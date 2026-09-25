@@ -47,6 +47,11 @@ export type Animation = {
 	walkSway: number, -- studs the gun sways side to side, one way per step
 	walkBounce: number, -- studs the gun dips on each step
 	walkRoll: number, -- radians it rolls with the sway
+	sprintPose: CFrame, -- the grip relative to the camera while sprinting
+	sprintSteps: number, -- steps a second at a sprint
+	sprintSway: number, -- studs the gun sways side to side while sprinting
+	sprintBounce: number, -- studs it dips on each sprinting step
+	sprintSwing: Vector3, -- radians it swings with each stride, like pumping arms: dips (X), turns (Y) and rolls (Z)
 	magazineReleased: number, -- the old magazine is let go: it slides out of the grip and falls, free of the gun
 	magazineDropSpeed: number, -- studs a second it leaves the grip at
 	magazineGravity: number, -- studs a second squared it falls with (a gun is about a stud long)
@@ -151,6 +156,11 @@ local DEFAULT: Animation = {
 	walkSway = 0.022,
 	walkBounce = 0.014,
 	walkRoll = 0.03,
+	sprintPose = CFrame.new(0.35, -0.85, -0.9) * CFrame.Angles(-0.45, 0.85, 0.3), -- low and turned in, across the body
+	sprintSteps = 2.9,
+	sprintSway = 0.04,
+	sprintBounce = 0.03,
+	sprintSwing = Vector3.new(0.06, 0.07, 0.1),
 	drawHits = {
 		{ t = 0.8, move = Vector3.new(0, -0.3, 0), turn = Vector3.new(-0.4, 0, 0.2), look = Vector3.zero }, -- the left hand takes hold
 	},

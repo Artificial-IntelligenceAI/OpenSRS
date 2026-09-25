@@ -29,7 +29,6 @@ type State = Types.State
 -- Where the gun's grip sits relative to the camera in each pose.
 local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when aiming: arms outstretched
 local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
-local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
@@ -103,6 +102,7 @@ local FILL_COLOR = Color3.fromRGB(255, 244, 230)
 local SWAY_AMOUNT = 0.0025 -- radians per pixel of mouse movement
 local SWAY_LIMIT = 0.08
 local SWAY_RETURN = 12
+local RAISE_LEAD = 0.7 -- the raise after sprinting reaches ready by this fraction of the raise time
 local BOB_EASE = 6 -- how quickly the walking bob fades in and out
 local AIMED_MOTION = 0.12 -- sway and bob keep this fraction while aiming
 
@@ -176,6 +176,7 @@ local droppedFrom: CFrame? = nil -- where the gun was, relative to the view, whe
 local sway = Vector2.zero
 local stepPhase = 0 -- through the walk cycle: each step is half a turn
 local bobStrength = 0
+local sprintBlend = 0
 local gunMove = Spring.new(animation.gunStiffness, animation.gunDamping)
 local gunTurn = Spring.new(animation.gunStiffness, animation.gunDamping)
 local look = Spring.new(animation.lookStiffness, animation.lookDamping)
@@ -276,6 +277,21 @@ local function arm(shoulder: Vector3, hand: Vector3): CFrame
 	return CFrame.lookAt(hand + direction * (ARM_LENGTH / 2), hand)
 end
 
+local function lerp(from: number, to: number, alpha: number): number
+	return from + (to - from) * alpha
+end
+
+-- Coming out of a sprint the gun rises back to ready over the raise time,
+-- arriving just as it can fire again.
+local function raising(state: State): CFrame
+	local ready = if state.aiming then AIM else HIP
+	-- Aim to be up a little early: the gun follows its target with a short lag.
+	local raised = if weapon.raiseTicks > 0
+		then math.min((1 - state.raiseTicks / weapon.raiseTicks) / RAISE_LEAD, 1)
+		else 1
+	return animation.sprintPose:Lerp(ready, raised * raised * (3 - 2 * raised))
+end
+
 -- Positions the gun and arms for this frame and returns where the muzzle is.
 function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, frameTime: number): Vector3
 	local raw = reloadProgress(state)
@@ -306,7 +322,8 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local handling = progress > 0 and progress < animation.readyAt
 	local target = if handling
 		then (if progress >= animation.rackStart then animation.rackPose else animation.reloadPose) * hold
-		elseif state.sprinting or state.raiseTicks > 0 then SPRINT
+		elseif state.sprinting then animation.sprintPose
+		elseif state.raiseTicks > 0 then raising(state)
 		elseif aiming then AIM
 		else HIP
 	local blend = 1 - math.exp(-POSE_SPEED * frameTime)
@@ -329,12 +346,23 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local pace = if walkSpeed > 0 then speed / walkSpeed else 0
 	bobStrength += (math.min(pace, 1.4) * motion - bobStrength) * (1 - math.exp(-BOB_EASE * frameTime))
 	-- Longer strides, not just quicker ones, when going faster.
-	local steps = animation.walkSteps * math.sqrt(math.min(pace, 2))
+	-- Sprinting: quicker steps, a bigger sway and dip, and the gun swings
+	-- with each stride like pumping arms.
+	local sprinting = if state.sprinting and speed > 0 then 1 else 0
+	sprintBlend += (sprinting - sprintBlend) * (1 - math.exp(-BOB_EASE * frameTime))
+	local steps = lerp(animation.walkSteps * math.sqrt(math.min(pace, 2)), animation.sprintSteps, sprintBlend)
 	stepPhase = (stepPhase + steps * math.pi * frameTime) % (2 * math.pi)
 	local side = math.sin(stepPhase)
-	local bob =
-		CFrame.new(side * animation.walkSway * bobStrength, -side * side * animation.walkBounce * bobStrength, 0)
-	local bobRoll = CFrame.Angles(0, 0, -side * animation.walkRoll * bobStrength) -- around the gun, not the view
+	local dip = side * side
+	local stepSway = lerp(animation.walkSway, animation.sprintSway, sprintBlend) * bobStrength
+	local stepDip = lerp(animation.walkBounce, animation.sprintBounce, sprintBlend) * bobStrength
+	local swing = animation.sprintSwing * sprintBlend * bobStrength
+	local bob = CFrame.new(side * stepSway, -dip * stepDip, 0)
+	local bobRoll = CFrame.Angles( -- around the gun, not the view
+		-dip * swing.X,
+		side * swing.Y,
+		-side * (animation.walkRoll * bobStrength + swing.Z)
+	)
 
 	kick = math.max(kick - frameTime, 0)
 	local cycle = if animation.slideCycle > 0 then kick / animation.slideCycle else 0
