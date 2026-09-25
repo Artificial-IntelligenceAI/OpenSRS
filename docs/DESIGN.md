@@ -52,7 +52,8 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 - Only OpenSRS avatars are used, never players' Roblox avatars.
 - Games can add their own avatars in the OpenSRS avatar format, which will be documented with part names, sizes and attachment points.
-- The first release ships a plain blocky R6 placeholder built from basic parts. A proper model will replace it later.
+- Without a custom avatar, everyone is a plain R6 figure: the classic R6 shapes (including the rounded head) in one neutral grey, with no face or clothing. It's built in code, so the "systems only" download has it too.
+- A game's own avatar goes in `Assets/Avatars/Default` as a Model with R6 parts named `Head`, `Torso`, `Left Arm`, `Right Arm`, `Left Leg` and `Right Leg`. The arms in the first-person view take the avatar's arm color.
 
 ## Visibility (anti-wallhack)
 

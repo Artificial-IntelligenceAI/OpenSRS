@@ -13,6 +13,7 @@ local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
 local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
+local Avatar = require(script.Parent.Avatar)
 local GunModel = require(script.Parent.GunModel)
 
 type State = Types.State
@@ -50,9 +51,6 @@ local BOB_SPEED = 1.1 -- steps per stud walked
 local BOB_AMOUNT = 0.025
 local AIMED_MOTION = 0.12 -- sway and bob keep this fraction while aiming
 
-local SKIN = Color3.fromRGB(204, 170, 140)
-local SHIRT = Color3.fromRGB(70, 80, 95)
-
 local Viewmodel = {}
 
 local weapon = Weapons.default
@@ -84,10 +82,11 @@ local function limb(name: string, size: Vector3, color: Color3): Part
 	return part
 end
 
-local rightArm = limb("RightArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), SHIRT)
-local leftArm = limb("LeftArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), SHIRT)
-local rightHand = limb("RightHand", Vector3.one * HAND_SIZE, SKIN)
-local leftHand = limb("LeftHand", Vector3.one * HAND_SIZE, SKIN)
+-- Arms match the avatar's arm color.
+local rightArm = limb("RightArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), Avatar.armColor)
+local leftArm = limb("LeftArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), Avatar.armColor)
+local rightHand = limb("RightHand", Vector3.one * HAND_SIZE, Avatar.armColor)
+local leftHand = limb("LeftHand", Vector3.one * HAND_SIZE, Avatar.armColor)
 
 local function localPoint(name: string, fallback: Vector3): CFrame
 	local attachment = GunModel.point(model, name)

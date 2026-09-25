@@ -19,4 +19,14 @@ function Assets.weapon(name: string, view: string): Model?
 	return nil
 end
 
+-- A fresh copy of an avatar model from Assets/Avatars, if the game shipped one.
+function Assets.avatar(name: string): Model?
+	local avatars = root and root:FindFirstChild("Avatars")
+	local model = avatars and avatars:FindFirstChild(name)
+	if model and model:IsA("Model") then
+		return model:Clone()
+	end
+	return nil
+end
+
 return table.freeze(Assets)

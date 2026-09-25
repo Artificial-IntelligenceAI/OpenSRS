@@ -10,7 +10,7 @@ local Shared = script.Parent.Parent.Shared
 local Body = require(Shared.Body)
 local Config = require(Shared.Config)
 local Protocol = require(Shared.Protocol)
-local PlaceholderAvatar = require(script.Parent.PlaceholderAvatar)
+local Avatar = require(script.Parent.Avatar)
 
 type Snapshot = Protocol.Snapshot
 type Remote = Protocol.Remote
@@ -27,7 +27,7 @@ folder.Parent = workspace
 Puppets.folder = folder
 
 local snapshots: { Snapshot } = {}
-local avatars: { [number]: PlaceholderAvatar.Avatar } = {}
+local avatars: { [number]: Avatar.Avatar } = {}
 local clockOffset: number? = nil -- server tick minus local tick
 
 local function localTick(): number
@@ -118,13 +118,10 @@ function Puppets.render()
 	for slot, remote in shown do
 		local avatar = avatars[slot]
 		if not avatar then
-			avatar = PlaceholderAvatar.new(`Player{slot}`)
+			avatar = Avatar.new(`Player{slot}`)
 			avatars[slot] = avatar
 		end
-		PlaceholderAvatar.apply(
-			avatar,
-			Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset)
-		)
+		Avatar.apply(avatar, Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset))
 		avatar.model.Parent = folder
 	end
 	for slot, avatar in avatars do
