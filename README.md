@@ -4,6 +4,15 @@
 
 > **Status:** early development — nothing usable yet.
 
+## Official downloads
+
+The **only** official source of OpenSRS is this repository's [Releases page](https://github.com/Artificial-IntelligenceAI/OpenSRS/releases). OpenSRS isn't published on the Creator Store or Toolbox, so any copy you find there isn't ours and may contain backdoors.
+
+Each release comes in two versions:
+
+- **Systems only:** the code, with no models. All Apache 2.0.
+- **With models:** the code plus the OpenSRS avatar and weapon models (models under CC BY 4.0).
+
 ## Licensing
 
 OpenSRS uses two licenses, split by directory:
