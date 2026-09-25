@@ -56,6 +56,8 @@ local BARREL_TRAVEL = 0.06
 type Key = WeaponAnimation.Key
 local IDENTITY = CFrame.identity
 local MAX_FRAME = 0.1 -- longer frames (hitches) are treated as this long
+local HANDS_SOUND = Vector3.new(0.2, -0.6, -1.1) -- where handling sounds are heard, from the view
+local FLOOR_SOUND = Vector3.new(-0.3, -2.5, -1) -- where the dropped magazine lands, from the view
 local MAGAZINE_OUT_OF_SIGHT = 6 -- studs a dropped magazine falls before it's hidden
 
 -- Eased position along a keyframe track at `t`, bowed out along `arc` in the
@@ -383,7 +385,8 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	end
 	for _, sound in animation.reloadSounds do
 		if lastProgress < sound.t and progress >= sound.t then
-			Sounds.play(weapon.name, sound.cue)
+			local low = sound.cue == Sounds.Cues.MagazineFloor
+			Sounds.near(weapon.name, sound.cue, if low then FLOOR_SOUND else HANDS_SOUND)
 		end
 	end
 	lastProgress = progress
@@ -396,7 +399,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	end
 	for _, sound in animation.drawSounds do
 		if lastDrawProgress < sound.t and drawProgress >= sound.t then
-			Sounds.play(weapon.name, sound.cue)
+			Sounds.near(weapon.name, sound.cue, HANDS_SOUND)
 		end
 	end
 	lastDrawProgress = drawProgress

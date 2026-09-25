@@ -24,7 +24,7 @@ attachments. Moving parts are named `Slide`, `Barrel`, `Trigger` and `Magazine`.
 - `X16-texture-manifest.json` — which textures go on which mesh.
 - `validation.json` and `X16-comparison.png` — triangle counts, checks, and a render comparing both versions to the original.
 - `ASTRA-NOTES.txt` — import notes from the model's author.
-- `sounds/` — the X16's sound set: 16 WAVs (48 kHz mono), synthesized from scratch with no recordings or samples. `NOTES.txt` says how each was made, `source/synthesize.py` regenerates them, `preview/X16_Audition_Reel.wav` plays them all in a row, and `LICENSE.txt` has their credit line.
+- `sounds/` — the X16's sounds: 20 WAVs (48 kHz mono) edited from public-domain recordings, mostly a real Walther PPQ 9mm. `SOURCES.md` lists the original of each file and how it was edited.
 
 To use your own copy of the meshes and textures, import the FBX with Studio's 3D Importer, then scale it to 1.2 studs and turn it to face -Z.
 

@@ -40,6 +40,8 @@ local HIP_FOV = 70
 local AIM_FOV = 64 -- aiming barely zooms
 local FOV_SPEED = 14
 local CASING_DELAY = 0.35 -- seconds after a shot that its case lands
+local HANDS = Vector3.new(0.3, -0.7, -1.2) -- where the player's own gun is heard, from their view
+local FEET = Vector3.new(0.6, -2.5, -0.8) -- where their spent cases land, from their view
 local DISTANT_SHOT = 200 -- studs beyond which others' shots use the distant sound
 local NEAR_MISS = 4 -- studs a bullet must pass within to be heard going by
 
@@ -206,6 +208,7 @@ function Controller.start()
 	end)
 
 	snapshotRemote.OnClientEvent:Connect(Puppets.receive)
+	Sounds.preload(weapon.name)
 	InputMap.start()
 	Hud.start()
 
@@ -242,7 +245,7 @@ function Controller.start()
 					and current.raiseTicks == 0
 					and not current.sprinting
 				then
-					Sounds.play(weapon.name, Sounds.Cues.DryFire)
+					Sounds.near(weapon.name, Sounds.Cues.DryFire, HANDS)
 				end
 				previous = current
 				local shot
@@ -260,8 +263,8 @@ function Controller.start()
 					local hit = workspace:Raycast(camera.CFrame.Position, direction * weapon.range, world.raycast)
 					local target = if hit then hit.Position else camera.CFrame.Position + direction * weapon.range
 					Viewmodel.fired()
-					Sounds.play(weapon.name, Sounds.Cues.Fire)
-					task.delay(CASING_DELAY, Sounds.play, weapon.name, Sounds.Cues.Casing)
+					Sounds.at(weapon.name, Sounds.Cues.Fire, muzzle)
+					task.delay(CASING_DELAY, Sounds.near, weapon.name, Sounds.Cues.Casing, FEET)
 					Effects.muzzleFlash(muzzle)
 					Effects.tracer(muzzle, target, weapon.bulletSpeed)
 				end
