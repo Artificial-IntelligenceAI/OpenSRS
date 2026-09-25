@@ -1,0 +1,82 @@
+[
+  {
+    "start_seconds": 0,
+    "file": "X16_Gunshot_01.wav",
+    "preview_gain_db": -8
+  },
+  {
+    "start_seconds": 0.916,
+    "file": "X16_Gunshot_02.wav",
+    "preview_gain_db": -8
+  },
+  {
+    "start_seconds": 1.825,
+    "file": "X16_Gunshot_03.wav",
+    "preview_gain_db": -8
+  },
+  {
+    "start_seconds": 2.704,
+    "file": "X16_DryFire.wav",
+    "preview_gain_db": -18
+  },
+  {
+    "start_seconds": 3.252,
+    "file": "X16_MagazineRelease.wav",
+    "preview_gain_db": -20
+  },
+  {
+    "start_seconds": 3.829,
+    "file": "X16_MagazineInsert.wav",
+    "preview_gain_db": -16
+  },
+  {
+    "start_seconds": 4.454,
+    "file": "X16_SlidePullBack.wav",
+    "preview_gain_db": -15
+  },
+  {
+    "start_seconds": 5.132,
+    "file": "X16_SlideForward.wav",
+    "preview_gain_db": -14
+  },
+  {
+    "start_seconds": 5.715,
+    "file": "X16_Impact_Concrete.wav",
+    "preview_gain_db": -15
+  },
+  {
+    "start_seconds": 6.387,
+    "file": "X16_Impact_Body.wav",
+    "preview_gain_db": -17
+  },
+  {
+    "start_seconds": 6.973,
+    "file": "X16_HitMarker_Tick.wav",
+    "preview_gain_db": -23
+  },
+  {
+    "start_seconds": 7.474,
+    "file": "X16_GunshotDistant.wav",
+    "preview_gain_db": -23
+  },
+  {
+    "start_seconds": 8.433,
+    "file": "X16_NearMissWhiz.wav",
+    "preview_gain_db": -18
+  },
+  {
+    "start_seconds": 9.103,
+    "file": "X16_DrawRustle.wav",
+    "preview_gain_db": -24
+  },
+  {
+    "start_seconds": 9.8,
+    "file": "X16_MagazineFloor.wav",
+    "preview_gain_db": -20
+  },
+  {
+    "start_seconds": 10.676,
+    "file": "X16_CasingTinkle.wav",
+    "preview_gain_db": -27
+  }
+]

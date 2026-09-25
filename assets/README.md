@@ -1,9 +1,9 @@
 # Assets
 
-Everything in this directory (3D models, textures and other art) is licensed under the
+Everything in this directory (3D models, textures, sounds and other art) is licensed under the
 [Creative Commons Attribution 4.0 International License](../LICENSE-CC-BY-4.0) (CC BY 4.0).
 
-See the [main README](../README.md#crediting-the-models) for how to credit it.
+See the [main README](../README.md#crediting-the-models-and-sounds) for how to credit it.
 
 ## Contents
 
@@ -23,6 +23,7 @@ attachments. Moving parts are named `Slide`, `Barrel`, `Trigger` and `Magazine`.
 - `X16-texture-manifest.json` — which textures go on which mesh.
 - `validation.json` and `X16-comparison.png` — triangle counts, checks, and a render comparing both versions to the original.
 - `ASTRA-NOTES.txt` — import notes from the model's author.
+- `sounds/` — the X16's sound set: 16 WAVs (48 kHz mono), synthesized from scratch with no recordings or samples. `NOTES.txt` says how each was made, `source/synthesize.py` regenerates them, `preview/X16_Audition_Reel.wav` plays them all in a row, and `LICENSE.txt` has their credit line.
 
 To use your own copy of the meshes and textures, import the FBX with Studio's 3D Importer, then scale it to 1.2 studs and turn it to face -Z.
 

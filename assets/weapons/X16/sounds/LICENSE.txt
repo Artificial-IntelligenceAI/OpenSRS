@@ -1,0 +1,24 @@
+X16 procedural sound set — OpenSRS
+SPDX-License-Identifier: CC-BY-4.0
+
+At the project owner's direction, the newly created WAV assets and synthesis
+source in this folder are provided under the Creative Commons Attribution
+4.0 International license.
+
+License deed: https://creativecommons.org/licenses/by/4.0/
+Full legal terms: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Requested credit:
+X16 procedural sound set — OpenSRS. CC BY 4.0.
+https://creativecommons.org/licenses/by/4.0/
+
+Indicate if changes were made. Preserve this attribution and license link.
+No endorsement by OpenSRS is implied by use of the material.
+
+Provenance: generated for the project using original, deterministic signal
+synthesis written with Codex. No third-party audio samples, recordings,
+sampled impulse responses, or pre-trained audio-generation outputs were
+used. NumPy, SciPy and SoundFile are processing tools, not audio sources.
+
+This notice does not change the license of any model files outside this
+sounds folder, or the licenses of the software libraries used to generate it.

@@ -22,15 +22,15 @@ OpenSRS uses two licenses, split by directory:
 | What | Where | License |
 | --- | --- | --- |
 | Code (Luau source, tooling, config) | everything outside `assets/` | [Apache License 2.0](LICENSE) |
-| 3D models and other art assets | [`assets/`](assets/) | [Creative Commons Attribution 4.0 International](LICENSE-CC-BY-4.0) (CC BY 4.0) |
+| 3D models, sounds and other art assets | [`assets/`](assets/) | [Creative Commons Attribution 4.0 International](LICENSE-CC-BY-4.0) (CC BY 4.0) |
 
-Release builds (e.g. `.rbxm` files) bundle both. The scripts inside are under Apache 2.0, and the models are under CC BY 4.0.
+Release builds (e.g. `.rbxm` files) bundle both. The scripts inside are under Apache 2.0, and the models and sounds are under CC BY 4.0.
 
-### Crediting the models
+### Crediting the models and sounds
 
-CC BY 4.0 requires attribution. If you use OpenSRS models in your game, credit them somewhere players can see, such as the game description or an in-game credits screen:
+CC BY 4.0 requires attribution. If you use OpenSRS models or sounds in your game, credit them somewhere players can see, such as the game description or an in-game credits screen:
 
-> Weapon models from OpenSRS (https://github.com/Artificial-IntelligenceAI/OpenSRS), licensed under CC BY 4.0.
+> Weapon models and sounds from OpenSRS (https://github.com/Artificial-IntelligenceAI/OpenSRS), licensed under CC BY 4.0.
 
 ## Developing OpenSRS
 

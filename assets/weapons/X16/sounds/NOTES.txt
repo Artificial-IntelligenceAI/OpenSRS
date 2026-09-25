@@ -1,0 +1,136 @@
+X16 / OpenSRS — original procedural pistol sound set
+
+STATUS
+16 individual sound assets: all 9 required sound types (11 WAVs because the
+shot has 3 variations), plus all 5 optional effects.
+Technical checks pass. Subjective listening is PENDING: the authoring session
+cannot receive audio input. No claim is made that these were heard or that
+listening established realism. Use preview/X16_Audition_Reel.wav to assess
+whether the gunshots and slide mechanics sound convincingly natural.
+
+DELIVERY
+48,000 Hz, mono, signed 24-bit PCM WAV. Each individual asset is trimmed to
+its active signal and peak-normalized to approximately -1 dBTP using 4x
+oversampling, then independently checked at 8x. Sample peaks can be lower
+than -1 dBFS because reconstructed peaks between samples can be higher.
+No hard clipping or brick-wall limiter is used. A few samples of attack
+ramping and short tail fades prevent edit clicks; these are not leading
+silence. TPDF dither is applied only at 24-bit quantization scale.
+All audio is newly synthesized from equations and seeded random numbers.
+There are no recordings, borrowed samples, library effects, sampled impulse
+responses, voices, or audio-generation-model outputs anywhere in the set.
+The Python libraries perform signal processing; they provide no audio content.
+
+HOW EACH SOUND WAS MADE
+X16_Gunshot_01.wav
+X16_Gunshot_02.wav
+X16_Gunshot_03.wav
+  Three independent seeded renders of the same close-shot design. An analytic
+  bipolar pressure pulse creates the leading crack. Brief high-frequency
+  noise adds the shock texture; separate rapidly decaying midrange gas and
+  low-mid pressure bands add weight. Very quiet short mechanical contacts
+  suggest the action cycle. Randomized, filtered early reflections and a
+  low diffuse tail provide restrained outdoor space. Timing and pressure
+  decay vary slightly between shots; these are not pitch-shifted duplicates.
+  No sustained sub-bass oscillator, dramatic echo, or musical resonator.
+  This is an approximate sound-design model, not a measured recording of a
+  particular firearm or a calibrated physical acoustic simulation.
+
+X16_DryFire.wav
+  A tight striker/sear contact, a quieter secondary contact, and heavily
+  damped polymer/steel modes. The short decay avoids a toy-like ringing ping.
+
+X16_MagazineRelease.wav
+  A small button contact, latch snap, then faint irregular polymer friction
+  as the magazine begins to move. The floor impact is a separate asset.
+
+X16_MagazineInsert.wav
+  A light guiding contact and brief friction lead into a heavier seated
+  polymer thud, a sharper catch engagement, and a small settling contact.
+
+X16_SlidePullBack.wav
+  An initial engagement click, irregular steel-rail friction, a very quiet
+  inharmonic spring/rail response, and a heavier rear stop with tiny settling
+  contacts. The strongest stop occurs about 131 ms after the start.
+
+X16_SlideForward.wav
+  A brief release and faster rail movement terminate in a layered steel
+  closure with closely spaced contacts. The main closure is about 34 ms
+  after the start. Short, damped modes avoid a sustained spring boing.
+
+X16_Impact_Concrete.wav
+  A dry, bright fractured transient, short broad stone-body resonance, and
+  tiny irregular grit contacts. No stylized ricochet whistle.
+
+X16_Impact_Body.wav
+  Strongly damped low-mid noise for soft mass, a brief fabric snap, and a
+  quiet secondary contact. No vocal material or exaggerated wet splatter.
+
+X16_HitMarker_Tick.wav
+  A very short bright noise transient with faint, quickly damped inharmonic
+  partials. Intended as restrained non-spatial player feedback, not a chime.
+
+OPTIONAL
+X16_GunshotDistant.wav
+  Derived only from a freshly rendered original shot. Reduced bandwidth
+  removes the close crack; a few softened delayed copies broaden the tail.
+
+X16_NearMissWhiz.wav
+  A brief noise pass with a moving broad spectral emphasis and a tiny
+  pressure transient. No sinusoidal or cartoon-style whistle.
+
+X16_DrawRustle.wav
+  Irregular filtered-noise grains model fabric/polymer friction, supported
+  by two light, heavily damped contacts.
+
+X16_MagazineFloor.wav
+  A weighted polymer/metal impact, irregular diminishing bounces, and a
+  short friction scrape. Intended for a hard floor.
+
+X16_CasingTinkle.wav
+  Brief inharmonic brass-like modes, a small broadband contact, and several
+  diminishing bounces. It is intentionally the most resonant small effect.
+
+PREVIEW AND MIXING
+preview/X16_Audition_Reel.wav contains every asset in the order above, with
+pauses. preview/CUE_SHEET.json supplies timestamps and applied gains.
+The reel is deliberately quieter than the normalized individual files.
+Peak normalization does NOT imply that all game sounds should play at the
+same volume. Start with gunshots as the loud reference; keep dry fire,
+magazine movements, and slides lower, with casing and clothing much lower.
+The preview gains are audition starting points, not a finished game mix.
+Randomize between the 3 close shots rather than applying large pitch shifts.
+Use the distant version as a distance-dependent replacement or crossfade;
+avoid stacking it at full level with a nearby shot. The environmental tail
+is intentionally modest so the game can add location-specific acoustics.
+Spatialize the weapon and impact sounds in the game. Keep the hit marker
+centered and quiet. Do not play the optional floor/casing effects inside the
+reload sounds as well; they are provided separately for animation events.
+Leave additional mixer headroom when several assets play simultaneously.
+
+REPRODUCIBILITY AND QA
+source/synthesize.py contains the complete synthesis and fixed random seeds.
+source/requirements.txt lists the actual generation-library versions.
+source/validate.py repeats file, trimming, finite-sample, DC, clipping,
+8x true-peak, and shot-variation checks. VALIDATION.json records the results
+and explicitly distinguishes those checks from listening.
+SHA256SUMS.txt identifies the delivered files.
+The existing model assets and their source file were not modified.
+
+LICENSE AND CREDIT
+At the project owner's direction, these original audio assets and the
+included synthesis source are supplied under Creative Commons Attribution
+4.0 International (CC BY 4.0):
+https://creativecommons.org/licenses/by/4.0/
+Suggested attribution:
+"X16 procedural sound set — OpenSRS. CC BY 4.0.
+https://creativecommons.org/licenses/by/4.0/"
+Indicate your modifications when redistributing altered versions. This
+license notice covers this sounds folder, not the separate model assets.
+See LICENSE.txt for the license link and provenance statement.
+
+REFERENCE DOCUMENTATION (no audio was obtained from these pages)
+Roblox audio asset format requirements:
+https://create.roblox.com/docs/audio/assets
+CC BY 4.0 license deed:
+https://creativecommons.org/licenses/by/4.0/
