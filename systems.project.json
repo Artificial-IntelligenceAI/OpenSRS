@@ -1,0 +1,7 @@
+{
+	"name": "OpenSRS",
+	"emitLegacyScripts": false,
+	"tree": {
+		"$path": "src"
+	}
+}

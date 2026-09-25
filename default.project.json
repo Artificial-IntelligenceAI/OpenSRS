@@ -2,6 +2,9 @@
 	"name": "OpenSRS",
 	"emitLegacyScripts": false,
 	"tree": {
-		"$path": "src"
+		"$path": "src",
+		"Assets": {
+			"$path": "assets/roblox/Assets.rbxm"
+		}
 	}
 }
