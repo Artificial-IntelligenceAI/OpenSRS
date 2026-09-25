@@ -252,7 +252,7 @@ function Controller.start()
 			fieldOfView += (targetFov - fieldOfView) * (1 - math.exp(-FOV_SPEED * frameTime))
 			camera.FieldOfView = fieldOfView
 
-			muzzle = Viewmodel.update(camera.CFrame, current, frameTime)
+			muzzle = Viewmodel.update(camera.CFrame, current, InputMap.mouseDelta(), frameTime)
 			Hud.update(
 				current.ammo,
 				current.reserve,

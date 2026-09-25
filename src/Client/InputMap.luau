@@ -63,15 +63,23 @@ function InputMap.start()
 	end)
 end
 
+local lastDelta = Vector2.zero
+
 -- Called every frame, before sampling.
 function InputMap.updateLook()
 	local delta = UserInputService:GetMouseDelta()
+	lastDelta = delta
 	yaw = (yaw - delta.X * RADIANS_PER_PIXEL + math.pi) % (2 * math.pi) - math.pi
 	pitch = math.clamp(pitch - delta.Y * RADIANS_PER_PIXEL, -Config.movement.maxPitch, Config.movement.maxPitch)
 end
 
 function InputMap.look(): (number, number)
 	return yaw, pitch
+end
+
+-- How far the mouse moved this frame, in pixels.
+function InputMap.mouseDelta(): Vector2
+	return lastDelta
 end
 
 -- `viewTick` is the server tick other players are currently drawn at.
