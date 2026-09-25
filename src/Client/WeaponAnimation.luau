@@ -43,6 +43,10 @@ export type Animation = {
 	fireVariation: Vector3, -- plus up to this much random turn, so no two shots kick the same
 	aimedFire: number, -- the kick is scaled by this while aiming, for a steadier sight picture
 	slideCycle: number, -- seconds the slide takes to cycle after a shot
+	walkSteps: number, -- steps a second at walking speed; a little faster when sprinting, slower when creeping
+	walkSway: number, -- studs the gun sways side to side, one way per step
+	walkBounce: number, -- studs the gun dips on each step
+	walkRoll: number, -- radians it rolls with the sway
 	magazineReleased: number, -- the old magazine starts sliding out
 	magazineFree: number, -- it's out, and starts falling
 	magazineGone: number, -- it's out of view
@@ -141,6 +145,10 @@ local DEFAULT: Animation = {
 	fireVariation = Vector3.new(0.4, 0.6, 0.8),
 	aimedFire = 0.6,
 	slideCycle = 0.07,
+	walkSteps = 1.9,
+	walkSway = 0.022,
+	walkBounce = 0.014,
+	walkRoll = 0.03,
 	drawHits = {
 		{ t = 0.8, move = Vector3.new(0, -0.3, 0), turn = Vector3.new(-0.4, 0, 0.2), look = Vector3.zero }, -- the left hand takes hold
 	},

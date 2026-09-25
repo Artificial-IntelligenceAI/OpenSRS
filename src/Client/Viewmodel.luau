@@ -102,8 +102,7 @@ local FILL_COLOR = Color3.fromRGB(255, 244, 230)
 local SWAY_AMOUNT = 0.0025 -- radians per pixel of mouse movement
 local SWAY_LIMIT = 0.08
 local SWAY_RETURN = 12
-local BOB_SPEED = 1.1 -- steps per stud walked
-local BOB_AMOUNT = 0.025
+local BOB_EASE = 6 -- how quickly the walking bob fades in and out
 local AIMED_MOTION = 0.12 -- sway and bob keep this fraction while aiming
 
 local Viewmodel = {}
@@ -173,7 +172,8 @@ local reloadBlend = 0
 local kick = 0
 local reloadLength = 0
 local sway = Vector2.zero
-local walked = 0
+local stepPhase = 0 -- through the walk cycle: each step is half a turn
+local bobStrength = 0
 local gunMove = Spring.new(animation.gunStiffness, animation.gunDamping)
 local gunTurn = Spring.new(animation.gunStiffness, animation.gunDamping)
 local look = Spring.new(animation.lookStiffness, animation.lookDamping)
@@ -309,12 +309,20 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	sway *= math.exp(-SWAY_RETURN * frameTime)
 	local swayFrame = CFrame.Angles(sway.Y * motion, sway.X * motion, sway.X * 0.5 * motion)
 
-	-- Bob: a figure-eight while walking on the ground.
+	-- Bob: while walking the gun sways side to side once every two steps,
+	-- dipping smoothly on each step, at about the pace a person walks. It
+	-- fades in and out rather than following every change in speed.
 	local speed = if state.grounded then Vector3.new(state.velocity.X, 0, state.velocity.Z).Magnitude else 0
-	walked += speed * frameTime
-	local strength = math.min(speed / Config.stance(0).speed, 1.6) * BOB_AMOUNT * motion
-	local phase = walked * BOB_SPEED * math.pi
-	local bob = CFrame.new(math.sin(phase) * strength, -math.abs(math.cos(phase)) * strength, 0)
+	local walkSpeed = Config.stance(0).speed
+	local pace = if walkSpeed > 0 then speed / walkSpeed else 0
+	bobStrength += (math.min(pace, 1.4) * motion - bobStrength) * (1 - math.exp(-BOB_EASE * frameTime))
+	-- Longer strides, not just quicker ones, when going faster.
+	local steps = animation.walkSteps * math.sqrt(math.min(pace, 2))
+	stepPhase = (stepPhase + steps * math.pi * frameTime) % (2 * math.pi)
+	local side = math.sin(stepPhase)
+	local bob =
+		CFrame.new(side * animation.walkSway * bobStrength, -side * side * animation.walkBounce * bobStrength, 0)
+	local bobRoll = CFrame.Angles(0, 0, -side * animation.walkRoll * bobStrength) -- around the gun, not the view
 
 	kick = math.max(kick - frameTime, 0)
 	local cycle = if animation.slideCycle > 0 then kick / animation.slideCycle else 0
@@ -349,7 +357,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	Spring.step(gunTurn, rotationOf(guide), step)
 	Spring.step(look, Vector3.zero, step)
 	local gunMotion = CFrame.new(gunMove.position) * turned(gunTurn.position)
-	local origin = camera * bob * swayFrame * current * gunMotion
+	local origin = camera * bob * swayFrame * current * bobRoll * gunMotion
 
 	-- The slide locks back on an empty magazine; the reload's rack pulls it
 	-- back and lets it go.
