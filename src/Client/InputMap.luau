@@ -4,7 +4,7 @@
 -- Turns keyboard and mouse into inputs.
 --
 -- WASD move, mouse looks, Space jumps, Left Shift sprints, Left Alt slow-walks,
--- C toggles crouch, Z toggles prone, Q and E lean.
+-- C toggles crouch, Z toggles prone, Q and E toggle leaning left and right.
 
 local UserInputService = game:GetService("UserInputService")
 
@@ -23,6 +23,7 @@ local InputMap = {}
 local yaw = 0
 local pitch = 0
 local stance: number = Stance.Stand
+local lean = 0 -- -1 left, 0 upright, 1 right
 
 local function down(key: Enum.KeyCode): boolean
 	return UserInputService:IsKeyDown(key)
@@ -33,12 +34,21 @@ function InputMap.start()
 		if processed then
 			return
 		end
-		if input.KeyCode == Enum.KeyCode.C then
+		local key = input.KeyCode
+		if key == Enum.KeyCode.C then
 			stance = if stance == Stance.Crouch then Stance.Stand else Stance.Crouch
-		elseif input.KeyCode == Enum.KeyCode.Z then
+		elseif key == Enum.KeyCode.Z then
 			stance = if stance == Stance.Prone then Stance.Stand else Stance.Prone
-		elseif input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.LeftShift then
+			lean = 0
+		elseif key == Enum.KeyCode.Space then
 			stance = Stance.Stand
+		elseif key == Enum.KeyCode.LeftShift then
+			stance = Stance.Stand
+			lean = 0
+		elseif key == Enum.KeyCode.Q then
+			lean = if lean == -1 then 0 else -1
+		elseif key == Enum.KeyCode.E then
+			lean = if lean == 1 then 0 else 1
 		end
 	end)
 end
@@ -81,10 +91,9 @@ function InputMap.sample(seq: number): Input
 	if down(Enum.KeyCode.LeftAlt) then
 		buttons += Buttons.SlowWalk
 	end
-	if down(Enum.KeyCode.Q) then
+	if lean == -1 then
 		buttons += Buttons.LeanLeft
-	end
-	if down(Enum.KeyCode.E) then
+	elseif lean == 1 then
 		buttons += Buttons.LeanRight
 	end
 	input.buttons = buttons

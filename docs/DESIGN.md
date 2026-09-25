@@ -44,7 +44,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 - **Server-authoritative movement.** Clients send inputs only. The server simulates movement and is the ground truth. The local client predicts its own movement so it feels instant, then corrects itself to match the server.
 - **Rig.** R6.
 - **Hitboxes.** Fixed R6 hitboxes for standing, crouching and prone. A hitbox never depends on how an avatar looks.
-- **Movement set:** walk, slow walk, sprint, crouch, prone, jump, lean left and right.
+- **Movement set:** walk, slow walk, sprint, crouch, prone, jump, lean left and right. Lean is a toggle (tap Q or E), and sprinting or going prone cancels it.
 - **Feel.** Tactical: acceleration and deceleration have weight, there's no bunny-hopping or air strafing, and sprinting delays when you can fire.
 - **Camera.** First-person only.
 

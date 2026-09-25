@@ -5,7 +5,8 @@
 -- the movement simulation and tells each client where it really is.
 --
 -- Anti-speedhack: every player earns one input per server tick and can bank a
--- few. Sending inputs faster than the tick rate just makes them queue up.
+-- few. Sending inputs faster than the tick rate just makes them queue up, and
+-- a queue that grows too long loses its oldest inputs.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,8 +30,8 @@ type Record = {
 	state: State?, -- nil until spawned
 	epoch: number,
 	dirty: boolean, -- the client must be told about a server-side change
-	nextSeq: number?, -- the next input to process; nil until the first one arrives
-	inputs: { [number]: Input },
+	lastSeq: number?, -- the last real input processed; nil until the first one
+	pending: { Input }, -- received but not yet processed, oldest first
 	lastInput: Input?,
 	tokens: number, -- inputs this player may process right now
 	packetBudget: number,
@@ -40,7 +41,7 @@ type Record = {
 
 local DT = 1 / Config.tickRate
 local MAX_TOKENS = 8 -- how far (in ticks) a player can fall behind before the server moves them on
-local MAX_AHEAD = 64 -- inputs further ahead than this are ignored
+local MAX_PENDING = 12 -- queued inputs beyond this are dropped, oldest first
 local MAX_TICKS_PER_FRAME = 4
 local PACKET_BUDGET_PER_TICK = 2 -- 120 input packets a second
 local MAX_PACKET_BUDGET = 30
@@ -125,12 +126,25 @@ local function onInput(player: Player, data: unknown)
 		return
 	end
 
+	local pending = record.pending
 	for _, input in inputs do
-		local nextSeq: number = record.nextSeq or input.seq
-		record.nextSeq = nextSeq
-		if input.seq >= nextSeq and input.seq < nextSeq + MAX_AHEAD then
-			record.inputs[input.seq] = input
+		local lastSeq = record.lastSeq
+		if lastSeq and input.seq <= lastSeq then
+			continue -- already processed; packets repeat recent inputs
 		end
+		local index = #pending + 1
+		while index > 1 and pending[index - 1].seq > input.seq do
+			index -= 1
+		end
+		if index > 1 and pending[index - 1].seq == input.seq then
+			continue
+		end
+		table.insert(pending, index, input)
+	end
+	-- A backlog (from a hitch, or someone trying to bank movement) loses its
+	-- oldest inputs. Dropping inputs never helps anyone move faster.
+	while #pending > MAX_PENDING do
+		table.remove(pending, 1)
 	end
 end
 
@@ -140,36 +154,34 @@ local function simulate(record: Record)
 		return
 	end
 
-	local processed = false
-	local nextSeq = record.nextSeq
-	if nextSeq then
-		record.tokens = math.min(record.tokens + 1, MAX_TOKENS)
-		record.packetBudget = math.min(record.packetBudget + PACKET_BUDGET_PER_TICK, MAX_PACKET_BUDGET)
+	record.packetBudget = math.min(record.packetBudget + PACKET_BUDGET_PER_TICK, MAX_PACKET_BUDGET)
 
+	local processed = false
+	local started = record.lastSeq ~= nil or #record.pending > 0
+	if started then
+		record.tokens = math.min(record.tokens + 1, MAX_TOKENS)
 		while record.tokens >= 1 do
 			local input: Input
-			local queued = record.inputs[nextSeq]
+			local queued = table.remove(record.pending, 1)
 			if queued then
-				record.inputs[nextSeq] = nil
 				input = queued
+				record.lastSeq = queued.seq
 			else
 				local lastInput = record.lastInput
 				if record.tokens < MAX_TOKENS or not lastInput then
 					break
 				end
 				-- The client has gone quiet. Keep simulating with its last input so
-				-- going silent can't freeze the character, such as mid-air.
-				input = table.clone(lastInput)
-				input.seq = nextSeq
+				-- going silent can't freeze the character, such as mid-air. This
+				-- doesn't count as processing any input, so late ones still apply.
+				input = lastInput
 			end
 
 			state = Movement.step(state, input, world)
 			record.lastInput = input
 			record.tokens -= 1
-			nextSeq += 1
 			processed = true
 		end
-		record.nextSeq = nextSeq
 	end
 
 	if state.position.Y < FALL_LIMIT then
@@ -182,11 +194,10 @@ local function simulate(record: Record)
 
 	-- The spawn message can be lost (it's unreliable, and the client may still be
 	-- loading), so keep repeating it until the client starts sending inputs.
-	local waitingForClient = nextSeq == nil and (tickCount + record.slot) % RESEND_TICKS == 0
+	local waitingForClient = not started and (tickCount + record.slot) % RESEND_TICKS == 0
 	if processed or record.dirty or waitingForClient then
 		record.dirty = false
-		local ack = (nextSeq or 1) - 1
-		remotes.state:FireClient(record.player, Protocol.encodeState(record.epoch, ack, state))
+		remotes.state:FireClient(record.player, Protocol.encodeState(record.epoch, record.lastSeq or 0, state))
 	end
 
 	if (tickCount + record.slot) % STREAM_REFRESH_TICKS == 0 then
@@ -266,8 +277,8 @@ local function onPlayerAdded(player: Player)
 		state = nil,
 		epoch = 0,
 		dirty = false,
-		nextSeq = nil,
-		inputs = {},
+		lastSeq = nil,
+		pending = {},
 		lastInput = nil,
 		tokens = 0,
 		packetBudget = MAX_PACKET_BUDGET,
