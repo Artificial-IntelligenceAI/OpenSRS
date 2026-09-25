@@ -147,6 +147,13 @@ local weaponFields: { Field } = {
 		description = "Seconds to reload. The reload animation stretches to fit.",
 	},
 	{
+		name = "DrawTime",
+		default = 0.5,
+		min = 0,
+		max = 2,
+		description = "Seconds after spawning before the gun can fire or reload. The draw animation stretches to fit.",
+	},
+	{
 		name = "RaiseTime",
 		default = 0.25,
 		min = 0,

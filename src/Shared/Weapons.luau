@@ -24,6 +24,7 @@ export type Weapon = {
 	magazine: number,
 	reserve: number,
 	reloadTicks: number,
+	drawTicks: number, -- after spawning, before the gun can fire or reload
 	raiseTicks: number, -- after sprinting, before the gun can fire
 
 	damage: number,
@@ -68,6 +69,7 @@ function Weapons.configure(name: string, values: Values): Weapon
 	weapon.magazine = math.round(number("MagazineSize"))
 	weapon.reserve = math.round(number("ReserveAmmo"))
 	weapon.reloadTicks = ticks(number("ReloadTime"))
+	weapon.drawTicks = math.round(number("DrawTime") * Config.tickRate)
 	weapon.raiseTicks = math.round(number("RaiseTime") * Config.tickRate)
 	weapon.damage = number("Damage")
 	weapon.headMultiplier = number("HeadshotMultiplier")

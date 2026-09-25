@@ -34,6 +34,7 @@ export type State = {
 	reserve: number, -- rounds left outside the magazine
 	fireCooldown: number, -- ticks until the next shot is allowed
 	reloadTicks: number, -- ticks left in the current reload; 0 when not reloading
+	drawTicks: number, -- ticks until the gun is drawn after spawning
 	raiseTicks: number, -- ticks until the gun is raised after sprinting
 	triggerHeld: boolean, -- the trigger was held last tick (semi-automatic needs a fresh press)
 	recoilPitch: number, -- radians added to the aim by recoil

@@ -182,6 +182,8 @@ local gunMove = Spring.new(animation.gunStiffness, animation.gunDamping)
 local gunTurn = Spring.new(animation.gunStiffness, animation.gunDamping)
 local look = Spring.new(animation.lookStiffness, animation.lookDamping)
 local lastProgress = 0
+local lastDrawTicks = 0
+local lastDrawProgress = 0
 local drift = 0
 local hold = IDENTITY
 local random = Random.new()
@@ -268,7 +270,18 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		)
 	end
 	local progress = if raw > 0 then raw + math.sin(raw * math.pi) * drift else 0
-	local aiming = state.aiming and progress == 0 and not state.sprinting and state.raiseTicks == 0
+	local drawing = state.drawTicks > 0 and weapon.drawTicks > 0
+	local drawProgress = if drawing then 1 - state.drawTicks / weapon.drawTicks else 0
+	if drawing and state.drawTicks > lastDrawTicks then
+		-- A fresh spawn: start from the draw's first position, not from wherever
+		-- the gun was.
+		local start = animation.drawTrack[1].value
+		gunMove.position, gunMove.velocity = start.Position, Vector3.zero
+		gunTurn.position, gunTurn.velocity = rotationOf(start), Vector3.zero
+		lastDrawProgress = 0
+	end
+	lastDrawTicks = state.drawTicks
+	local aiming = state.aiming and progress == 0 and not drawing and not state.sprinting and state.raiseTicks == 0
 	-- Once the slide is home the gun comes back up ready, while the reload
 	-- finishes.
 	local handling = progress > 0 and progress < animation.readyAt
@@ -314,7 +327,18 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		end
 	end
 	lastProgress = progress
-	local guide = if reloading then sample(animation.gunTrack, progress) else IDENTITY
+	for _, hit in animation.drawHits do
+		if lastDrawProgress < hit.t and drawProgress >= hit.t then
+			Spring.impulse(gunMove, hit.move)
+			Spring.impulse(gunTurn, hit.turn)
+			Spring.impulse(look, hit.look)
+		end
+	end
+	lastDrawProgress = drawProgress
+	local guide = if reloading
+		then sample(animation.gunTrack, progress)
+		elseif drawing then sample(animation.drawTrack, drawProgress)
+		else IDENTITY
 	Spring.step(gunMove, guide.Position, step)
 	Spring.step(gunTurn, rotationOf(guide), step)
 	Spring.step(look, Vector3.zero, step)
@@ -340,6 +364,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local barrel = CFrame.new(0, 0, BARREL_TRAVEL * slideBack)
 	local leftHand = if reloading
 		then CFrame.new(sampleArc(animation.leftHandTrack, progress, animation.arc))
+		elseif drawing then CFrame.new(sampleArc(animation.drawLeftHandTrack, drawProgress, animation.arc))
 		else LEFT_HAND_AT
 	local magazine, magazineShown = magazineAt(progress, leftHand.Position)
 	for index, part in gunParts do

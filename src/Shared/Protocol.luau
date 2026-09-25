@@ -67,7 +67,7 @@ Protocol.VIEW_TICK_SCALE = 8
 Protocol.MAX_INPUTS_PER_PACKET = 3
 
 local INPUT_SIZE = 16
-local STATE_SIZE = 65
+local STATE_SIZE = 66
 local SHOT_SIZE = 26
 local SNAPSHOT_HEADER_SIZE = 5
 local SNAPSHOT_ENTRY_SIZE = 19
@@ -204,6 +204,7 @@ function Protocol.encodeState(epoch: number, ack: number, state: State, health: 
 	buffer.writef64(data, 47, state.recoilYaw)
 	buffer.writef64(data, 55, state.bloom)
 	buffer.writeu16(data, 63, math.clamp(math.ceil(health), 0, 0xFFFF))
+	buffer.writeu8(data, 65, state.drawTicks)
 	return data
 end
 
@@ -230,6 +231,7 @@ function Protocol.decodeState(data: unknown): StateMessage?
 			reserve = buffer.readu16(data, 33),
 			fireCooldown = buffer.readu8(data, 35),
 			reloadTicks = buffer.readu16(data, 36),
+			drawTicks = buffer.readu8(data, 65),
 			raiseTicks = buffer.readu8(data, 38),
 			triggerHeld = bit32.btest(flags, 32),
 			recoilPitch = buffer.readf64(data, 39),

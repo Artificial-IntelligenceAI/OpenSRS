@@ -41,6 +41,7 @@ function Simulation.newState(position: Vector3, yaw: number, weapon: Weapon): St
 		reserve = weapon.reserve,
 		fireCooldown = 0,
 		reloadTicks = 0,
+		drawTicks = weapon.drawTicks, -- a fresh spawn starts by drawing the gun
 		raiseTicks = 0,
 		triggerHeld = false,
 		recoilPitch = 0,

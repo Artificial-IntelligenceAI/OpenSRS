@@ -57,6 +57,7 @@ local function matches(a: State, b: State): boolean
 		and a.reserve == b.reserve
 		and a.fireCooldown == b.fireCooldown
 		and a.reloadTicks == b.reloadTicks
+		and a.drawTicks == b.drawTicks
 		and a.raiseTicks == b.raiseTicks
 		and a.triggerHeld == b.triggerHeld
 		and math.abs(a.recoilPitch - b.recoilPitch) < TOLERANCE

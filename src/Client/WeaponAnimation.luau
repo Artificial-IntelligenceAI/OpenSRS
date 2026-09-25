@@ -1,9 +1,9 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- How a weapon moves in the player's own view while reloading. Times are
--- fractions of the reload, from 0 to 1, so the same animation fits any reload
--- time set in Settings. Positions are in studs, angles in radians, and offsets
+-- How a weapon moves in the player's own view while drawing it after a spawn
+-- and while reloading. Times are fractions of the draw or the reload, from 0
+-- to 1, so the same animation fits any DrawTime or ReloadTime set in Settings. Positions are in studs, angles in radians, and offsets
 -- are in the gun's space (grip at the origin, muzzle toward -Z) unless a field
 -- says otherwise.
 --
@@ -35,6 +35,9 @@ export type Animation = {
 	leftHandTrack: { Key }, -- where the left hand goes
 	hits: { Hit },
 	arc: Vector3, -- hands bow out this way between keys (times the distance), not in straight lines
+	drawTrack: { Key }, -- drawing after a spawn: where the gun is, on top of the ready position; ends at no offset
+	drawLeftHandTrack: { Key }, -- where the left hand goes while drawing
+	drawHits: { Hit },
 	magazineReleased: number, -- the old magazine starts sliding out
 	magazineFree: number, -- it's out, and starts falling
 	magazineGone: number, -- it's out of view
@@ -115,6 +118,22 @@ local DEFAULT: Animation = {
 		{ t = 0.85, move = Vector3.new(0, 0, -1.4), turn = Vector3.new(1.6, 0, 0.4), look = Vector3.new(0.4, 0, 0) }, -- slide slams forward
 	},
 	arc = Vector3.new(-0.3, 0, 0.2),
+	-- Drawing: the gun swings up from below, muzzle first down and canted, and
+	-- levels out; the left hand comes up to meet it and wraps the grip.
+	drawTrack = {
+		key(0, CFrame.new(0.1, -0.9, 0.35) * CFrame.Angles(-1, 0.35, 0.5)),
+		key(0.55, CFrame.new(0, 0.02, 0) * CFrame.Angles(0.06, 0, -0.04)),
+		key(1, IDENTITY),
+	},
+	drawLeftHandTrack = {
+		key(0, at(-0.4, -1.6, 0.4)),
+		key(0.4, at(-0.4, -1.6, 0.4)),
+		key(0.8, LEFT_HAND),
+		key(1, LEFT_HAND),
+	},
+	drawHits = {
+		{ t = 0.8, move = Vector3.new(0, -0.3, 0), turn = Vector3.new(-0.4, 0, 0.2), look = Vector3.zero }, -- the left hand takes hold
+	},
 	magazineReleased = 0.15,
 	magazineFree = 0.22,
 	magazineGone = 0.35,

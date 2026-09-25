@@ -24,7 +24,8 @@ local Firearm = {}
 function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 	local buttons = input.buttons
 	state.fireCooldown = math.max(state.fireCooldown - 1, 0)
-	-- Raising the gun after a sprint takes a moment.
+	-- Drawing the gun after spawning, and raising it after a sprint, take a moment.
+	state.drawTicks = math.max(state.drawTicks - 1, 0)
 	state.raiseTicks = if state.sprinting then weapon.raiseTicks else math.max(state.raiseTicks - 1, 0)
 
 	if state.reloadTicks > 0 then
@@ -38,7 +39,13 @@ function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 
 	local pulling = bit32.btest(buttons, Buttons.Fire)
 	local wantsReload = bit32.btest(buttons, Buttons.Reload) or (pulling and state.ammo == 0)
-	if wantsReload and state.reloadTicks == 0 and state.ammo < weapon.magazine and state.reserve > 0 then
+	if
+		wantsReload
+		and state.reloadTicks == 0
+		and state.drawTicks == 0
+		and state.ammo < weapon.magazine
+		and state.reserve > 0
+	then
 		state.reloadTicks = weapon.reloadTicks
 	end
 
@@ -48,6 +55,7 @@ function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 		and state.ammo > 0
 		and state.fireCooldown == 0
 		and state.reloadTicks == 0
+		and state.drawTicks == 0
 		and state.raiseTicks == 0
 		and not state.sprinting
 	state.triggerHeld = pulling
