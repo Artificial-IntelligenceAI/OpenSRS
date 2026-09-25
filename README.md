@@ -20,3 +20,10 @@ Release builds (e.g. `.rbxm` files) bundle both. The scripts inside are under Ap
 CC BY 4.0 requires attribution. If you use OpenSRS models in your game, credit them somewhere players can see, such as the game description or an in-game credits screen:
 
 > Weapon models from OpenSRS (https://github.com/Artificial-IntelligenceAI/OpenSRS), licensed under CC BY 4.0.
+
+## Developing OpenSRS
+
+You only need this if you're working on OpenSRS itself.
+
+1. Install [Rokit](https://github.com/rojo-rbx/rokit), then run `rokit install` in this folder to get the pinned tools.
+2. Run `./scripts/check.sh` to check formatting, lint and strict types. CI runs the same script on every push.

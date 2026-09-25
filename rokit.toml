@@ -1,0 +1,10 @@
+# Tools used to develop OpenSRS, pinned to exact versions.
+# Run `rokit install` to get them. Players and game developers never need these.
+
+[tools]
+rojo = "rojo-rbx/rojo@7.7.0"
+wally = "upliftgames/wally@0.3.2"
+selene = "kampfkarren/selene@0.31.0"
+stylua = "johnnymorganz/stylua@2.5.2"
+luau-lsp = "johnnymorganz/luau-lsp@1.69.0"
+lune = "lune-org/lune@0.10.5"

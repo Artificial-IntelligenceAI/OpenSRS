@@ -1,0 +1,34 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      ROKIT_VERSION: 1.2.0
+      ROKIT_SHA256: 951a7f3ec3d2a5e021fd1867d32f69f010ee4c2927f644b759578afc59c65fc0
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Rokit comes straight from its official release and is checked against a pinned hash.
+      - name: Install Rokit
+        run: |
+          curl -fsSL -o rokit.zip "https://github.com/rojo-rbx/rokit/releases/download/v${ROKIT_VERSION}/rokit-${ROKIT_VERSION}-linux-x86_64.zip"
+          echo "${ROKIT_SHA256}  rokit.zip" | sha256sum --check
+          unzip -q rokit.zip -d "$RUNNER_TEMP/rokit-bin"
+          rm rokit.zip
+          "$RUNNER_TEMP/rokit-bin/rokit" self-install
+          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
+
+      - name: Install pinned tools
+        run: rokit install --no-trust-check
+
+      - name: Run checks
+        run: ./scripts/check.sh
