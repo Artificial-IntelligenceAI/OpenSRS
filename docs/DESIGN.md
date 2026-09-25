@@ -33,7 +33,7 @@ A cheater fully controls their own client. Anything the client says can be a lie
 | Remote spam ("kill all") | Every message is validated and rate-limited. |
 | Wallhacks / ESP | Clients only receive characters they can actually see (see [Visibility](#visibility-anti-wallhack)). |
 
-**Can't be fully blocked.** Aimbots and triggerbots only automate the player's own aim input. OpenSRS can make them harder and flag suspicious patterns, but no system can fully stop them.
+**Can't be fully blocked.** Aimbots and triggerbots only automate the player's own aim input. OpenSRS can make them harder and flag suspicious patterns (see [Cheat flags](#cheat-flags)), but no system can fully stop them.
 
 **The code itself.** OpenSRS never uses `require()` by asset ID, `loadstring`, or HTTP requests, the usual ways backdoors hide in Toolbox models.
 
@@ -99,6 +99,6 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 - The X16 pistol: ammo, reload, recoil, accuracy and delayed damage.
 - More weapons come after the core feels right in playtesting.
 
-## Proposed, not yet decided
+## Cheat flags
 
-- **Cheat flags.** OpenSRS reports suspicious behavior to the game through hooks, and each game decides what to do (log, kick or ban).
+OpenSRS never punishes players on its own. When it spots something it can't block outright, like inhuman aim snaps, it reports the player and the reason to the game through a hook. Each game decides whether to log, kick or ban.
