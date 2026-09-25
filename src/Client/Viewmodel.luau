@@ -34,7 +34,6 @@ local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around th
 local LEFT_HAND = Vector3.new(-0.07, 0.14, -0.04)
 local ARM_WIDTH = 0.36
 local ARM_LENGTH = 2
-local HAND_SIZE = 0.22
 
 local KICK_TIME = 0.07
 local KICK_BACK = 0.05
@@ -82,11 +81,9 @@ local function limb(name: string, size: Vector3, color: Color3): Part
 	return part
 end
 
--- Arms match the avatar's arm color.
+-- Plain R6 arms, ending at the hands, in the avatar's arm color.
 local rightArm = limb("RightArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), Avatar.armColor)
 local leftArm = limb("LeftArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), Avatar.armColor)
-local rightHand = limb("RightHand", Vector3.one * HAND_SIZE, Avatar.armColor)
-local leftHand = limb("LeftHand", Vector3.one * HAND_SIZE, Avatar.armColor)
 
 local function localPoint(name: string, fallback: Vector3): CFrame
 	local attachment = GunModel.point(model, name)
@@ -102,8 +99,6 @@ local AIM = CFrame.new(0, -AIM_DROP, -AIM_DISTANCE) * CFrame.Angles(AIM_TILT, 0,
 local parts: { BasePart } = table.clone(gunParts)
 table.insert(parts, rightArm)
 table.insert(parts, leftArm)
-table.insert(parts, rightHand)
-table.insert(parts, leftHand)
 local cframes: { CFrame } = table.create(#parts)
 
 local current = HIP
@@ -207,8 +202,6 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local count = #gunParts
 	cframes[count + 1] = arm((camera * CFrame.new(RIGHT_SHOULDER)).Position, rightHandPoint)
 	cframes[count + 2] = arm((camera * CFrame.new(LEFT_SHOULDER)).Position, leftHandPoint)
-	cframes[count + 3] = origin.Rotation + rightHandPoint
-	cframes[count + 4] = origin.Rotation + leftHandPoint
 	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 
 	return (origin * MUZZLE).Position
