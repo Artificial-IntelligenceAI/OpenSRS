@@ -3,19 +3,22 @@
 
 -- A plain blocky R6 figure, used until real avatar models exist.
 
-local Body = require(script.Parent.Parent.Shared.Body)
+local Shared = script.Parent.Parent.Shared
+local Body = require(Shared.Body)
+local Weapons = require(Shared.Weapons)
+local GunModel = require(script.Parent.GunModel)
 
 export type Avatar = {
 	model: Model,
 	parts: { [Body.PartName]: BasePart },
-	gun: BasePart,
+	gun: Model,
 }
 
 local SKIN = Color3.fromRGB(204, 170, 140)
 local SHIRT = Color3.fromRGB(70, 80, 95)
 local PANTS = Color3.fromRGB(45, 50, 55)
-local GUN = Color3.fromRGB(30, 30, 32)
-local GUN_SIZE = Vector3.new(0.22, 0.3, 1.2)
+-- Where the gun's grip sits relative to the hand.
+local GRIP_IN_HAND = CFrame.new(0, -0.25, 0.05)
 
 local COLORS: { [Body.PartName]: Color3 } = {
 	Head = SKIN,
@@ -51,7 +54,9 @@ function PlaceholderAvatar.new(name: string): Avatar
 	for _, partName in Body.PART_NAMES do
 		parts[partName] = block(partName, Body.SIZES[partName], COLORS[partName], model)
 	end
-	local gun = block("Gun", GUN_SIZE, GUN, model)
+	local gun = GunModel.new(Weapons.default.name, "ThirdPerson")
+	gun.Name = "Gun"
+	gun.Parent = model
 	return { model = model, parts = parts, gun = gun }
 end
 
@@ -59,7 +64,7 @@ function PlaceholderAvatar.apply(avatar: Avatar, pose: Body.Pose)
 	for name, cframe in pose do
 		avatar.parts[name].CFrame = cframe
 	end
-	avatar.gun.CFrame = Body.gun(pose)
+	avatar.gun:PivotTo(Body.hand(pose) * GRIP_IN_HAND)
 end
 
 return table.freeze(PlaceholderAvatar)

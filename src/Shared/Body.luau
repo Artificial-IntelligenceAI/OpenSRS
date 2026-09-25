@@ -92,10 +92,10 @@ function Body.pose(position: Vector3, yaw: number, pitch: number, stance: number
 	return world
 end
 
--- Where a held gun sits: in the right hand, pointing where the arm points.
--- Not a hitbox.
-function Body.gun(pose: Pose): CFrame
-	return pose["Right Arm"] * CFrame.new(0, -1.15, 0) * CFrame.Angles(-HALF_PI, 0, 0) * CFrame.new(0, 0.15, -0.35)
+-- The right hand, facing where the arm points (-Z) with +Y up. Held guns are
+-- placed relative to this. Not a hitbox.
+function Body.hand(pose: Pose): CFrame
+	return pose["Right Arm"] * CFrame.new(0, -1.1, 0) * CFrame.Angles(-HALF_PI, 0, 0)
 end
 
 return table.freeze(Body)

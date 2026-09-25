@@ -18,6 +18,10 @@ assert(
 local replicated = Instance.new("Folder")
 replicated.Name = "OpenSRS"
 root.Shared:Clone().Parent = replicated
+local assets = root:FindFirstChild("Assets") -- only in the "with models" download
+if assets then
+	assets:Clone().Parent = replicated
+end
 require(root.Server.Main).start(replicated)
 root.Client:Clone().Parent = replicated
 replicated.Parent = ReplicatedStorage
