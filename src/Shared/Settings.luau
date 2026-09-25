@@ -142,6 +142,8 @@ function Settings.apply(resolved: Resolved)
 	Config.snapshotInterval = math.max(math.round(tickRate / number(gameValues, "SnapshotRate")), 1)
 	Config.respawnTime = number(gameValues, "RespawnTime")
 	Config.maxHealth = number(gameValues, "MaxHealth")
+	Config.bulletHoleTime = number(gameValues, "BulletHoleTime")
+	Config.maxBulletHoles = math.round(number(gameValues, "MaxBulletHoles"))
 
 	local M = Config.movement
 	M.slowWalkSpeed = number(movement, "SlowWalkSpeed")

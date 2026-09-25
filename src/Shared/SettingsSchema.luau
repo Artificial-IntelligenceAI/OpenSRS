@@ -46,6 +46,20 @@ local game: Section = {
 			description = "Seconds between dying and respawning.",
 		},
 		{ name = "MaxHealth", default = 100, min = 1, max = 10000, description = "Health each player spawns with." },
+		{
+			name = "BulletHoleTime",
+			default = 30,
+			min = 0,
+			max = 600,
+			description = "Seconds bullet holes stay on walls and players. 0 turns them off.",
+		},
+		{
+			name = "MaxBulletHoles",
+			default = 60,
+			min = 0,
+			max = 1000,
+			description = "Most bullet holes shown at once; the oldest disappear first.",
+		},
 	},
 }
 

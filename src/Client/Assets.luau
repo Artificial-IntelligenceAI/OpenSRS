@@ -26,6 +26,13 @@ function Assets.weaponPart(name: string, part: string): Instance?
 	return weapon and weapon:FindFirstChild(part)
 end
 
+-- An effect template a game shipped, from Assets/Effects/<category>/<name>.
+function Assets.effect(category: string, name: string): Instance?
+	local effects = root and root:FindFirstChild("Effects")
+	local group = effects and effects:FindFirstChild(category)
+	return group and group:FindFirstChild(name)
+end
+
 -- A fresh copy of an avatar model from Assets/Avatars, if the game shipped one.
 function Assets.avatar(name: string): Model?
 	local avatars = root and root:FindFirstChild("Avatars")

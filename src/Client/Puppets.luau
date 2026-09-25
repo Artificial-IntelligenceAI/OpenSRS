@@ -137,7 +137,14 @@ function Puppets.render()
 		avatar.model.Parent = folder
 	end
 	for slot, avatar in avatars do
-		if not shown[slot] then
+		if not shown[slot] and avatar.model.Parent then
+			-- Holes from Impacts don't outlast a player being shown: they'd
+			-- still be there after a respawn.
+			for _, descendant in avatar.model:GetDescendants() do
+				if descendant:GetAttribute("OpenSRSHole") then
+					descendant:Destroy()
+				end
+			end
 			avatar.model.Parent = nil
 		end
 	end

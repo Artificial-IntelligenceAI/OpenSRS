@@ -4,6 +4,8 @@
 		"TickRate": 60,
 		"SnapshotRate": 20,
 		"RespawnTime": 3,
-		"MaxHealth": 100
+		"MaxHealth": 100,
+		"BulletHoleTime": 30,
+		"MaxBulletHoles": 60
 	}
 }

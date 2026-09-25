@@ -25,6 +25,8 @@ local Config = {
 	snapshotInterval = 3, -- ticks between updates about other players
 	respawnTime = 3,
 	maxHealth = 100,
+	bulletHoleTime = 30, -- seconds; cosmetic, on each client
+	maxBulletHoles = 60,
 
 	movement = {
 		width = 2,

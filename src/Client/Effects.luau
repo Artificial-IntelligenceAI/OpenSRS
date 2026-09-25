@@ -1,12 +1,10 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Visual effects for shots: tracers, muzzle flashes and impact marks. Purely
--- cosmetic and client-side.
+-- Visual effects for shots: tracers and muzzle flashes (impacts are in
+-- Impacts). Purely cosmetic and client-side.
 
 local Debris = game:GetService("Debris")
-
-local Protocol = require(script.Parent.Parent.Shared.Protocol)
 
 type Tracer = {
 	part: Part,
@@ -19,7 +17,6 @@ type Tracer = {
 
 local TRACER_LENGTH = 4
 local TRACER_COLOR = Color3.fromRGB(255, 220, 150)
-local IMPACT_LIFETIME = 8
 local FLASH_TIME = 0.05
 
 local Effects = {}
@@ -74,18 +71,6 @@ function Effects.muzzleFlash(position: Vector3)
 	light.Parent = flash
 	flash.Parent = folder
 	Debris:AddItem(flash, FLASH_TIME)
-end
-
-function Effects.impact(position: Vector3, kind: number)
-	if kind == Protocol.HitKind.Nothing then
-		return
-	end
-	local color = if kind == Protocol.HitKind.World then Color3.fromRGB(40, 40, 40) else Color3.fromRGB(150, 20, 20)
-	local mark = effectPart(Vector3.new(0.18, 0.18, 0.18), color, Enum.Material.SmoothPlastic)
-	mark.Shape = Enum.PartType.Ball
-	mark.Position = position
-	mark.Parent = folder
-	Debris:AddItem(mark, if kind == Protocol.HitKind.World then IMPACT_LIFETIME else 0.3)
 end
 
 -- Moves tracers; call once a frame.

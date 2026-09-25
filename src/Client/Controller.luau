@@ -22,6 +22,7 @@ local Weapons = require(Shared.Weapons)
 local Casings = require(script.Parent.Casings)
 local Effects = require(script.Parent.Effects)
 local Hud = require(script.Parent.Hud)
+local Impacts = require(script.Parent.Impacts)
 local InputMap = require(script.Parent.InputMap)
 local Puppets = require(script.Parent.Puppets)
 local Sounds = require(script.Parent.Sounds)
@@ -68,6 +69,17 @@ local function matches(a: State, b: State): boolean
 		and math.abs(a.recoilPitch - b.recoilPitch) < TOLERANCE
 		and math.abs(a.recoilYaw - b.recoilYaw) < TOLERANCE
 		and math.abs(a.bloom - b.bloom) < TOLERANCE
+end
+
+-- Shows where a shot landed: a hole and a burst of particles, and its sound.
+local function landed(shot: Protocol.ShotEffect)
+	if shot.kind == Protocol.HitKind.World then
+		Impacts.world(shot.origin, shot.hit)
+		Sounds.at(weapon.name, Sounds.Cues.ImpactWorld, shot.hit)
+	elseif shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head then
+		Impacts.body(shot.origin, shot.hit)
+		Sounds.at(weapon.name, Sounds.Cues.ImpactBody, shot.hit)
+	end
 end
 
 function Controller.start()
@@ -160,12 +172,8 @@ function Controller.start()
 		end
 		local delay = if weapon.instantDamage then 0 else (shot.hit - shot.origin).Magnitude / weapon.bulletSpeed
 		task.delay(delay, function()
-			Effects.impact(shot.hit, shot.kind)
-			local struck = shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head
-			if shot.kind ~= Protocol.HitKind.Nothing then
-				Sounds.at(weapon.name, if struck then Sounds.Cues.ImpactBody else Sounds.Cues.ImpactWorld, shot.hit)
-			end
-			if struck then
+			landed(shot)
+			if shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head then
 				Hud.hit(shot.kind)
 				local played = shot.kind == Protocol.HitKind.Head and Sounds.play(weapon.name, Sounds.Cues.Headshot)
 				if not played then
@@ -201,13 +209,7 @@ function Controller.start()
 			task.delay(arrive, Sounds.at, weapon.name, Sounds.Cues.NearMiss, closest)
 		end
 		local delay = path.Magnitude / weapon.bulletSpeed
-		task.delay(delay, function()
-			Effects.impact(shot.hit, shot.kind)
-			if shot.kind ~= Protocol.HitKind.Nothing then
-				local struck = shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head
-				Sounds.at(weapon.name, if struck then Sounds.Cues.ImpactBody else Sounds.Cues.ImpactWorld, shot.hit)
-			end
-		end)
+		task.delay(delay, landed, shot)
 	end)
 
 	snapshotRemote.OnClientEvent:Connect(Puppets.receive)

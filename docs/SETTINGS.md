@@ -27,6 +27,8 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `SnapshotRate` | 20 | 5 to 60 | How many times a second each player is told about the others. |
 | `RespawnTime` | 3 | 0 to 60 | Seconds between dying and respawning. |
 | `MaxHealth` | 100 | 1 to 10000 | Health each player spawns with. |
+| `BulletHoleTime` | 30 | 0 to 600 | Seconds bullet holes stay on walls and players. 0 turns them off. |
+| `MaxBulletHoles` | 60 | 0 to 1000 | Most bullet holes shown at once; the oldest disappear first. |
 
 ## Movement
 
