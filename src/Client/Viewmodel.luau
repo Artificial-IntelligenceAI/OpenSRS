@@ -56,6 +56,7 @@ local BARREL_TRAVEL = 0.06
 type Key = WeaponAnimation.Key
 local IDENTITY = CFrame.identity
 local MAX_FRAME = 0.1 -- longer frames (hitches) are treated as this long
+local MAGAZINE_OUT_OF_SIGHT = 6 -- studs a dropped magazine falls before it's hidden
 
 -- Eased position along a keyframe track at `t`, bowed out along `arc` in the
 -- middle of each move.
@@ -171,6 +172,7 @@ local aimBlend = 0
 local reloadBlend = 0
 local kick = 0
 local reloadLength = 0
+local droppedFrom: CFrame? = nil -- where the gun was, relative to the view, when the old magazine was let go
 local sway = Vector2.zero
 local stepPhase = 0 -- through the walk cycle: each step is half a turn
 local bobStrength = 0
@@ -220,20 +222,30 @@ local function reloadProgress(state: State): number
 end
 
 -- Where the magazine is relative to where it seats, and whether it's shown.
--- `hand` is where the left hand is, in the gun's space.
-local function magazineAt(progress: number, hand: Vector3): (CFrame, boolean)
+-- `hand` is where the left hand is, in the gun's space; `origin` is where the
+-- gun is this frame.
+local function magazineAt(progress: number, hand: Vector3, camera: CFrame, origin: CFrame): (CFrame, boolean)
 	if progress <= animation.magazineReleased then
+		droppedFrom = nil
 		return IDENTITY, true
-	elseif progress < animation.magazineFree then
-		local u = (progress - animation.magazineReleased) / (animation.magazineFree - animation.magazineReleased)
-		return CFrame.new(0, -0.35 * (1 - (1 - u) ^ 2), 0), true
-	elseif progress < animation.magazineGone then
-		-- Falling: slow at first, then faster, turning over as it goes.
-		local u = (progress - animation.magazineFree) / (animation.magazineGone - animation.magazineFree)
-		return CFrame.new(0.05 * u, -0.35 - 0.6 * u - 1.65 * u * u, 0.1 * u) * CFrame.Angles(0.8 * u * u, 0, 0.3 * u),
-			true
 	elseif progress < animation.magazineShown then
-		return IDENTITY, false
+		-- Let go, the old magazine is on its own: it slides out along the grip,
+		-- then falls straight down (the world's down, not the gun's) under
+		-- gravity, turning over as it goes. The gun moves on without it.
+		local from = droppedFrom or camera:ToObjectSpace(origin)
+		droppedFrom = from
+		local seconds = (progress - animation.magazineReleased) * reloadLength / Config.tickRate
+		local fallen = animation.magazineDropSpeed * seconds + animation.magazineGravity * seconds * seconds / 2
+		local along = math.min(fallen, animation.magazineClear)
+		local free = math.max(fallen - animation.magazineClear, 0)
+		local grip = from:VectorToWorldSpace(Vector3.new(0, -1, 0))
+		local down = camera:VectorToObjectSpace(Vector3.new(0, -1, 0))
+		local tumble = animation.magazineTumble * free
+		local placed = camera
+			* CFrame.new(grip * along + down * free)
+			* from
+			* CFrame.Angles(tumble.X, tumble.Y, tumble.Z)
+		return origin:ToObjectSpace(placed), free < MAGAZINE_OUT_OF_SIGHT
 	elseif progress < animation.magazineSeated then
 		local remaining = (animation.magazineSeated - progress) / (animation.magazineSeated - animation.magazineShown)
 		return CFrame.new(hand - animation.handWhenSeated) * CFrame.Angles(
@@ -380,7 +392,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		then CFrame.new(sampleArc(animation.leftHandTrack, progress, animation.arc))
 		elseif drawing then CFrame.new(sampleArc(animation.drawLeftHandTrack, drawProgress, animation.arc))
 		else LEFT_HAND_AT
-	local magazine, magazineShown = magazineAt(progress, leftHand.Position)
+	local magazine, magazineShown = magazineAt(progress, leftHand.Position, camera, origin)
 	for index, part in gunParts do
 		local offset = rest[index]
 		if part.Name == "Slide" then

@@ -47,9 +47,11 @@ export type Animation = {
 	walkSway: number, -- studs the gun sways side to side, one way per step
 	walkBounce: number, -- studs the gun dips on each step
 	walkRoll: number, -- radians it rolls with the sway
-	magazineReleased: number, -- the old magazine starts sliding out
-	magazineFree: number, -- it's out, and starts falling
-	magazineGone: number, -- it's out of view
+	magazineReleased: number, -- the old magazine is let go: it slides out of the grip and falls, free of the gun
+	magazineDropSpeed: number, -- studs a second it leaves the grip at
+	magazineGravity: number, -- studs a second squared it falls with (a gun is about a stud long)
+	magazineClear: number, -- studs it slides along the grip before it's out and falls straight down
+	magazineTumble: Vector3, -- radians it turns over per stud it falls
 	magazineShown: number, -- the new one appears in the left hand
 	magazineSeated: number, -- it's home
 	magazineTilt: number, -- the new magazine goes in nose first, by this much, straightening as it goes
@@ -153,8 +155,10 @@ local DEFAULT: Animation = {
 		{ t = 0.8, move = Vector3.new(0, -0.3, 0), turn = Vector3.new(-0.4, 0, 0.2), look = Vector3.zero }, -- the left hand takes hold
 	},
 	magazineReleased = 0.15,
-	magazineFree = 0.22,
-	magazineGone = 0.35,
+	magazineDropSpeed = 2,
+	magazineGravity = 60,
+	magazineClear = 0.3,
+	magazineTumble = Vector3.new(0.9, 0, 0.4),
 	magazineShown = 0.4,
 	magazineSeated = 0.59,
 	magazineTilt = 0.3,
