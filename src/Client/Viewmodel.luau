@@ -20,7 +20,7 @@ local GunModel = require(script.Parent.GunModel)
 type State = Types.State
 
 -- Where the gun's grip sits relative to the camera in each pose.
-local AIM_REACH = 1.8 -- how far in front of the eye the rear sight sits when aiming: arm's length
+local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when aiming: arms outstretched
 local HIP = CFrame.new(0.4, -0.7, -1.3) * CFrame.Angles(0.03, 0.07, 0.1)
 local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
 local RELOAD = CFrame.new(0.12, -0.62, -0.8) * CFrame.Angles(0.55, 0.25, 0.6)
