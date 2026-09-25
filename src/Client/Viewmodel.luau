@@ -105,10 +105,12 @@ local FILL_BRIGHTNESS = 4
 local FILL_RANGE = 1.35 -- reaches the slide, not the arms below it
 local FILL_COLOR = Color3.fromRGB(255, 244, 230)
 -- Lights in Roblox light everything in range, so near a wall, floor or ceiling
--- the fill would throw a bright spot on it. It fades out as a surface comes
--- within its range, and is off by the time one is three-quarters of the way in.
-local FILL_CLEAR = FILL_RANGE * 1.05
-local FILL_OFF = FILL_RANGE * 0.75
+-- the fill would throw a bright spot on it. It's fully off before any surface
+-- can be in its range (with room for the probes below misjudging a surface at
+-- an angle by up to about a fifth), and fades in only once everything is well
+-- clear of it.
+local FILL_OFF = FILL_RANGE * 1.25
+local FILL_CLEAR = FILL_RANGE * 1.7
 local FILL_FADE = 10 -- how quickly it fades back in; it goes out at once
 -- Directions it looks for surfaces in: along each axis and each diagonal, so a
 -- wall at an angle isn't judged farther away than it is.
