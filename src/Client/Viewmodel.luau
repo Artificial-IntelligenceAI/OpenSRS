@@ -27,10 +27,14 @@ local RELOAD = CFrame.new(0.12, -0.62, -0.8) * CFrame.Angles(0.55, 0.25, 0.6)
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
--- Two-handed pistol grip: the right arm runs straight out to the grip, and
--- the left arm comes across from the left to wrap around the right hand.
-local RIGHT_SHOULDER = Vector3.new(0.2, -1.45, 0.5)
-local LEFT_SHOULDER = Vector3.new(-1.2, -1.4, 0.15)
+-- Two-handed pistol grip. Aiming: the right arm runs straight out to the
+-- grip and the left arm comes across from the left to wrap around the right
+-- hand. From the hip the gun sits lower right, so the arms come in at an
+-- angle from the lower right and lower middle instead.
+local AIM_RIGHT_SHOULDER = Vector3.new(0.2, -1.45, 0.5)
+local AIM_LEFT_SHOULDER = Vector3.new(-1.2, -1.4, 0.15)
+local HIP_RIGHT_SHOULDER = Vector3.new(1.1, -1.6, 0.1)
+local HIP_LEFT_SHOULDER = Vector3.new(-0.5, -1.7, 0.1)
 local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around the grip
 local LEFT_HAND = Vector3.new(-0.1, 0.1, 0.02) -- wrapped around the right hand, from the left
 local ARM_WIDTH = 0.38
@@ -216,8 +220,10 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local leftHandPoint = (origin * CFrame.new(LEFT_HAND + Vector3.new(0, -MAGAZINE_DROP * out, 0))).Position
 	local rightHandPoint = (origin * CFrame.new(RIGHT_HAND)).Position
 	local count = #gunParts
-	cframes[count + 1] = arm((camera * CFrame.new(RIGHT_SHOULDER)).Position, rightHandPoint)
-	cframes[count + 2] = arm((camera * CFrame.new(LEFT_SHOULDER)).Position, leftHandPoint)
+	local rightShoulder = HIP_RIGHT_SHOULDER:Lerp(AIM_RIGHT_SHOULDER, aimBlend)
+	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend)
+	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint)
+	cframes[count + 2] = arm((camera * CFrame.new(leftShoulder)).Position, leftHandPoint)
 	cframes[count + 3] = origin * FILL_OFFSET
 	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 
