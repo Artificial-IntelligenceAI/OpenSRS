@@ -49,7 +49,10 @@ local ARM_WIDTH = 0.38
 local ARM_LENGTH = 1.3 -- forearms only: long enough to run off screen, never near the eye
 
 local SLIDE_TRAVEL = 0.19
-local BARREL_TRAVEL = 0.06
+-- The X16 model's barrel is only its visible pieces (the top of the chamber and
+-- the muzzle ring); with no tube between them, it has to move with the slide or
+-- the ring floats in front of the gun when the slide is back.
+local BARREL_TRAVEL = SLIDE_TRAVEL
 
 -- The reload's choreography, as a fraction of the reload (see WeaponAnimation;
 -- a game can change it per weapon).
@@ -106,8 +109,20 @@ local FILL_COLOR = Color3.fromRGB(255, 244, 230)
 -- within its range, and is off by the time one is three-quarters of the way in.
 local FILL_CLEAR = FILL_RANGE * 1.05
 local FILL_OFF = FILL_RANGE * 0.75
-local FILL_FADE = 15 -- how quickly it fades in and out
-local FILL_PROBES = { Vector3.xAxis, -Vector3.xAxis, Vector3.yAxis, -Vector3.yAxis, Vector3.zAxis, -Vector3.zAxis }
+local FILL_FADE = 10 -- how quickly it fades back in; it goes out at once
+-- Directions it looks for surfaces in: along each axis and each diagonal, so a
+-- wall at an angle isn't judged farther away than it is.
+local FILL_PROBES: { Vector3 } = {}
+for x = -1, 1 do
+	for y = -1, 1 do
+		for z = -1, 1 do
+			local direction = Vector3.new(x, y, z)
+			if direction.Magnitude > 0 and (math.abs(x) + math.abs(y) + math.abs(z) ~= 2) then
+				table.insert(FILL_PROBES, direction.Unit)
+			end
+		end
+	end
+end
 
 local SWAY_AMOUNT = 0.0025 -- radians per pixel of mouse movement
 local SWAY_LIMIT = 0.08
@@ -484,8 +499,16 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 			nearest = math.min(nearest, hit.Distance)
 		end
 	end
+	-- A light that has gone into a wall can't see that wall from inside it:
+	-- anything between the eye and the light turns it off too.
+	local eye = camera.Position
+	if workspace:Raycast(eye, fillAt.Position - eye, probe) then
+		nearest = 0
+	end
 	local wanted = math.clamp((nearest - FILL_OFF) / (FILL_CLEAR - FILL_OFF), 0, 1)
-	fillLevel += (wanted - fillLevel) * (1 - math.exp(-FILL_FADE * frameTime))
+	fillLevel = if wanted < fillLevel
+		then wanted -- out at once, so walking up to a wall never flashes a spot on it
+		else fillLevel + (wanted - fillLevel) * (1 - math.exp(-FILL_FADE * frameTime))
 	light.Brightness = FILL_BRIGHTNESS * fillLevel
 	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 
