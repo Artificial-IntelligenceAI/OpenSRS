@@ -25,6 +25,7 @@ local Stance = Types.Stance
 local M = Config.movement
 local DT = 1 / Config.tickRate
 local SLIDE_ITERATIONS = 3
+local SLIDE_INSET = 0.05 -- how much narrower than the hull its sideways casts are, per side
 
 local Movement = {}
 
@@ -57,9 +58,16 @@ local function slide(
 		if length < 1e-4 then
 			break
 		end
+		local direction = displacement / length
 
+		-- Shape casts ignore anything they start touching, so a hull that has
+		-- crept up against a wall (moving nearly along it, or pushed into a
+		-- corner) would pass straight through. Casting a hull SLIDE_INSET
+		-- narrower keeps every cast clear of whatever the real hull touches.
 		local cframe, size = hull(position, stance)
-		local result = workspace:Blockcast(cframe, size, displacement, world.raycast)
+		size -= Vector3.new(2 * SLIDE_INSET, 0, 2 * SLIDE_INSET)
+		local reach = length + M.skin + SLIDE_INSET
+		local result = workspace:Blockcast(cframe, size, direction * reach, world.raycast)
 		if not result then
 			position += displacement
 			break
@@ -71,10 +79,18 @@ local function slide(
 		end
 		normal = normal.Unit
 
-		local direction = displacement / length
-		local travel = math.max(result.Distance, 0)
-		-- Stop just short of the surface so the next cast doesn't start inside it.
-		position += direction * travel + normal * M.skin
+		-- How far the real hull was from the surface, and how much of each
+		-- stud moved along `direction` closes that gap.
+		local facing = -direction:Dot(normal)
+		local gap = result.Distance * math.max(facing, 0) - SLIDE_INSET
+		-- Move until the real hull is a skin's width away, but never backward...
+		local travel = if facing > 1e-4 then math.clamp((gap - M.skin) / facing, 0, length) else length
+		position += direction * travel
+		-- ...and if it was already closer than that, push it back out.
+		local left = gap - travel * math.max(facing, 0)
+		if left < M.skin then
+			position += normal * (M.skin - left)
+		end
 
 		local remaining = direction * (length - travel)
 		displacement = remaining - normal * remaining:Dot(normal)
