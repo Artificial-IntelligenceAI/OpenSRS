@@ -26,6 +26,7 @@ local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when ai
 local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
 local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
 local RELOAD = CFrame.new(0.05, -0.32, -1.15) * CFrame.Angles(0.75, 0.25, -0.35) -- muzzle up, grip toward you: the magazine well shows
+local RACK = RELOAD * CFrame.new(0, 0, -0.1) -- pushed out a little for racking the slide
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
@@ -37,12 +38,13 @@ local AIM_RIGHT_SHOULDER = Vector3.new(0.2, -1.45, 0.5)
 local AIM_LEFT_SHOULDER = Vector3.new(-1.2, -1.4, 0.15)
 local HIP_RIGHT_SHOULDER = Vector3.new(1.1, -1.6, 0.1)
 local HIP_LEFT_SHOULDER = Vector3.new(-0.5, -1.7, 0.1)
--- While reloading the left arm comes from further left, so it never crosses in front of the eye.
-local RELOAD_LEFT_SHOULDER = Vector3.new(-1.3, -1.6, 0.1)
+-- While reloading the left forearm comes in from the lower left, in front of the
+-- eye rather than from behind it, so it never covers the view.
+local RELOAD_LEFT_SHOULDER = Vector3.new(-2, -1.9, -0.6)
 local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around the grip
 local LEFT_HAND_AT = CFrame.new(-0.1, 0.1, 0.02) -- in the gun's space: wrapped around the right hand, from the left
 local ARM_WIDTH = 0.38
-local ARM_LENGTH = 2.6 -- long enough to reach off screen from the hand
+local ARM_LENGTH = 1.3 -- forearms only: long enough to run off screen, never near the eye
 
 local KICK_TIME = 0.07
 local KICK_BACK = 0.05
@@ -52,8 +54,9 @@ local SLIDE_TRAVEL = 0.19
 local BARREL_TRAVEL = 0.06
 
 -- Reload choreography: keyframes over the reload's progress, from 0 to 1.
--- Offsets are in the gun's space. The empty reload runs the same steps, then
--- releases the locked slide.
+-- Offsets are in the gun's space. Every reload ends with a rack: the left hand
+-- pulls the slide back and lets it snap forward (on an empty gun that also
+-- releases the locked slide).
 type Key = { t: number, value: CFrame }
 
 local function key(t: number, value: CFrame): Key
@@ -67,35 +70,44 @@ end
 local IDENTITY = CFrame.identity
 
 -- Gun: a flick when the magazine release is pressed, a bump up as the new
--- magazine seats, and a jolt when a locked slide slams forward.
+-- magazine seats, and a jolt when the racked slide slams forward.
 local GUN_TRACK = {
 	key(0, IDENTITY),
 	key(0.1, CFrame.Angles(0.06, 0, 0.05)),
 	key(0.2, IDENTITY),
-	key(0.66, IDENTITY),
-	key(0.7, CFrame.new(0, 0.05, 0) * CFrame.Angles(-0.05, 0, 0)),
-	key(0.76, IDENTITY),
-	key(0.77, IDENTITY),
-	key(0.8, CFrame.new(0, 0, 0.04) * CFrame.Angles(0.04, 0, 0)),
-	key(0.88, IDENTITY),
+	key(0.46, IDENTITY),
+	key(0.49, CFrame.new(0, 0.05, 0) * CFrame.Angles(-0.05, 0, 0)),
+	key(0.53, IDENTITY),
+	key(0.67, IDENTITY),
+	key(0.7, CFrame.new(0, 0, 0.05) * CFrame.Angles(0.06, 0, 0)),
+	key(0.78, IDENTITY),
 }
 -- The old magazine slides out, then drops out of view.
-local OLD_MAGAZINE = { key(0.12, IDENTITY), key(0.2, at(0, -0.35, 0)), key(0.34, at(0, -2.6, 0)) }
-local OLD_MAGAZINE_GONE = 0.34
--- The new magazine comes up from below in the left hand and seats.
-local NEW_MAGAZINE = { key(0.45, at(0, -1.6, 0.25)), key(0.62, at(0, -0.3, 0.02)), key(0.7, IDENTITY) }
-local NEW_MAGAZINE_SHOWN = 0.45
+local OLD_MAGAZINE = { key(0.12, IDENTITY), key(0.18, at(0, -0.35, 0)), key(0.28, at(0, -2.6, 0)) }
+local OLD_MAGAZINE_GONE = 0.28
+-- The new magazine comes up from below in the left hand and goes straight in.
+local NEW_MAGAZINE = { key(0.32, at(0, -1.4, 0.2)), key(0.41, at(0, -0.3, 0.02)), key(0.47, IDENTITY) }
+local NEW_MAGAZINE_SHOWN = 0.32
 local LEFT_HAND_TRACK = {
 	key(0, LEFT_HAND_AT),
-	key(0.14, LEFT_HAND_AT),
-	key(0.3, at(-0.35, -1, 0.35)),
-	key(0.42, at(-0.3, -2.2, 0.35)),
-	key(0.47, at(-0.05, -1.75, 0.25)),
-	key(0.62, at(-0.05, -0.45, 0.02)),
-	key(0.7, at(-0.05, -0.15, 0.02)),
-	key(0.82, LEFT_HAND_AT),
+	key(0.12, LEFT_HAND_AT),
+	key(0.24, at(-0.3, -1.2, 0.35)),
+	key(0.3, at(-0.3, -2, 0.35)),
+	key(0.33, at(-0.05, -1.55, 0.22)),
+	key(0.41, at(-0.05, -0.45, 0.02)),
+	key(0.47, at(-0.05, -0.15, 0.02)),
+	key(0.56, at(-0.2, 0.45, 0.1)), -- pinch the back of the slide from its left side
+	key(0.6, at(-0.2, 0.45, 0.1)),
+	key(0.67, at(-0.2, 0.45, 0.31)), -- rack it back
+	key(0.7, at(-0.28, 0.4, 0.26)), -- let go
+	key(0.8, LEFT_HAND_AT),
 }
-local SLIDE_RELEASE = 0.78 -- when the slide release is pressed on an empty reload
+-- The gun is pushed out a little for the rack; the left hand pinches the slide
+-- from its left side, so the forearm stays below it.
+local RACK_START = 0.5
+local RACK_END = 0.72
+local RACK_PULL = 0.6
+local RACK_RELEASE = 0.68
 
 -- Eased value of a keyframe track at `t`.
 local function sample(keys: { Key }, t: number): CFrame
@@ -235,7 +247,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local progress = reloadProgress(state)
 	local aiming = state.aiming and progress == 0 and not state.sprinting and state.raiseTicks == 0
 	local target = if progress > 0
-		then RELOAD
+		then (if progress >= RACK_START and progress < RACK_END then RACK else RELOAD)
 		elseif state.sprinting or state.raiseTicks > 0 then SPRINT
 		elseif aiming then AIM
 		else HIP
@@ -267,9 +279,19 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local gunMotion = if reloading then sample(GUN_TRACK, progress) else IDENTITY
 	local origin = camera * bob * swayFrame * current * recoil * gunMotion
 
-	-- The slide locks back on an empty magazine until the reload racks it.
-	local locked = if reloading then empty and progress < SLIDE_RELEASE else state.ammo == 0
-	local slideBack = if locked then 1 else amount
+	-- The slide locks back on an empty magazine; the reload's rack pulls it
+	-- back and lets it go.
+	local slideBack
+	if not reloading then
+		slideBack = if state.ammo == 0 then 1 else amount
+	elseif progress >= RACK_RELEASE then
+		slideBack = 0
+	elseif progress >= RACK_PULL then
+		slideBack =
+			math.max(if empty then 1 else 0, math.min((progress - RACK_PULL) / (RACK_RELEASE - RACK_PULL - 0.01), 1))
+	else
+		slideBack = if empty then 1 else 0
+	end
 	local slide = CFrame.new(0, 0, SLIDE_TRAVEL * slideBack)
 	local barrel = CFrame.new(0, 0, BARREL_TRAVEL * slideBack)
 	local magazine, magazineShown = magazineAt(progress)
