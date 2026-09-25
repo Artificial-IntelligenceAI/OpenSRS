@@ -15,6 +15,16 @@ assert(
 	"ReplicatedStorage already has something named OpenSRS. Remove it and try again."
 )
 
+-- Settings first: everything else reads them when it loads.
+local Settings = require(root.Shared.Settings)
+local settingsFolder = root:FindFirstChild("Settings")
+local overridesModule = settingsFolder and settingsFolder:FindFirstChild("Overrides")
+local overrides = if overridesModule and overridesModule:IsA("ModuleScript")
+	then (require :: any)(overridesModule)
+	else nil
+local settings = Settings.resolve(settingsFolder, overrides)
+Settings.apply(settings)
+
 local replicated = Instance.new("Folder")
 replicated.Name = "OpenSRS"
 root.Shared:Clone().Parent = replicated
@@ -22,6 +32,8 @@ local assets = root:FindFirstChild("Assets") -- only in the "with models" downlo
 if assets then
 	assets:Clone().Parent = replicated
 end
+-- Clients predict with exactly the values the server settled on.
+Settings.write(settings, replicated)
 require(root.Server.Main).start(replicated)
 root.Client:Clone().Parent = replicated
 replicated.Parent = ReplicatedStorage

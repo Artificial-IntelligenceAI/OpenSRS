@@ -67,7 +67,7 @@ Protocol.VIEW_TICK_SCALE = 8
 Protocol.MAX_INPUTS_PER_PACKET = 3
 
 local INPUT_SIZE = 16
-local STATE_SIZE = 63
+local STATE_SIZE = 65
 local SHOT_SIZE = 26
 local SNAPSHOT_HEADER_SIZE = 5
 local SNAPSHOT_ENTRY_SIZE = 19
@@ -198,12 +198,12 @@ function Protocol.encodeState(epoch: number, ack: number, state: State, health: 
 	buffer.writeu8(data, 32, state.ammo)
 	buffer.writeu16(data, 33, state.reserve)
 	buffer.writeu8(data, 35, state.fireCooldown)
-	buffer.writeu8(data, 36, state.reloadTicks)
-	buffer.writeu8(data, 37, state.raiseTicks)
-	buffer.writef64(data, 38, state.recoilPitch)
-	buffer.writef64(data, 46, state.recoilYaw)
-	buffer.writef64(data, 54, state.bloom)
-	buffer.writeu8(data, 62, math.clamp(math.ceil(health), 0, 255))
+	buffer.writeu16(data, 36, state.reloadTicks)
+	buffer.writeu8(data, 38, state.raiseTicks)
+	buffer.writef64(data, 39, state.recoilPitch)
+	buffer.writef64(data, 47, state.recoilYaw)
+	buffer.writef64(data, 55, state.bloom)
+	buffer.writeu16(data, 63, math.clamp(math.ceil(health), 0, 0xFFFF))
 	return data
 end
 
@@ -229,14 +229,14 @@ function Protocol.decodeState(data: unknown): StateMessage?
 			ammo = buffer.readu8(data, 32),
 			reserve = buffer.readu16(data, 33),
 			fireCooldown = buffer.readu8(data, 35),
-			reloadTicks = buffer.readu8(data, 36),
-			raiseTicks = buffer.readu8(data, 37),
+			reloadTicks = buffer.readu16(data, 36),
+			raiseTicks = buffer.readu8(data, 38),
 			triggerHeld = bit32.btest(flags, 32),
-			recoilPitch = buffer.readf64(data, 38),
-			recoilYaw = buffer.readf64(data, 46),
-			bloom = buffer.readf64(data, 54),
+			recoilPitch = buffer.readf64(data, 39),
+			recoilYaw = buffer.readf64(data, 47),
+			bloom = buffer.readf64(data, 55),
 		},
-		health = buffer.readu8(data, 62),
+		health = buffer.readu16(data, 63),
 	}
 end
 

@@ -1,0 +1,9 @@
+{
+	"className": "Configuration",
+	"attributes": {
+		"TickRate": 60,
+		"SnapshotRate": 20,
+		"RespawnTime": 3,
+		"MaxHealth": 100
+	}
+}

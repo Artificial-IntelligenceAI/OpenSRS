@@ -41,7 +41,6 @@ local MAX_REWIND_TICKS = math.round(Config.tickRate * 0.4)
 local REWIND_TOLERANCE = 3
 local REWIND_SMOOTHING = 0.05
 local HEARING_RANGE = 400
-local MAX_HEALTH = 100
 local HEAD = "Head"
 local TORSO = "Torso"
 
@@ -54,8 +53,6 @@ local died = Instance.new("BindableEvent")
 Combat.Damaged = damaged.Event
 -- (victim: Player, killer: Player?)
 Combat.Died = died.Event
-
-Combat.MAX_HEALTH = MAX_HEALTH
 
 local history: { [number]: { Entry } } = {}
 local health: { [number]: number } = {}
@@ -76,7 +73,7 @@ function Combat.start(created: Remotes.Remotes, find: (slot: number) -> Target?)
 end
 
 function Combat.spawned(slot: number)
-	health[slot] = MAX_HEALTH
+	health[slot] = Config.maxHealth
 	history[slot] = {}
 end
 

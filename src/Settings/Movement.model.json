@@ -1,0 +1,20 @@
+{
+	"className": "Configuration",
+	"attributes": {
+		"WalkSpeed": 12,
+		"SlowWalkSpeed": 6,
+		"SprintSpeed": 19,
+		"CrouchSpeed": 6,
+		"ProneSpeed": 2.5,
+		"AimSpeedMultiplier": 0.6,
+		"BackwardSpeedMultiplier": 0.8,
+		"Acceleration": 60,
+		"Deceleration": 80,
+		"AirAcceleration": 6,
+		"JumpHeight": 3.7,
+		"JumpCooldown": 0.4,
+		"Gravity": 196.2,
+		"LeanDistance": 1,
+		"LeanTime": 0.17
+	}
+}

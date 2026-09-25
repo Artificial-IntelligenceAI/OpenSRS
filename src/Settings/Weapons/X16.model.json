@@ -1,0 +1,33 @@
+{
+	"className": "Configuration",
+	"attributes": {
+		"Damage": 25,
+		"HeadshotMultiplier": 2,
+		"LimbMultiplier": 0.8,
+		"FireRate": 400,
+		"Automatic": false,
+		"MagazineSize": 17,
+		"ReserveAmmo": 51,
+		"ReloadTime": 1.6,
+		"EmptyReloadTime": 2.1,
+		"RaiseTime": 0.25,
+		"BulletSpeed": 1340,
+		"InstantDamage": false,
+		"Range": 1000,
+		"FullDamageRange": 30,
+		"MinDamageRange": 100,
+		"MinDamageMultiplier": 0.6,
+		"SpreadStanding": 1,
+		"SpreadCrouching": 0.8,
+		"SpreadProne": 0.6,
+		"SpreadMoving": 1.2,
+		"SpreadAirborne": 4,
+		"AimSpreadMultiplier": 0.3,
+		"BloomPerShot": 0.6,
+		"BloomMax": 3,
+		"BloomRecovery": 3,
+		"RecoilUp": 1.6,
+		"RecoilSide": 0.4,
+		"RecoilRecovery": 6.3
+	}
+}

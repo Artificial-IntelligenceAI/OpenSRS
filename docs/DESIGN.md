@@ -89,9 +89,11 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Configuration
 
-- Studio's Properties panel (Attributes) covers every common setting, with no code needed.
-- An optional code settings file covers advanced setups.
-- The server keeps its own copy of every setting, so changing values on a client does nothing.
+- **No code needed.** Every gameplay number lives in the `Settings` folder inside OpenSRS (Game, Movement, and one Configuration per weapon), editable as attributes in Studio's Properties panel. [SETTINGS.md](SETTINGS.md) lists them all.
+- **Optional code file.** A ModuleScript named `Overrides` in that folder can change any value in code, and it wins over the attributes.
+- **Checked.** Values of the wrong type fall back to the default, and out-of-range values are clamped, with a warning in Output.
+- **The server's copy is the only one that counts.** The server resolves the settings, then publishes the final values so clients predict with exactly the same numbers. Changing them on a client does nothing.
+- **One source of defaults.** Defaults and ranges are defined once in `src/Shared/SettingsSchema.luau`. The shipped Settings folder and SETTINGS.md are generated from it, and CI fails if they drift.
 
 ## Distribution and install
 

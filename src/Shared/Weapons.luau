@@ -1,10 +1,12 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Weapon stats. Distances are in studs, angles in degrees, times in ticks
--- (60 a second) unless a name says otherwise.
+-- Weapon stats as the simulation uses them. Distances are in studs, angles in
+-- degrees, and times in ticks unless a name says otherwise. They're built from
+-- Settings (in friendlier units, like rounds a minute and seconds) at startup.
 
 local Config = require(script.Parent.Config)
+local SettingsSchema = require(script.Parent.SettingsSchema)
 
 export type Spread = {
 	stand: number, -- standing still, from the hip
@@ -45,50 +47,72 @@ export type Weapon = {
 	recoilRecovery: number, -- fraction of the kick that settles back each tick
 }
 
-local TICKS = Config.tickRate
-
-local X16: Weapon = table.freeze({
-	name = "X16",
-	automatic = false,
-	fireInterval = math.round(TICKS * 60 / 400), -- 400 rounds a minute
-	magazine = 17,
-	reserve = 51,
-	reloadTicks = math.round(TICKS * 1.6),
-	reloadEmptyTicks = math.round(TICKS * 2.1),
-	raiseTicks = math.round(TICKS * 0.25),
-
-	damage = 25,
-	headMultiplier = 2,
-	limbMultiplier = 0.8,
-	fullDamageRange = 30,
-	minDamageRange = 100,
-	minDamageMultiplier = 0.6,
-	bulletSpeed = 1340, -- about 375 m/s
-	instantDamage = false,
-	range = 1000,
-
-	spread = table.freeze({
-		stand = 1,
-		crouch = 0.8,
-		prone = 0.6,
-		moving = 1.2,
-		airborne = 4,
-		aimMultiplier = 0.3,
-	}),
-	bloomPerShot = 0.6,
-	bloomMax = 3,
-	bloomRecovery = 0.05,
-
-	recoilPitch = 1.6,
-	recoilYaw = 0.4,
-	recoilRecovery = 0.1,
-})
+-- Settings values for one weapon, keyed by field name (see SettingsSchema).
+export type Values = { [string]: number | boolean }
 
 local Weapons = {}
 
-Weapons.X16 = X16
+local byName: { [string]: Weapon } = {}
+
+local function ticks(seconds: number): number
+	return math.max(math.round(seconds * Config.tickRate), 1)
+end
+
+-- Fills in (or creates) a weapon's stats from its settings.
+function Weapons.configure(name: string, values: Values): Weapon
+	local function number(field: string): number
+		return values[field] :: number
+	end
+	local weapon = byName[name] or ({ name = name } :: any)
+	weapon.automatic = values.Automatic == true
+	weapon.fireInterval = ticks(60 / number("FireRate"))
+	weapon.magazine = math.round(number("MagazineSize"))
+	weapon.reserve = math.round(number("ReserveAmmo"))
+	weapon.reloadTicks = ticks(number("ReloadTime"))
+	weapon.reloadEmptyTicks = ticks(number("EmptyReloadTime"))
+	weapon.raiseTicks = math.round(number("RaiseTime") * Config.tickRate)
+	weapon.damage = number("Damage")
+	weapon.headMultiplier = number("HeadshotMultiplier")
+	weapon.limbMultiplier = number("LimbMultiplier")
+	weapon.fullDamageRange = number("FullDamageRange")
+	weapon.minDamageRange = math.max(number("MinDamageRange"), number("FullDamageRange") + 0.01)
+	weapon.minDamageMultiplier = number("MinDamageMultiplier")
+	weapon.bulletSpeed = number("BulletSpeed")
+	weapon.instantDamage = values.InstantDamage == true
+	weapon.range = number("Range")
+	weapon.spread = {
+		stand = number("SpreadStanding"),
+		crouch = number("SpreadCrouching"),
+		prone = number("SpreadProne"),
+		moving = number("SpreadMoving"),
+		airborne = number("SpreadAirborne"),
+		aimMultiplier = number("AimSpreadMultiplier"),
+	}
+	weapon.bloomPerShot = number("BloomPerShot")
+	weapon.bloomMax = number("BloomMax")
+	weapon.bloomRecovery = number("BloomRecovery") / Config.tickRate
+	weapon.recoilPitch = number("RecoilUp")
+	weapon.recoilYaw = number("RecoilSide")
+	weapon.recoilRecovery = 1 - math.exp(-number("RecoilRecovery") / Config.tickRate)
+	byName[name] = weapon
+	return weapon
+end
+
+function Weapons.get(name: string): Weapon?
+	return byName[name]
+end
+
+-- Start from the defaults, so weapons exist even before Settings are applied.
+for _, entry in SettingsSchema.weapons do
+	local values: Values = {}
+	for _, field in SettingsSchema.weaponFields do
+		local default = entry.defaults[field.name]
+		values[field.name] = if default ~= nil then default else field.default
+	end
+	Weapons.configure(entry.name, values)
+end
 
 -- The weapon every player carries for now.
-Weapons.default = X16
+Weapons.default = byName.X16
 
-return table.freeze(Weapons)
+return Weapons

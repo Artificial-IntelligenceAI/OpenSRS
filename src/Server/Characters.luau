@@ -53,7 +53,6 @@ local STREAM_REFRESH_TICKS = 60 -- streaming requests expire, so they're renewed
 local RESEND_TICKS = 10 -- how often to repeat the spawn until the client starts sending inputs
 local FALL_LIMIT = -500
 local VISIBILITY_GROUPS = 4 -- each player's visibility is checked every 4 ticks (15 a second)
-local RESPAWN_DELAY = 3
 -- Buttons a filler input must never repeat: a silent client shouldn't keep shooting.
 local ONE_SHOT_BUTTONS = Types.Buttons.Fire + Types.Buttons.Reload + Types.Buttons.Jump
 
@@ -336,7 +335,7 @@ local function onDied(victim: Player)
 	end
 	record.state = nil
 	remotes.life:FireClient(victim, false)
-	task.delay(RESPAWN_DELAY, function()
+	task.delay(Config.respawnTime, function()
 		if records[victim] == record and record.state == nil then
 			spawn(record)
 		end

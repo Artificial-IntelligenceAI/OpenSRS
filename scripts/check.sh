@@ -11,6 +11,7 @@ if [ ! -f "$defs" ]; then
 fi
 
 stylua --check src
+lune run scripts/generate-settings --check
 selene src
 rojo sourcemap default.project.json -o sourcemap.json
 luau-lsp analyze --platform=roblox --sourcemap=sourcemap.json --definitions=@roblox="$defs" src

@@ -4,7 +4,7 @@
 
 > **Status:** early development — nothing usable yet.
 
-See [docs/DESIGN.md](docs/DESIGN.md) for how OpenSRS works and why.
+See [docs/DESIGN.md](docs/DESIGN.md) for how OpenSRS works and why, and [docs/SETTINGS.md](docs/SETTINGS.md) for every setting you can change.
 
 ## Official downloads
 
