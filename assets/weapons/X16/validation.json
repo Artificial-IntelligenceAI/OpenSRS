@@ -1,0 +1,113 @@
+{
+  "source_sha256": "f91f0f329a9d90d983c104b2f6b5a4dd2f9cbaf1571139ef353951c6bcb026a5",
+  "length_units": 1.2,
+  "versions": {
+    "FP": {
+      "reimport_passed": true,
+      "total_triangles": 51546,
+      "largest_mesh_triangles": 15775,
+      "meshes": {
+        "FP_Frame_A": {
+          "triangles": 15775,
+          "vertices": 7988,
+          "material": "FP_Frame_PBR"
+        },
+        "FP_Barrel_Mesh": {
+          "triangles": 1350,
+          "vertices": 679,
+          "material": "FP_Barrel_PBR"
+        },
+        "FP_Slide_Mesh": {
+          "triangles": 13748,
+          "vertices": 6886,
+          "material": "FP_Slide_PBR"
+        },
+        "FP_Trigger_Mesh": {
+          "triangles": 1399,
+          "vertices": 708,
+          "material": "FP_Trigger_PBR"
+        },
+        "FP_Magazine_Mesh": {
+          "triangles": 3500,
+          "vertices": 1760,
+          "material": "FP_Magazine_PBR"
+        },
+        "FP_Frame_B": {
+          "triangles": 15774,
+          "vertices": 7969,
+          "material": "FP_Frame_PBR"
+        }
+      },
+      "reimport_dimensions_blender": [
+        0.15719491988420486,
+        1.2000000774860382,
+        0.8044026494026184
+      ],
+      "uv_maps_present": true,
+      "attachments_present": true,
+      "uv_bounds_passed": true,
+      "finite_normals_passed": true,
+      "single_material_per_mesh": true
+    },
+    "TP": {
+      "reimport_passed": true,
+      "total_triangles": 5498,
+      "largest_mesh_triangles": 3359,
+      "meshes": {
+        "TP_Frame_Mesh": {
+          "triangles": 3359,
+          "vertices": 1708,
+          "material": "TP_Frame_PBR"
+        },
+        "TP_Barrel_Mesh": {
+          "triangles": 176,
+          "vertices": 92,
+          "material": "TP_Barrel_PBR"
+        },
+        "TP_Trigger_Mesh": {
+          "triangles": 193,
+          "vertices": 105,
+          "material": "TP_Trigger_PBR"
+        },
+        "TP_Magazine_Mesh": {
+          "triangles": 458,
+          "vertices": 239,
+          "material": "TP_Magazine_PBR"
+        },
+        "TP_Slide_Mesh": {
+          "triangles": 1312,
+          "vertices": 668,
+          "material": "TP_Slide_PBR"
+        }
+      },
+      "reimport_dimensions_blender": [
+        0.1568748727440834,
+        1.2000001519918442,
+        0.8041777014732361
+      ],
+      "uv_maps_present": true,
+      "attachments_present": true,
+      "uv_bounds_passed": true,
+      "finite_normals_passed": true,
+      "single_material_per_mesh": true
+    }
+  },
+  "texture_count": 40,
+  "normal_convention": "OpenGL tangent space +Y",
+  "source_unchanged": true,
+  "comparison": {
+    "views": [
+      "ThreeQuarter",
+      "Side",
+      "Reverse"
+    ],
+    "reimported_geometry": true,
+    "identical_camera_scale_lighting": true,
+    "visual_review_passed": true,
+    "notes": "Close overall match. TP small controls and curved edges are simplified; procedural micrograin and magazine reflections are approximate."
+  },
+  "external_texture_paths_passed_without_image_search": true,
+  "working_copy_textures_packed": true,
+  "legacy_name_scan_passed": true,
+  "attachment_positions_verified_after_reimport": true
+}

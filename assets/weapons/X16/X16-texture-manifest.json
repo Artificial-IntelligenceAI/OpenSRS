@@ -1,0 +1,111 @@
+{
+  "FP": {
+    "fbx": "FP/X16-2027-Edition_FP.fbx",
+    "parts": {
+      "FP_Frame_A": {
+        "animation_part": "Frame",
+        "textures": {
+          "Color": "FP/FP_Frame_Color.png",
+          "Normal": "FP/FP_Frame_Normal.png",
+          "Roughness": "FP/FP_Frame_Roughness.png",
+          "Metalness": "FP/FP_Frame_Metalness.png"
+        }
+      },
+      "FP_Barrel_Mesh": {
+        "animation_part": "Barrel",
+        "textures": {
+          "Color": "FP/FP_Barrel_Color.png",
+          "Normal": "FP/FP_Barrel_Normal.png",
+          "Roughness": "FP/FP_Barrel_Roughness.png",
+          "Metalness": "FP/FP_Barrel_Metalness.png"
+        }
+      },
+      "FP_Slide_Mesh": {
+        "animation_part": "Slide",
+        "textures": {
+          "Color": "FP/FP_Slide_Color.png",
+          "Normal": "FP/FP_Slide_Normal.png",
+          "Roughness": "FP/FP_Slide_Roughness.png",
+          "Metalness": "FP/FP_Slide_Metalness.png"
+        }
+      },
+      "FP_Trigger_Mesh": {
+        "animation_part": "Trigger",
+        "textures": {
+          "Color": "FP/FP_Trigger_Color.png",
+          "Normal": "FP/FP_Trigger_Normal.png",
+          "Roughness": "FP/FP_Trigger_Roughness.png",
+          "Metalness": "FP/FP_Trigger_Metalness.png"
+        }
+      },
+      "FP_Magazine_Mesh": {
+        "animation_part": "Magazine",
+        "textures": {
+          "Color": "FP/FP_Magazine_Color.png",
+          "Normal": "FP/FP_Magazine_Normal.png",
+          "Roughness": "FP/FP_Magazine_Roughness.png",
+          "Metalness": "FP/FP_Magazine_Metalness.png"
+        }
+      },
+      "FP_Frame_B": {
+        "animation_part": "Frame",
+        "textures": {
+          "Color": "FP/FP_Frame_Color.png",
+          "Normal": "FP/FP_Frame_Normal.png",
+          "Roughness": "FP/FP_Frame_Roughness.png",
+          "Metalness": "FP/FP_Frame_Metalness.png"
+        }
+      }
+    }
+  },
+  "TP": {
+    "fbx": "TP/X16-2027-Edition_TP.fbx",
+    "parts": {
+      "TP_Frame_Mesh": {
+        "animation_part": "Frame",
+        "textures": {
+          "Color": "TP/TP_Frame_Color.png",
+          "Normal": "TP/TP_Frame_Normal.png",
+          "Roughness": "TP/TP_Frame_Roughness.png",
+          "Metalness": "TP/TP_Frame_Metalness.png"
+        }
+      },
+      "TP_Barrel_Mesh": {
+        "animation_part": "Barrel",
+        "textures": {
+          "Color": "TP/TP_Barrel_Color.png",
+          "Normal": "TP/TP_Barrel_Normal.png",
+          "Roughness": "TP/TP_Barrel_Roughness.png",
+          "Metalness": "TP/TP_Barrel_Metalness.png"
+        }
+      },
+      "TP_Trigger_Mesh": {
+        "animation_part": "Trigger",
+        "textures": {
+          "Color": "TP/TP_Trigger_Color.png",
+          "Normal": "TP/TP_Trigger_Normal.png",
+          "Roughness": "TP/TP_Trigger_Roughness.png",
+          "Metalness": "TP/TP_Trigger_Metalness.png"
+        }
+      },
+      "TP_Magazine_Mesh": {
+        "animation_part": "Magazine",
+        "textures": {
+          "Color": "TP/TP_Magazine_Color.png",
+          "Normal": "TP/TP_Magazine_Normal.png",
+          "Roughness": "TP/TP_Magazine_Roughness.png",
+          "Metalness": "TP/TP_Magazine_Metalness.png"
+        }
+      },
+      "TP_Slide_Mesh": {
+        "animation_part": "Slide",
+        "textures": {
+          "Color": "TP/TP_Slide_Color.png",
+          "Normal": "TP/TP_Slide_Normal.png",
+          "Roughness": "TP/TP_Slide_Roughness.png",
+          "Metalness": "TP/TP_Slide_Metalness.png"
+        }
+      }
+    }
+  }
+}

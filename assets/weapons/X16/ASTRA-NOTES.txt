@@ -1,0 +1,72 @@
+X16 2027 Edition — Roblox game assets
+
+FILES
+FP/X16-2027-Edition_FP.fbx — first-person asset, 51,546 triangles, 6 meshes.
+TP/X16-2027-Edition_TP.fbx — third-person asset, 5,498 triangles, 5 meshes.
+X16-2027-Edition-game.blend — editable, packed working copy with both versions.
+X16-attachments.json — named marker positions and animation pivots.
+X16-texture-manifest.json — mesh-to-texture assignments.
+validation.json — measurements and FBX round-trip checks.
+comparison/ — original and re-imported asset renders in identical lighting.
+
+SCALE AND AXES
+The complete assembled gun is 1.2 asset units long, measured along its length
+including the back of the grip. No hands are included in the triangle totals.
+Roblox coordinates: +Y up, forward -Z, +X right. The model origin is the grip.
+The Blender working copy uses Z up and +Y forward; FBX converts the axes.
+Check the Studio importer preview and set the assembled length to 1.2 studs.
+Importers may apply a unit conversion; do not rely on automatic unit guessing.
+The attachment JSON uses the target Roblox coordinate system, in studs.
+
+TEXTURES
+Every mesh uses one material and one non-overlapping UV atlas. The two FP
+frame meshes share the Frame atlas. There are five atlas sets per version,
+each with Color, Normal, Roughness and Metalness PNG maps: 40 maps total.
+FP: Frame/Slide 2048 square; Barrel/Trigger/Magazine 1024 square.
+TP: Frame/Slide 2048 square; Barrel/Trigger/Magazine 512 square.
+Color is sRGB. Normal, Roughness and Metalness are non-color data.
+Normals use OpenGL tangent space, positive green/Y; do not flip green.
+Roughness uses white=rough. Metalness uses white=metal.
+Textures are external beside each FBX and also packed in the working copy.
+
+ROBLOX IMPORT
+1. Import the desired FBX using Studio's 3D Importer. Keep meshes separate.
+2. Check the 1.2-stud assembled length and facing direction before accepting.
+3. For each MeshPart, assign a SurfaceAppearance using the matching four
+   maps listed in X16-texture-manifest.json. Set MeshPart Color to white and
+   Transparency to zero. Do not depend on Blender procedural materials.
+4. Keep FP_Frame_A and FP_Frame_B rigidly joined as one frame. Use joints
+   suitable for your animation system for Slide, Trigger and Magazine.
+   The Barrel is separate as well. Sights are part of Slide. The seated
+   display cartridge is part of Magazine, so it follows reload animations.
+5. The named FBX empties are Muzzle, EjectionPort, RearSight and Grip. If
+   Studio imports them as generic nodes, create Attachments at the JSON
+   positions relative to the model origin, then preserve their world
+   positions when parenting them to the listed animation part.
+6. Choose collision behavior and joint animation in the shooter project.
+   The assets preserve the source's visual exterior and solid hidden forms.
+
+VERIFICATION
+Both exported FBX files were imported into fresh Blender 5.1 scenes.
+Mesh/triangle counts, 1.2-unit length, UVs, finite coordinates/normals and
+attachment positions were checked. Every mesh is strictly below 20,000
+triangles. The largest FP mesh is 15,775 triangles; TP is 3,359.
+The comparison renders use the re-imported geometry with the delivered maps
+reconnected explicitly. They compare source, FP and TP at the same scale,
+camera and lighting. This is a Blender FBX round-trip check, not a published
+Roblox asset or a completed Studio upload.
+
+The source's layered procedural shaders have been translated to standard
+four-map PBR. Very fine grain and the magazine's subdued reflections are
+approximations; the third-person silhouette also has fewer curved segments.
+The first-person inscription retains geometry. The third-person inscription
+is baked onto a simplified continuous slide surface.
+
+SOURCE PRESERVATION
+The original X16-2027-Edition.blend was read only. Its SHA-256 is recorded in
+validation.json and was checked again after export. Source and reference
+materials were not modified. This package adds no new license; use it under
+the permissions and license applicable to the original project.
+
+Roblox texture documentation:
+https://create.roblox.com/docs/art/modeling/surface-appearance

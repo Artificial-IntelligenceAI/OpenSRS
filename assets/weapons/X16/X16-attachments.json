@@ -1,0 +1,106 @@
+{
+  "coordinate_system": "Roblox: X right, Y up, forward -Z. Grip is model origin. 1 asset unit = 1 stud when imported with scale 1.",
+  "length_units": 1.2,
+  "source_to_asset_scale": 0.17844217530091586,
+  "attachments": {
+    "Muzzle": {
+      "position": [
+        0.0,
+        0.44075218,
+        -0.95109683
+      ],
+      "forward": [
+        0,
+        0,
+        -1
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "parent": "Barrel"
+    },
+    "EjectionPort": {
+      "position": [
+        0.06334697,
+        0.49785367,
+        -0.41041702
+      ],
+      "forward": [
+        0,
+        0,
+        -1
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "parent": "Slide"
+    },
+    "RearSight": {
+      "position": [
+        0.0,
+        0.52818888,
+        0.04014952
+      ],
+      "forward": [
+        0,
+        0,
+        -1
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "parent": "Slide"
+    },
+    "Grip": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "forward": [
+        0,
+        0,
+        -1
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "parent": "Frame"
+    }
+  },
+  "pivots": {
+    "Frame": [
+      0.0,
+      0.0,
+      -0.0
+    ],
+    "Slide": [
+      0.0,
+      0.44075218,
+      -0.37472856
+    ],
+    "Trigger": [
+      0.0,
+      0.2765854,
+      -0.29442957
+    ],
+    "Magazine": [
+      0.0,
+      0.00892212,
+      -0.0178442
+    ],
+    "Barrel": [
+      0.0,
+      0.44075218,
+      -0.41041702
+    ]
+  }
+}
