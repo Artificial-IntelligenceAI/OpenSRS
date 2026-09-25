@@ -42,6 +42,13 @@ local SLIDE_TRAVEL = 0.19
 local BARREL_TRAVEL = 0.06
 local MAGAZINE_DROP = 0.9
 
+-- A small light that travels with the view, so the held gun reads clearly
+-- whatever the map's lighting. Its short range keeps it off the world.
+local FILL_OFFSET = CFrame.new(-0.2, 1.45, 0.45) -- in the gun's space: high above the slide, toward the eye
+local FILL_BRIGHTNESS = 4
+local FILL_RANGE = 1.35 -- reaches the slide, not the arms below it
+local FILL_COLOR = Color3.fromRGB(255, 244, 230)
+
 local SWAY_AMOUNT = 0.0025 -- radians per pixel of mouse movement
 local SWAY_LIMIT = 0.08
 local SWAY_RETURN = 12
@@ -93,9 +100,19 @@ local MUZZLE = localPoint("Muzzle", Vector3.new(0, 0.44, -1))
 local SIGHT = localPoint("RearSight", Vector3.new(0, 0.53, 0.05))
 local AIM = CFrame.new(0, 0, -AIM_REACH) * CFrame.new(-SIGHT.Position)
 
+local fill = limb("FillLight", Vector3.one * 0.05, Color3.new(1, 1, 1))
+fill.Transparency = 1
+local light = Instance.new("PointLight")
+light.Brightness = FILL_BRIGHTNESS
+light.Range = FILL_RANGE
+light.Color = FILL_COLOR
+light.Shadows = false
+light.Parent = fill
+
 local parts: { BasePart } = table.clone(gunParts)
 table.insert(parts, rightArm)
 table.insert(parts, leftArm)
+table.insert(parts, fill)
 local cframes: { CFrame } = table.create(#parts)
 
 local current = HIP
@@ -199,6 +216,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local count = #gunParts
 	cframes[count + 1] = arm((camera * CFrame.new(RIGHT_SHOULDER)).Position, rightHandPoint)
 	cframes[count + 2] = arm((camera * CFrame.new(LEFT_SHOULDER)).Position, leftHandPoint)
+	cframes[count + 3] = origin * FILL_OFFSET
 	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 
 	return (origin * MUZZLE).Position
