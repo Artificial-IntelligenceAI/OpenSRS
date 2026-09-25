@@ -1,0 +1,12 @@
+{
+	"name": "OpenSRS Dev",
+	"emitLegacyScripts": false,
+	"tree": {
+		"$className": "DataModel",
+		"ServerScriptService": {
+			"OpenSRS": {
+				"$path": "default.project.json"
+			}
+		}
+	}
+}

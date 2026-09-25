@@ -38,3 +38,4 @@ You only need this if you're working on OpenSRS itself.
 
 1. Install [Rokit](https://github.com/rojo-rbx/rokit), then run `rokit install` in this folder to get the pinned tools.
 2. Run `./scripts/check.sh` to check formatting, lint and strict types. CI runs the same script on every push.
+3. To playtest, run `rojo serve dev.project.json` and connect with the Rojo plugin in Studio. It syncs `src/` into `ServerScriptService.OpenSRS`.
