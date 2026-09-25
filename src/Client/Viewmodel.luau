@@ -7,8 +7,10 @@
 -- From the hip the gun comes in from the lower right. Aiming holds it out at
 -- arm's length with both arms reaching up from the bottom of the screen and
 -- the sights lined up on the center. It sways against mouse movement, bobs
--- while walking, kicks on each shot (the slide cycles), and drops the magazine
--- while reloading.
+-- while walking, and kicks on each shot as the slide cycles. The slide locks
+-- back on the last round. Reloading drops the old magazine, fetches a new one
+-- with the left hand and seats it; from empty, the thumb then hits the slide
+-- release and the slide snaps forward.
 
 local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
@@ -23,7 +25,7 @@ type State = Types.State
 local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when aiming: arms outstretched
 local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
 local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
-local RELOAD = CFrame.new(0.12, -0.62, -0.8) * CFrame.Angles(0.55, 0.25, 0.6)
+local RELOAD = CFrame.new(0.05, -0.32, -1.15) * CFrame.Angles(0.75, 0.25, -0.35) -- muzzle up, grip toward you: the magazine well shows
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
@@ -35,8 +37,10 @@ local AIM_RIGHT_SHOULDER = Vector3.new(0.2, -1.45, 0.5)
 local AIM_LEFT_SHOULDER = Vector3.new(-1.2, -1.4, 0.15)
 local HIP_RIGHT_SHOULDER = Vector3.new(1.1, -1.6, 0.1)
 local HIP_LEFT_SHOULDER = Vector3.new(-0.5, -1.7, 0.1)
+-- While reloading the left arm comes from further left, so it never crosses in front of the eye.
+local RELOAD_LEFT_SHOULDER = Vector3.new(-1.3, -1.6, 0.1)
 local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around the grip
-local LEFT_HAND = Vector3.new(-0.1, 0.1, 0.02) -- wrapped around the right hand, from the left
+local LEFT_HAND_AT = CFrame.new(-0.1, 0.1, 0.02) -- in the gun's space: wrapped around the right hand, from the left
 local ARM_WIDTH = 0.38
 local ARM_LENGTH = 2.6 -- long enough to reach off screen from the hand
 
@@ -46,7 +50,68 @@ local KICK_UP = 0.025
 local KICK_TILT = 0.12
 local SLIDE_TRAVEL = 0.19
 local BARREL_TRAVEL = 0.06
-local MAGAZINE_DROP = 0.9
+
+-- Reload choreography: keyframes over the reload's progress, from 0 to 1.
+-- Offsets are in the gun's space. The empty reload runs the same steps, then
+-- releases the locked slide.
+type Key = { t: number, value: CFrame }
+
+local function key(t: number, value: CFrame): Key
+	return { t = t, value = value }
+end
+
+local function at(x: number, y: number, z: number): CFrame
+	return CFrame.new(x, y, z)
+end
+
+local IDENTITY = CFrame.identity
+
+-- Gun: a flick when the magazine release is pressed, a bump up as the new
+-- magazine seats, and a jolt when a locked slide slams forward.
+local GUN_TRACK = {
+	key(0, IDENTITY),
+	key(0.1, CFrame.Angles(0.06, 0, 0.05)),
+	key(0.2, IDENTITY),
+	key(0.66, IDENTITY),
+	key(0.7, CFrame.new(0, 0.05, 0) * CFrame.Angles(-0.05, 0, 0)),
+	key(0.76, IDENTITY),
+	key(0.77, IDENTITY),
+	key(0.8, CFrame.new(0, 0, 0.04) * CFrame.Angles(0.04, 0, 0)),
+	key(0.88, IDENTITY),
+}
+-- The old magazine slides out, then drops out of view.
+local OLD_MAGAZINE = { key(0.12, IDENTITY), key(0.2, at(0, -0.35, 0)), key(0.34, at(0, -2.6, 0)) }
+local OLD_MAGAZINE_GONE = 0.34
+-- The new magazine comes up from below in the left hand and seats.
+local NEW_MAGAZINE = { key(0.45, at(0, -1.6, 0.25)), key(0.62, at(0, -0.3, 0.02)), key(0.7, IDENTITY) }
+local NEW_MAGAZINE_SHOWN = 0.45
+local LEFT_HAND_TRACK = {
+	key(0, LEFT_HAND_AT),
+	key(0.14, LEFT_HAND_AT),
+	key(0.3, at(-0.35, -1, 0.35)),
+	key(0.42, at(-0.3, -2.2, 0.35)),
+	key(0.47, at(-0.05, -1.75, 0.25)),
+	key(0.62, at(-0.05, -0.45, 0.02)),
+	key(0.7, at(-0.05, -0.15, 0.02)),
+	key(0.82, LEFT_HAND_AT),
+}
+local SLIDE_RELEASE = 0.78 -- when the slide release is pressed on an empty reload
+
+-- Eased value of a keyframe track at `t`.
+local function sample(keys: { Key }, t: number): CFrame
+	if t <= keys[1].t then
+		return keys[1].value
+	end
+	for index = 2, #keys do
+		local after = keys[index]
+		if t <= after.t then
+			local before = keys[index - 1]
+			local u = (t - before.t) / (after.t - before.t)
+			return before.value:Lerp(after.value, u * u * (3 - 2 * u))
+		end
+	end
+	return keys[#keys].value
+end
 
 -- A small light that travels with the view, so the held gun reads clearly
 -- whatever the map's lighting. Its short range keeps it off the world.
@@ -123,6 +188,7 @@ local cframes: { CFrame } = table.create(#parts)
 
 local current = HIP
 local aimBlend = 0
+local reloadBlend = 0
 local kick = 0
 local reloadLength = 0
 local sway = Vector2.zero
@@ -146,18 +212,16 @@ local function reloadProgress(state: State): number
 	return 1 - state.reloadTicks / reloadLength
 end
 
--- How far the magazine is out, from 0 (seated) to 1 (gone), during a reload.
-local function magazineOut(progress: number): number
+-- Where the magazine is relative to where it seats, and whether it's shown.
+local function magazineAt(progress: number): (CFrame, boolean)
 	if progress <= 0 then
-		return 0
-	elseif progress < 0.3 then
-		return progress / 0.3
-	elseif progress < 0.55 then
-		return 1
-	elseif progress < 0.75 then
-		return 1 - (progress - 0.55) / 0.2
+		return IDENTITY, true
+	elseif progress < OLD_MAGAZINE_GONE then
+		return sample(OLD_MAGAZINE, progress), true
+	elseif progress < NEW_MAGAZINE_SHOWN then
+		return IDENTITY, false
 	end
-	return 0
+	return sample(NEW_MAGAZINE, progress), true
 end
 
 -- An arm reaching from a shoulder to a hand; only the hand end is usually on screen.
@@ -178,6 +242,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local blend = 1 - math.exp(-POSE_SPEED * frameTime)
 	current = current:Lerp(target, blend)
 	aimBlend += ((if aiming then 1 else 0) - aimBlend) * blend
+	reloadBlend += ((if progress > 0 then 1 else 0) - reloadBlend) * blend
 	local motion = 1 - (1 - AIMED_MOTION) * aimBlend
 
 	-- Sway: the gun lags behind the mouse, then settles.
@@ -197,12 +262,17 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local amount = kick / KICK_TIME
 	local recoil = CFrame.new(0, KICK_UP * amount, KICK_BACK * amount) * CFrame.Angles(KICK_TILT * amount, 0, 0)
 
-	local origin = camera * bob * swayFrame * current * recoil
+	local reloading = progress > 0
+	local empty = reloading and reloadLength > weapon.reloadTicks
+	local gunMotion = if reloading then sample(GUN_TRACK, progress) else IDENTITY
+	local origin = camera * bob * swayFrame * current * recoil * gunMotion
 
-	local slide = CFrame.new(0, 0, SLIDE_TRAVEL * amount)
-	local barrel = CFrame.new(0, 0, BARREL_TRAVEL * amount)
-	local out = magazineOut(progress)
-	local magazine = CFrame.new(0, -MAGAZINE_DROP * out, 0)
+	-- The slide locks back on an empty magazine until the reload racks it.
+	local locked = if reloading then empty and progress < SLIDE_RELEASE else state.ammo == 0
+	local slideBack = if locked then 1 else amount
+	local slide = CFrame.new(0, 0, SLIDE_TRAVEL * slideBack)
+	local barrel = CFrame.new(0, 0, BARREL_TRAVEL * slideBack)
+	local magazine, magazineShown = magazineAt(progress)
 	for index, part in gunParts do
 		local offset = rest[index]
 		if part.Name == "Slide" then
@@ -211,17 +281,17 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 			offset = barrel * offset
 		elseif part.Name == "Magazine" then
 			offset = magazine * offset
-			part.LocalTransparencyModifier = if out >= 1 then 1 else 0
+			part.LocalTransparencyModifier = if magazineShown then 0 else 1
 		end
 		cframes[index] = origin * offset
 	end
 
-	-- While reloading the support hand goes down to fetch the magazine.
-	local leftHandPoint = (origin * CFrame.new(LEFT_HAND + Vector3.new(0, -MAGAZINE_DROP * out, 0))).Position
+	local leftHand = if reloading then sample(LEFT_HAND_TRACK, progress) else LEFT_HAND_AT
+	local leftHandPoint = (origin * leftHand).Position
 	local rightHandPoint = (origin * CFrame.new(RIGHT_HAND)).Position
 	local count = #gunParts
 	local rightShoulder = HIP_RIGHT_SHOULDER:Lerp(AIM_RIGHT_SHOULDER, aimBlend)
-	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend)
+	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend):Lerp(RELOAD_LEFT_SHOULDER, reloadBlend)
 	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint)
 	cframes[count + 2] = arm((camera * CFrame.new(leftShoulder)).Position, leftHandPoint)
 	cframes[count + 3] = origin * FILL_OFFSET
