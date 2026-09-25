@@ -4,6 +4,8 @@
 
 > **Status:** early development — nothing usable yet.
 
+See [docs/DESIGN.md](docs/DESIGN.md) for how OpenSRS works and why.
+
 ## Official downloads
 
 The **only** official source of OpenSRS is this repository's [Releases page](https://github.com/Artificial-IntelligenceAI/OpenSRS/releases). OpenSRS isn't published on the Creator Store or Toolbox, so any copy you find there isn't ours and may contain backdoors.
