@@ -80,8 +80,12 @@ local DEFAULT: Animation = {
 		key(0.4, CFrame.Angles(0.06, 0.05, 0.12)), -- turn to meet the incoming magazine
 		key(0.59, CFrame.Angles(0.02, 0, 0.05)),
 		key(0.69, IDENTITY),
-		key(0.75, CFrame.new(0, 0, -0.05)), -- the right hand pushes against the rack
-		key(0.85, CFrame.new(0, 0, -0.07)),
+		-- Push-pull: as the left hand pulls the slide back, the right hand
+		-- pushes the gun forward along the barrel, so the hands part and
+		-- neither does all the work.
+		key(0.75, CFrame.new(0, 0, -0.02)), -- braced as the left hand takes hold
+		key(0.84, CFrame.new(0, 0, -0.22)), -- pushed out as the slide comes back
+		key(0.9, CFrame.new(0, 0, -0.03)),
 		key(1, IDENTITY),
 	},
 	leftHandTrack = {
@@ -107,7 +111,7 @@ local DEFAULT: Animation = {
 			turn = Vector3.new(-1.4, 0, -0.6),
 			look = Vector3.new(-0.3, 0, 0.15),
 		}, -- magazine slapped home
-		{ t = 0.75, move = Vector3.new(0, 0, 0.35), turn = Vector3.new(0.3, 0, 0), look = Vector3.zero }, -- slide grabbed
+		{ t = 0.75, move = Vector3.new(0, 0, 0.1), turn = Vector3.new(0.3, 0, 0), look = Vector3.zero }, -- slide grabbed
 		{ t = 0.85, move = Vector3.new(0, 0, -1.4), turn = Vector3.new(1.6, 0, 0.4), look = Vector3.new(0.4, 0, 0) }, -- slide slams forward
 	},
 	arc = Vector3.new(-0.3, 0, 0.2),
