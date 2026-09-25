@@ -35,7 +35,7 @@ type Record = {
 	tokens: number, -- inputs this player may process right now
 	packetBudget: number,
 	droppedPackets: number,
-	streamedAround: Vector3?,
+	streaming: boolean, -- a streaming request is in flight
 }
 
 local DT = 1 / Config.tickRate
@@ -45,8 +45,8 @@ local MAX_TICKS_PER_FRAME = 4
 local PACKET_BUDGET_PER_TICK = 2 -- 120 input packets a second
 local MAX_PACKET_BUDGET = 30
 local FLOOD_THRESHOLD = 600 -- dropped packets before a flag is raised
-local STREAM_CHECK_TICKS = 30
-local STREAM_DISTANCE = 32
+local STREAM_REFRESH_TICKS = 60 -- streaming requests expire, so they're renewed every second
+local RESEND_TICKS = 10 -- how often to repeat the spawn until the client starts sending inputs
 local FALL_LIMIT = -500
 local VISIBILITY_GROUPS = 4 -- each player's visibility is checked every 4 ticks (15 a second)
 
@@ -81,23 +81,21 @@ local function spawnPoint(): Vector3
 	return chosen.Position + Vector3.new(0, chosen.Size.Y / 2 + 0.1, 0)
 end
 
+-- Players have no Roblox character, so Roblox doesn't know where to stream the
+-- map for them. Ask for it around their position, and keep asking.
 local function streamAround(record: Record, position: Vector3)
-	if not workspace.StreamingEnabled then
+	if not workspace.StreamingEnabled or record.streaming then
 		return
 	end
-	record.streamedAround = position
-	task.spawn(function()
-		pcall(record.player.RequestStreamAroundAsync, record.player, position)
-	end)
+	record.streaming = true
+	pcall(record.player.RequestStreamAroundAsync, record.player, position)
+	record.streaming = false
 end
 
 local function spawn(record: Record)
 	local position = spawnPoint()
-	if workspace.StreamingEnabled then
-		-- Make sure the map around the spawn has reached the client first.
-		record.streamedAround = position
-		pcall(record.player.RequestStreamAroundAsync, record.player, position)
-	end
+	-- Make sure the map around the spawn has reached the client first.
+	streamAround(record, position)
 	if records[record.player] ~= record then
 		return
 	end
@@ -182,18 +180,17 @@ local function simulate(record: Record)
 	end
 	record.state = state
 
-	-- Always answer a spawn, even before the first input, since the client waits for it.
-	if processed or record.dirty then
+	-- The spawn message can be lost (it's unreliable, and the client may still be
+	-- loading), so keep repeating it until the client starts sending inputs.
+	local waitingForClient = nextSeq == nil and (tickCount + record.slot) % RESEND_TICKS == 0
+	if processed or record.dirty or waitingForClient then
 		record.dirty = false
 		local ack = (nextSeq or 1) - 1
 		remotes.state:FireClient(record.player, Protocol.encodeState(record.epoch, ack, state))
 	end
 
-	if tickCount % STREAM_CHECK_TICKS == 0 then
-		local streamedAround = record.streamedAround
-		if not streamedAround or (streamedAround - state.position).Magnitude > STREAM_DISTANCE then
-			streamAround(record, state.position)
-		end
+	if (tickCount + record.slot) % STREAM_REFRESH_TICKS == 0 then
+		task.spawn(streamAround, record, state.position)
 	end
 end
 
@@ -275,7 +272,7 @@ local function onPlayerAdded(player: Player)
 		tokens = 0,
 		packetBudget = MAX_PACKET_BUDGET,
 		droppedPackets = 0,
-		streamedAround = nil,
+		streaming = false,
 	}
 	records[player] = record
 	task.spawn(spawn, record)

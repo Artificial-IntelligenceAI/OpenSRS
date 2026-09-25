@@ -107,6 +107,12 @@ function Controller.start()
 	snapshotRemote.OnClientEvent:Connect(Puppets.receive)
 	InputMap.start()
 
+	task.delay(5, function()
+		if state == nil then
+			warn("OpenSRS: still waiting for the server to spawn this player after 5 seconds.")
+		end
+	end)
+
 	RunService:BindToRenderStep("OpenSRS", Enum.RenderPriority.Camera.Value + 1, function(frameTime: number)
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 		UserInputService.MouseIconEnabled = false
