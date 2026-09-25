@@ -8,7 +8,7 @@
 		"Automatic": false,
 		"MagazineSize": 17,
 		"ReserveAmmo": 51,
-		"ReloadTime": 1.6,
+		"ReloadTime": 1.3,
 		"EmptyReloadTime": 2.1,
 		"RaiseTime": 0.25,
 		"BulletSpeed": 1340,

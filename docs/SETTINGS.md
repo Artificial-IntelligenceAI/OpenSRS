@@ -59,8 +59,8 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `Automatic` | false | true or false | Keeps firing while the trigger is held. |
 | `MagazineSize` | 17 | 1 to 255 | Rounds in a full magazine. |
 | `ReserveAmmo` | 51 | 0 to 65535 | Spare rounds a player spawns with. |
-| `ReloadTime` | 1.6 | 0.02 to 4 | Seconds to reload. |
-| `EmptyReloadTime` | 2.1 | 0.02 to 4 | Seconds to reload from empty (includes racking the slide). |
+| `ReloadTime` | 1.3 | 0.02 to 4 | Seconds to reload. The reload animation stretches to fit. |
+| `EmptyReloadTime` | 2.1 | 0.02 to 4 | Seconds to reload from empty. The reload animation stretches to fit. |
 | `RaiseTime` | 0.25 | 0 to 2 | Seconds after sprinting before the gun can fire. |
 | `BulletSpeed` | 1340 | 1 to 100000 | Studs a second a bullet travels. |
 | `InstantDamage` | false | true or false | Damage lands the moment the gun fires instead of when the bullet would arrive. |

@@ -139,13 +139,19 @@ local weaponFields: { Field } = {
 	{ name = "Automatic", default = false, description = "Keeps firing while the trigger is held." },
 	{ name = "MagazineSize", default = 17, min = 1, max = 255, description = "Rounds in a full magazine." },
 	{ name = "ReserveAmmo", default = 51, min = 0, max = 65535, description = "Spare rounds a player spawns with." },
-	{ name = "ReloadTime", default = 1.6, min = 0.02, max = 4, description = "Seconds to reload." },
+	{
+		name = "ReloadTime",
+		default = 1.3,
+		min = 0.02,
+		max = 4,
+		description = "Seconds to reload. The reload animation stretches to fit.",
+	},
 	{
 		name = "EmptyReloadTime",
 		default = 2.1,
 		min = 0.02,
 		max = 4,
-		description = "Seconds to reload from empty (includes racking the slide).",
+		description = "Seconds to reload from empty. The reload animation stretches to fit.",
 	},
 	{
 		name = "RaiseTime",

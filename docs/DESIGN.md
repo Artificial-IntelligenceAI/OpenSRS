@@ -81,6 +81,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 - **Bullet speed.** Set per weapon. By default the hit is decided the instant the gun fires, but damage lands when the bullet would arrive, based on distance and speed. Games can switch any weapon to instant damage instead.
 - **Accuracy.** Spread depends on movement state (standing, walking, sprinting, jumping, crouching, prone, aiming down sights). The defaults are forgiving, not Valorant-harsh. Every value is configurable per weapon and per state.
 - **Damage.** Per weapon, with falloff over distance, a headshot multiplier and a limb multiplier. Players have 100 health and respawn 3 seconds after dying.
+- **Reload animation.** Only for show, in the player's own view: drop the old magazine, slap in the new one, roll the gun onto its side and rack the slide, then come back up ready. It's timed as fractions of the reload, so it stretches to whatever `ReloadTime` or `EmptyReloadTime` a game sets. A game can change any part of it (poses, timings, hand paths, how springy it feels) per weapon with a ModuleScript at `Assets/Weapons/<Name>/Animation` that returns just the fields to change; the fields and their defaults are in `src/Client/WeaponAnimation.luau`.
 
 ## Networking
 
