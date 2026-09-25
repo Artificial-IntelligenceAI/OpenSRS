@@ -45,6 +45,7 @@ local group = SoundService:FindFirstChild("OpenSRS")
 if not (group and group:IsA("SoundGroup")) then
 	local created = Instance.new("SoundGroup")
 	created.Name = "OpenSRS"
+	created.Volume = 1 -- SoundGroups start at half volume
 	created.Parent = SoundService
 	group = created
 end
