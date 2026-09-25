@@ -4,10 +4,11 @@
 -- The gun and arms in the player's own view. It only exists on this client and
 -- never affects gameplay.
 --
--- The gun is held close to the eye so it reads clearly: from the hip it comes
--- in from the lower right, and aiming puts the front sight on the center of
--- the screen with the gun tilted up slightly, so you look along its top. It sways against mouse movement, bobs while walking,
--- kicks on each shot (the slide cycles), and drops the magazine while reloading.
+-- From the hip the gun comes in from the lower right. Aiming holds it out at
+-- arm's length with both arms reaching up from the bottom of the screen and
+-- the sights lined up on the center. It sways against mouse movement, bobs
+-- while walking, kicks on each shot (the slide cycles), and drops the magazine
+-- while reloading.
 
 local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
@@ -19,21 +20,19 @@ local GunModel = require(script.Parent.GunModel)
 type State = Types.State
 
 -- Where the gun's grip sits relative to the camera in each pose.
-local AIM_DISTANCE = 1.05 -- how far in front of the eye the front sight sits when aiming
-local AIM_DROP = 0.1 -- how far below the aim point the front sight sits, so targets stay visible
-local AIM_TILT = math.rad(7) -- the gun's rear sits lower than its front when aiming
-local HIP = CFrame.new(0.38, -0.72, -1.0) * CFrame.Angles(0.03, 0.07, 0.1)
+local AIM_REACH = 1.8 -- how far in front of the eye the rear sight sits when aiming: arm's length
+local HIP = CFrame.new(0.4, -0.7, -1.3) * CFrame.Angles(0.03, 0.07, 0.1)
 local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
 local RELOAD = CFrame.new(0.12, -0.62, -0.8) * CFrame.Angles(0.55, 0.25, 0.6)
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
-local RIGHT_SHOULDER = Vector3.new(0.75, -1.7, 0.1)
-local LEFT_SHOULDER = Vector3.new(-0.55, -1.8, 0)
+local RIGHT_SHOULDER = Vector3.new(0.85, -1.5, 0.2)
+local LEFT_SHOULDER = Vector3.new(-0.85, -1.5, 0.2)
 local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around the grip
-local LEFT_HAND = Vector3.new(-0.07, 0.14, -0.04)
-local ARM_WIDTH = 0.36
-local ARM_LENGTH = 2
+local LEFT_HAND = Vector3.new(-0.07, 0.14, -0.02)
+local ARM_WIDTH = 0.5
+local ARM_LENGTH = 2.6 -- long enough to reach off screen from the hand
 
 local KICK_TIME = 0.07
 local KICK_BACK = 0.05
@@ -92,9 +91,7 @@ end
 
 local MUZZLE = localPoint("Muzzle", Vector3.new(0, 0.44, -1))
 local SIGHT = localPoint("RearSight", Vector3.new(0, 0.53, 0.05))
--- The front sight: on top of the slide, just behind the muzzle.
-local FRONT_SIGHT = Vector3.new(0, SIGHT.Position.Y, MUZZLE.Position.Z + 0.06)
-local AIM = CFrame.new(0, -AIM_DROP, -AIM_DISTANCE) * CFrame.Angles(AIM_TILT, 0, 0) * CFrame.new(-FRONT_SIGHT)
+local AIM = CFrame.new(0, 0, -AIM_REACH) * CFrame.new(-SIGHT.Position)
 
 local parts: { BasePart } = table.clone(gunParts)
 table.insert(parts, rightArm)

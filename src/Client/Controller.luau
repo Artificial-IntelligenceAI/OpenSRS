@@ -36,7 +36,7 @@ local CORRECTION_DECAY = 15 -- how fast a visible correction fades out
 local EYE_SMOOTHING = 12 -- how fast the camera follows stance changes
 local LEAN_ROLL = math.rad(12)
 local HIP_FOV = 70
-local AIM_FOV = 55
+local AIM_FOV = 64 -- aiming barely zooms
 local FOV_SPEED = 14
 
 local Controller = {}
