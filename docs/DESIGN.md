@@ -56,9 +56,12 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Visibility (anti-wallhack)
 
-- Each player only receives the characters they can see from their first-person eye position, including while leaning and prone. This applies to **teammates too**.
-- Characters are sent slightly before they come into view so they don't pop in around corners.
-- Visibility is checked less often than movement (about 15 times a second, with a margin) and runs across CPU cores with Parallel Luau.
+- Each player only receives the characters they can see from their first-person eye position. This applies to **teammates too**.
+- A target counts as visible if a clear line runs from any of the viewer's possible eye positions to any of the target's body parts (head, torso, arms, legs).
+- **No pop-in.** Eyes and bodies are pushed 0.25 s ahead along their velocity, and the viewer's possible eyes include both full leans. Once seen, a target stays known for 0.4 s.
+- **Nothing is pushed through walls.** Looking ahead stops at the first wall, so running at a wall never reveals what's behind it.
+- **What blocks sight.** Any part that is less than 25% transparent blocks sight, even if it can be walked through (like bushes). Glass and other see-through parts don't.
+- **Cost.** Each player's view is checked 15 times a second, with players split into four groups so the work is spread over ticks. In a worst-case test (32 players in a dense maze where only 3% of pairs can see each other), this took about 3 ms per server tick. Moving it onto several CPU cores with Parallel Luau is planned if real games need it.
 - Gunshot effects and sounds (tracers, muzzle flashes) are only sent to players close enough to see or hear them.
 - Each player only receives their own ammo and weapon state.
 

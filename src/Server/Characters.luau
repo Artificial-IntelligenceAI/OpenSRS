@@ -18,6 +18,7 @@ local Protocol = require(Shared.Protocol)
 local Types = require(Shared.Types)
 local Flags = require(script.Parent.Flags)
 local Remotes = require(script.Parent.Remotes)
+local Visibility = require(script.Parent.Visibility)
 
 type Input = Types.Input
 type State = Types.State
@@ -47,6 +48,7 @@ local FLOOD_THRESHOLD = 600 -- dropped packets before a flag is raised
 local STREAM_CHECK_TICKS = 30
 local STREAM_DISTANCE = 32
 local FALL_LIMIT = -500
+local VISIBILITY_GROUPS = 4 -- each player's visibility is checked every 4 ticks (15 a second)
 
 local Characters = {}
 
@@ -195,12 +197,24 @@ local function simulate(record: Record)
 	end
 end
 
+local function updateVisibility()
+	local subjects: { Visibility.Subject } = {}
+	for _, record in records do
+		local state = record.state
+		if state then
+			table.insert(subjects, { slot = record.slot, state = state, leanOffset = Eye.leanOffset(state, world) })
+		end
+	end
+	Visibility.update(subjects, os.clock(), tickCount % VISIBILITY_GROUPS, VISIBILITY_GROUPS)
+end
+
 local function sendSnapshots()
-	local visible: { [Player]: Protocol.Remote } = {}
+	local now = os.clock()
+	local remote: { [Player]: Protocol.Remote } = {}
 	for player, record in records do
 		local state = record.state
 		if state then
-			visible[player] = {
+			remote[player] = {
 				position = state.position,
 				yaw = state.yaw,
 				pitch = state.pitch,
@@ -210,12 +224,12 @@ local function sendSnapshots()
 		end
 	end
 
-	for viewer in records do
+	for viewer, viewerRecord in records do
 		local players: { [number]: Protocol.Remote } = {}
-		for other, remote in visible do
-			-- Visibility filtering (anti-wallhack) plugs in here.
-			if other ~= viewer then
-				players[records[other].slot] = remote
+		for other, entry in remote do
+			local slot = records[other].slot
+			if other ~= viewer and Visibility.canSee(viewerRecord.slot, slot, now) then
+				players[slot] = entry
 			end
 		end
 		remotes.snapshot:FireClient(viewer, Protocol.encodeSnapshot(tickCount, players))
@@ -227,6 +241,7 @@ local function tick()
 	for _, record in records do
 		simulate(record)
 	end
+	updateVisibility()
 	if tickCount % Config.snapshotInterval == 0 then
 		sendSnapshots()
 	end
@@ -271,6 +286,7 @@ local function onPlayerRemoving(player: Player)
 	if record then
 		records[player] = nil
 		slots[record.slot] = nil
+		Visibility.forget(record.slot)
 	end
 end
 
