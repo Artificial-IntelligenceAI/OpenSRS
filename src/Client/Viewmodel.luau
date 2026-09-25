@@ -153,6 +153,7 @@ end
 
 local MUZZLE = localPoint("Muzzle", Vector3.new(0, 0.44, -1))
 local SIGHT = localPoint("RearSight", Vector3.new(0, 0.53, 0.05))
+local EJECTION = localPoint("EjectionPort", Vector3.new(0.06, 0.5, -0.41))
 local AIM = CFrame.new(0, 0, -AIM_REACH) * CFrame.new(-SIGHT.Position)
 
 local fill = limb("FillLight", Vector3.one * 0.05, Color3.new(1, 1, 1))
@@ -175,6 +176,7 @@ local aimBlend = 0
 local reloadBlend = 0
 local kick = 0
 local reloadLength = 0
+local lastOrigin = CFrame.identity -- where the gun was drawn last frame
 local droppedFrom: CFrame? = nil -- where the gun was, relative to the view, when the old magazine was let go
 local sway = Vector2.zero
 local stepPhase = 0 -- through the walk cycle: each step is half a turn
@@ -192,6 +194,11 @@ local random = Random.new()
 
 function Viewmodel.show(visible: boolean)
 	model.Parent = if visible then workspace.CurrentCamera else nil
+end
+
+-- Where the gun's ejection port is, as of the last frame.
+function Viewmodel.ejectionPort(): CFrame
+	return lastOrigin * EJECTION
 end
 
 function Viewmodel.fired()
@@ -412,6 +419,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	Spring.step(look, Vector3.zero, step)
 	local gunMotion = CFrame.new(gunMove.position) * turned(gunTurn.position)
 	local origin = camera * bob * swayFrame * current * bobRoll * gunMotion
+	lastOrigin = origin
 
 	-- The slide locks back on an empty magazine; the reload's rack pulls it
 	-- back and lets it go.

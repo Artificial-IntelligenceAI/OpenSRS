@@ -11,6 +11,7 @@ local Body = require(Shared.Body)
 local Config = require(Shared.Config)
 local Protocol = require(Shared.Protocol)
 local Avatar = require(script.Parent.Avatar)
+local GunModel = require(script.Parent.GunModel)
 
 type Snapshot = Protocol.Snapshot
 type Remote = Protocol.Remote
@@ -76,6 +77,17 @@ end
 
 -- The server tick other players are being drawn at right now, or 0 before
 -- the first snapshot. Shots tell the server this so it can rewind to it.
+-- Where the ejection port of the gun held by the player in `slot` is, if that
+-- player is being shown.
+function Puppets.ejectionPort(slot: number): CFrame?
+	local avatar = avatars[slot]
+	if not avatar or not avatar.model.Parent then
+		return nil
+	end
+	local port = GunModel.point(avatar.gun, "EjectionPort")
+	return if port then port.WorldCFrame else nil
+end
+
 function Puppets.renderTick(): number
 	local offset = clockOffset
 	if offset == nil then
