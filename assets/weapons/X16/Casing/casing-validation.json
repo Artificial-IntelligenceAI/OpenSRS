@@ -1,0 +1,86 @@
+{
+  "triangles": 284,
+  "mesh_count": 1,
+  "dimensions_studs": [
+    0.09875362366437912,
+    0.051450081169605255,
+    0.051450081169605255
+  ],
+  "expected_fp_scale_dimensions_studs": [
+    0.09875361884871943,
+    0.051450076169588466,
+    0.051450076169588466
+  ],
+  "source_case_dimensions_art_units": [
+    0.2883291244506836,
+    0.2883291244506836,
+    0.5534208416938783
+  ],
+  "fp_scale_factor": 0.17844217530091586,
+  "origin": [
+    0,
+    0,
+    0
+  ],
+  "long_axis": "+X",
+  "open_mouth": "+X end; recessed interior ends at source height 0.105",
+  "rim_and_extractor_groove_preserved": true,
+  "watertight_wall_topology": true,
+  "reimport_passed": true,
+  "texture_resolution": [
+    512,
+    512
+  ],
+  "max_visible_40_cases_triangles": 11360,
+  "external_texture_paths_verified": true,
+  "uv_bounds_verified": true,
+  "reimport_geometric_vertices": 144,
+  "open_mouth_centerline_ray_verified": true,
+  "centerline_first_surface_x_studs": -0.030640386044979095,
+  "profile_samples_x_radius_studs": [
+    [
+      -0.04937681,
+      0.024040410491268597
+    ],
+    [
+      -0.04615593,
+      0.025725041603752486
+    ],
+    [
+      -0.04516736,
+      0.025113753974437714
+    ],
+    [
+      -0.04368272,
+      0.02270538405490651
+    ],
+    [
+      -0.03750683,
+      0.022413108629541132
+    ],
+    [
+      -0.03627202,
+      0.023013649884407784
+    ],
+    [
+      -0.03331523,
+      0.025301252740498003
+    ],
+    [
+      -0.03064038,
+      0.023019041544903068
+    ],
+    [
+      0.04152699,
+      0.02492913485378641
+    ],
+    [
+      0.04775105,
+      0.024804800748825073
+    ],
+    [
+      0.04937682,
+      0.024415776269271626
+    ]
+  ]
+}

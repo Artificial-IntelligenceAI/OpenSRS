@@ -132,7 +132,7 @@ local function step(casing: Casing, dt: number)
 	local along = casing.velocity - normal * into
 	casing.velocity = along * SLIDE - normal * into * BOUNCE
 	casing.spin *= SLIDE
-	local at = hit.Position + normal * (SIZE.Y / 2)
+	local at = hit.Position + normal * (part.Size.Y / 2)
 	if not casing.landed then
 		casing.landed = true
 		Sounds.at(casing.weapon, Sounds.Cues.Casing, hit.Position)

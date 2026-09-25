@@ -24,6 +24,7 @@ attachments. Moving parts are named `Slide`, `Barrel`, `Trigger` and `Magazine`.
 - `X16-texture-manifest.json` — which textures go on which mesh.
 - `validation.json` and `X16-comparison.png` — triangle counts, checks, and a render comparing both versions to the original.
 - `ASTRA-NOTES.txt` — import notes from the model's author.
+- `Casing/` — the X16's spent case: `X16-Spent-Casing.fbx` (284 triangles, 0.099 × 0.051 studs, long axis X, mouth toward +X) with its four PBR textures, and Astra's README and checks.
 - `sounds/` — the X16's sounds: 20 WAVs (48 kHz mono) edited from public-domain recordings, mostly a real Walther PPQ 9mm. `SOURCES.md` lists the original of each file and how it was edited.
 
 To use your own copy of the meshes and textures, import the FBX with Studio's 3D Importer, then scale it to 1.2 studs and turn it to face -Z.
