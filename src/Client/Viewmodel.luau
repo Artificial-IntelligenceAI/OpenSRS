@@ -27,11 +27,13 @@ local RELOAD = CFrame.new(0.12, -0.62, -0.8) * CFrame.Angles(0.55, 0.25, 0.6)
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
-local RIGHT_SHOULDER = Vector3.new(0.85, -1.5, 0.2)
-local LEFT_SHOULDER = Vector3.new(-0.85, -1.5, 0.2)
+-- Two-handed pistol grip: the right arm runs straight out to the grip, and
+-- the left arm comes across from the left to wrap around the right hand.
+local RIGHT_SHOULDER = Vector3.new(0.2, -1.45, 0.5)
+local LEFT_SHOULDER = Vector3.new(-1.2, -1.4, 0.15)
 local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around the grip
-local LEFT_HAND = Vector3.new(-0.07, 0.14, -0.02)
-local ARM_WIDTH = 0.5
+local LEFT_HAND = Vector3.new(-0.1, 0.1, 0.02) -- wrapped around the right hand, from the left
+local ARM_WIDTH = 0.38
 local ARM_LENGTH = 2.6 -- long enough to reach off screen from the hand
 
 local KICK_TIME = 0.07
