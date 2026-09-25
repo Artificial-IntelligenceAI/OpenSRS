@@ -39,7 +39,7 @@ function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 	local pulling = bit32.btest(buttons, Buttons.Fire)
 	local wantsReload = bit32.btest(buttons, Buttons.Reload) or (pulling and state.ammo == 0)
 	if wantsReload and state.reloadTicks == 0 and state.ammo < weapon.magazine and state.reserve > 0 then
-		state.reloadTicks = if state.ammo == 0 then weapon.reloadEmptyTicks else weapon.reloadTicks
+		state.reloadTicks = weapon.reloadTicks
 	end
 
 	-- Semi-automatic weapons need a fresh pull for every shot.

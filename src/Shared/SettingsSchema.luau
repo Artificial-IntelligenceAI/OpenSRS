@@ -147,13 +147,6 @@ local weaponFields: { Field } = {
 		description = "Seconds to reload. The reload animation stretches to fit.",
 	},
 	{
-		name = "EmptyReloadTime",
-		default = 1.5,
-		min = 0.02,
-		max = 4,
-		description = "Seconds to reload from empty. The reload animation stretches to fit.",
-	},
-	{
 		name = "RaiseTime",
 		default = 0.25,
 		min = 0,

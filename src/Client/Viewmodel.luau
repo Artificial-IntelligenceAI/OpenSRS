@@ -301,7 +301,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local recoil = CFrame.new(0, KICK_UP * amount, KICK_BACK * amount) * CFrame.Angles(KICK_TILT * amount, 0, 0)
 
 	local reloading = progress > 0
-	local empty = reloading and reloadLength > weapon.reloadTicks
+	local empty = reloading and state.ammo == 0 -- the new rounds only count once the reload is done
 
 	-- The gun follows the reload's guide through springs, and gets knocked at
 	-- the moments that would jolt it; the view gets a smaller nudge.
