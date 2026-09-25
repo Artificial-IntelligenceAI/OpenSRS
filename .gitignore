@@ -7,8 +7,9 @@
 /ServerPackages/
 /DevPackages/
 
-# Built Roblox files
+# Built Roblox files (the art in assets/ is source, not build output)
 *.rbxm
+!assets/roblox/*.rbxm
 *.rbxl
 *.rbxlx.lock
 *.rbxl.lock
