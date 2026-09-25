@@ -7,7 +7,7 @@
 -- From the hip the gun comes in from the lower right. Aiming holds it out at
 -- arm's length with both arms reaching up from the bottom of the screen and
 -- the sights lined up on the center. It sways against mouse movement, bobs
--- while walking, and kicks on each shot as the slide cycles. The slide locks
+-- while walking, and kicks back and up on each shot as the slide cycles. The slide locks
 -- back on the last round. Reloading drops the old magazine, fetches a new one
 -- with the left hand and seats it, then rolls the gun onto its side and racks
 -- the slide over the top. So it reads as a person rather than a machine, the
@@ -48,10 +48,6 @@ local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around th
 local ARM_WIDTH = 0.38
 local ARM_LENGTH = 1.3 -- forearms only: long enough to run off screen, never near the eye
 
-local KICK_TIME = 0.07
-local KICK_BACK = 0.05
-local KICK_UP = 0.025
-local KICK_TILT = 0.12
 local SLIDE_TRAVEL = 0.19
 local BARREL_TRAVEL = 0.06
 
@@ -193,7 +189,18 @@ function Viewmodel.show(visible: boolean)
 end
 
 function Viewmodel.fired()
-	kick = KICK_TIME
+	kick = animation.slideCycle
+	-- The shot knocks the gun through the same springs the reload uses, so it
+	-- overshoots a little and settles, and each shot is a little different.
+	local scale = 1 - (1 - animation.aimedFire) * aimBlend
+	local variation = animation.fireVariation
+	local wobble = Vector3.new(
+		random:NextNumber(0, variation.X),
+		random:NextNumber(-variation.Y, variation.Y),
+		random:NextNumber(-variation.Z, variation.Z)
+	)
+	Spring.impulse(gunMove, animation.fireMove * scale)
+	Spring.impulse(gunTurn, (animation.fireTurn + wobble) * scale)
 end
 
 -- A small turn of the view from the reload's jolts, to put on the camera.
@@ -310,8 +317,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local bob = CFrame.new(math.sin(phase) * strength, -math.abs(math.cos(phase)) * strength, 0)
 
 	kick = math.max(kick - frameTime, 0)
-	local amount = kick / KICK_TIME
-	local recoil = CFrame.new(0, KICK_UP * amount, KICK_BACK * amount) * CFrame.Angles(KICK_TILT * amount, 0, 0)
+	local cycle = if animation.slideCycle > 0 then kick / animation.slideCycle else 0
 
 	local reloading = progress > 0
 	local empty = reloading and state.ammo == 0 -- the new rounds only count once the reload is done
@@ -343,13 +349,13 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	Spring.step(gunTurn, rotationOf(guide), step)
 	Spring.step(look, Vector3.zero, step)
 	local gunMotion = CFrame.new(gunMove.position) * turned(gunTurn.position)
-	local origin = camera * bob * swayFrame * current * recoil * gunMotion
+	local origin = camera * bob * swayFrame * current * gunMotion
 
 	-- The slide locks back on an empty magazine; the reload's rack pulls it
 	-- back and lets it go.
 	local slideBack
 	if not reloading then
-		slideBack = if state.ammo == 0 then 1 else amount
+		slideBack = if state.ammo == 0 then 1 else cycle
 	elseif progress >= animation.rackRelease then
 		slideBack = 0
 	elseif progress >= animation.rackPull then

@@ -1,8 +1,8 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- How a weapon moves in the player's own view while drawing it after a spawn
--- and while reloading. Times are fractions of the draw or the reload, from 0
+-- How a weapon moves in the player's own view when fired, while drawing it
+-- after a spawn and while reloading. Times are fractions of the draw or the reload, from 0
 -- to 1, so the same animation fits any DrawTime or ReloadTime set in Settings. Positions are in studs, angles in radians, and offsets
 -- are in the gun's space (grip at the origin, muzzle toward -Z) unless a field
 -- says otherwise.
@@ -38,6 +38,11 @@ export type Animation = {
 	drawTrack: { Key }, -- drawing after a spawn: where the gun is, on top of the ready position; ends at no offset
 	drawLeftHandTrack: { Key }, -- where the left hand goes while drawing
 	drawHits: { Hit },
+	fireMove: Vector3, -- each shot kicks the gun this fast (studs a second, in the gun's space; +Z is back toward you)
+	fireTurn: Vector3, -- and turns it this fast (radians a second; +X is muzzle up)
+	fireVariation: Vector3, -- plus up to this much random turn, so no two shots kick the same
+	aimedFire: number, -- the kick is scaled by this while aiming, for a steadier sight picture
+	slideCycle: number, -- seconds the slide takes to cycle after a shot
 	magazineReleased: number, -- the old magazine starts sliding out
 	magazineFree: number, -- it's out, and starts falling
 	magazineGone: number, -- it's out of view
@@ -131,6 +136,11 @@ local DEFAULT: Animation = {
 		key(0.8, LEFT_HAND),
 		key(1, LEFT_HAND),
 	},
+	fireMove = Vector3.new(0, 0.6, 1.6),
+	fireTurn = Vector3.new(3.2, 0, 0),
+	fireVariation = Vector3.new(0.4, 0.6, 0.8),
+	aimedFire = 0.6,
+	slideCycle = 0.07,
 	drawHits = {
 		{ t = 0.8, move = Vector3.new(0, -0.3, 0), turn = Vector3.new(-0.4, 0, 0.2), look = Vector3.zero }, -- the left hand takes hold
 	},
