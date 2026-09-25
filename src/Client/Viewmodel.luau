@@ -101,6 +101,13 @@ local FILL_OFFSET = CFrame.new(-0.2, 1.45, 0.45) -- in the gun's space: high abo
 local FILL_BRIGHTNESS = 4
 local FILL_RANGE = 1.35 -- reaches the slide, not the arms below it
 local FILL_COLOR = Color3.fromRGB(255, 244, 230)
+-- Lights in Roblox light everything in range, so near a wall, floor or ceiling
+-- the fill would throw a bright spot on it. It fades out as a surface comes
+-- within its range, and is off by the time one is three-quarters of the way in.
+local FILL_CLEAR = FILL_RANGE * 1.05
+local FILL_OFF = FILL_RANGE * 0.75
+local FILL_FADE = 15 -- how quickly it fades in and out
+local FILL_PROBES = { Vector3.xAxis, -Vector3.xAxis, Vector3.yAxis, -Vector3.yAxis, Vector3.zAxis, -Vector3.zAxis }
 
 local SWAY_AMOUNT = 0.0025 -- radians per pixel of mouse movement
 local SWAY_LIMIT = 0.08
@@ -164,6 +171,11 @@ light.Range = FILL_RANGE
 light.Color = FILL_COLOR
 light.Shadows = false
 light.Parent = fill
+local fillLevel = 1
+local probe = RaycastParams.new()
+probe.FilterType = Enum.RaycastFilterType.Exclude
+probe.FilterDescendantsInstances = { model }
+probe.IgnoreWater = true
 
 local parts: { BasePart } = table.clone(gunParts)
 table.insert(parts, rightArm)
@@ -463,7 +475,18 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend):Lerp(RELOAD_LEFT_SHOULDER, reloadBlend)
 	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint)
 	cframes[count + 2] = arm((camera * CFrame.new(leftShoulder)).Position, leftHandPoint)
-	cframes[count + 3] = origin * FILL_OFFSET
+	local fillAt = origin * FILL_OFFSET
+	cframes[count + 3] = fillAt
+	local nearest = FILL_CLEAR
+	for _, direction in FILL_PROBES do
+		local hit = workspace:Raycast(fillAt.Position, direction * FILL_CLEAR, probe)
+		if hit then
+			nearest = math.min(nearest, hit.Distance)
+		end
+	end
+	local wanted = math.clamp((nearest - FILL_OFF) / (FILL_CLEAR - FILL_OFF), 0, 1)
+	fillLevel += (wanted - fillLevel) * (1 - math.exp(-FILL_FADE * frameTime))
+	light.Brightness = FILL_BRIGHTNESS * fillLevel
 	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 
 	return (origin * MUZZLE).Position
