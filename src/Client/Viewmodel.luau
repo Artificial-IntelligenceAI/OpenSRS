@@ -31,6 +31,12 @@ type State = Types.State
 local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when aiming: arms outstretched
 local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
 local POSE_SPEED = 16
+-- The gun is only drawn, not solid, so up against a wall it would poke through.
+-- It's pulled in low and close instead, by as much as a wall is in the way.
+local TUCKED = CFrame.new(0.6, -1.05, -0.35) * CFrame.Angles(0.75, 0.6, 0.35) -- low and close, turned in
+local TUCK_MARGIN = 0.25 -- studs kept between the muzzle and a wall
+local TUCK_RANGE = 1 -- how much further in a wall must be for the gun to tuck fully
+local TUCK_SPEED = 20 -- how quickly it tucks; it comes back out at half that
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
 -- Two-handed pistol grip. Aiming: the right arm runs straight out to the
@@ -201,6 +207,7 @@ table.insert(parts, fill)
 local cframes: { CFrame } = table.create(#parts)
 
 local current = HIP
+local tuck = 0
 local aimBlend = 0
 local reloadBlend = 0
 local kick = 0
@@ -367,6 +374,23 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		else HIP
 	local blend = 1 - math.exp(-POSE_SPEED * frameTime)
 	current = current:Lerp(target, blend)
+
+	-- Tuck the gun away from a wall it would otherwise go through: look from
+	-- the eye to where the muzzle would be, and straight ahead that far.
+	local eye = camera.Position
+	local muzzleAt = (camera * current * MUZZLE).Position
+	local reach = (muzzleAt - eye).Magnitude + TUCK_MARGIN
+	local blocked = 0
+	for _, toward in { muzzleAt - eye, camera.LookVector } do
+		local hit = workspace:Raycast(eye, toward.Unit * reach, probe)
+		if hit then
+			blocked = math.max(blocked, reach - hit.Distance)
+		end
+	end
+	local tuckTarget = math.clamp(blocked / TUCK_RANGE, 0, 1)
+	local tuckRate = if tuckTarget > tuck then TUCK_SPEED else TUCK_SPEED / 2
+	tuck += (tuckTarget - tuck) * (1 - math.exp(-tuckRate * frameTime))
+	local held = current:Lerp(TUCKED, tuck * tuck * (3 - 2 * tuck))
 	aimBlend += ((if aiming then 1 else 0) - aimBlend) * blend
 	reloadBlend += ((if handling then 1 else 0) - reloadBlend) * blend
 	local motion = 1 - (1 - AIMED_MOTION) * aimBlend
@@ -447,7 +471,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	Spring.step(gunTurn, rotationOf(guide), step)
 	Spring.step(look, Vector3.zero, step)
 	local gunMotion = CFrame.new(gunMove.position) * turned(gunTurn.position)
-	local origin = camera * bob * swayFrame * current * bobRoll * gunMotion
+	local origin = camera * bob * swayFrame * held * bobRoll * gunMotion
 	lastOrigin = origin
 
 	-- The slide locks back on an empty magazine; the reload's rack pulls it
@@ -503,7 +527,6 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	end
 	-- A light that has gone into a wall can't see that wall from inside it:
 	-- anything between the eye and the light turns it off too.
-	local eye = camera.Position
 	if workspace:Raycast(eye, fillAt.Position - eye, probe) then
 		nearest = 0
 	end
