@@ -1,12 +1,12 @@
-# OpenRGS
+# OpenSRS
 
-An open-source Roblox gun system.
+**Open-sourced Secure Roblox Systems** — cheat-resistant, server-authoritative characters and weapons for Roblox.
 
 > **Status:** early development — nothing usable yet.
 
 ## Licensing
 
-OpenRGS uses two licenses, split by directory:
+OpenSRS uses two licenses, split by directory:
 
 | What | Where | License |
 | --- | --- | --- |
@@ -17,6 +17,6 @@ Release builds (e.g. `.rbxm` files) bundle both. The scripts inside are under Ap
 
 ### Crediting the models
 
-CC BY 4.0 requires attribution. If you use OpenRGS models in your game, credit them somewhere players can see, such as the game description or an in-game credits screen:
+CC BY 4.0 requires attribution. If you use OpenSRS models in your game, credit them somewhere players can see, such as the game description or an in-game credits screen:
 
-> Weapon models from OpenRGS (https://github.com/Artificial-IntelligenceAI/OpenRGS), licensed under CC BY 4.0.
+> Weapon models from OpenSRS (https://github.com/Artificial-IntelligenceAI/OpenSRS), licensed under CC BY 4.0.
