@@ -23,6 +23,9 @@ export type Key = { t: number, value: CFrame }
 -- space for the gun and the camera's for the view.
 export type Hit = { t: number, move: Vector3, turn: Vector3, look: Vector3 }
 
+-- A sound played when the draw or reload reaches `t` (see Sounds.Cues).
+export type SoundCue = { t: number, cue: string }
+
 export type Animation = {
 	leftHand: CFrame, -- where the left hand holds the gun outside of reloads
 	reloadPose: CFrame, -- the grip relative to the camera while changing magazines
@@ -38,6 +41,8 @@ export type Animation = {
 	drawTrack: { Key }, -- drawing after a spawn: where the gun is, on top of the ready position; ends at no offset
 	drawLeftHandTrack: { Key }, -- where the left hand goes while drawing
 	drawHits: { Hit },
+	drawSounds: { SoundCue },
+	reloadSounds: { SoundCue },
 	fireMove: Vector3, -- each shot kicks the gun this fast (studs a second, in the gun's space; +Z is back toward you)
 	fireTurn: Vector3, -- and turns it this fast (radians a second; +X is muzzle up)
 	fireVariation: Vector3, -- plus up to this much random turn, so no two shots kick the same
@@ -161,6 +166,16 @@ local DEFAULT: Animation = {
 	sprintSway = 0.04,
 	sprintBounce = 0.03,
 	sprintSwing = Vector3.new(0.06, 0.07, 0.1),
+	drawSounds = {
+		{ t = 0.01, cue = "Draw" },
+	},
+	reloadSounds = {
+		{ t = 0.15, cue = "MagazineOut" },
+		{ t = 0.32, cue = "MagazineFloor" }, -- the dropped magazine lands
+		{ t = 0.59, cue = "MagazineIn" },
+		{ t = 0.75, cue = "SlideBack" },
+		{ t = 0.85, cue = "SlideForward" },
+	},
 	drawHits = {
 		{ t = 0.8, move = Vector3.new(0, -0.3, 0), turn = Vector3.new(-0.4, 0, 0.2), look = Vector3.zero }, -- the left hand takes hold
 	},

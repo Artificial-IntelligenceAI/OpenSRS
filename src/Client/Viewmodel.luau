@@ -21,6 +21,7 @@ local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
 local Avatar = require(script.Parent.Avatar)
 local GunModel = require(script.Parent.GunModel)
+local Sounds = require(script.Parent.Sounds)
 local Spring = require(script.Parent.Spring)
 local WeaponAnimation = require(script.Parent.WeaponAnimation)
 
@@ -380,12 +381,22 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 			Spring.impulse(look, hit.look)
 		end
 	end
+	for _, sound in animation.reloadSounds do
+		if lastProgress < sound.t and progress >= sound.t then
+			Sounds.play(weapon.name, sound.cue)
+		end
+	end
 	lastProgress = progress
 	for _, hit in animation.drawHits do
 		if lastDrawProgress < hit.t and drawProgress >= hit.t then
 			Spring.impulse(gunMove, hit.move)
 			Spring.impulse(gunTurn, hit.turn)
 			Spring.impulse(look, hit.look)
+		end
+	end
+	for _, sound in animation.drawSounds do
+		if lastDrawProgress < sound.t and drawProgress >= sound.t then
+			Sounds.play(weapon.name, sound.cue)
 		end
 	end
 	lastDrawProgress = drawProgress

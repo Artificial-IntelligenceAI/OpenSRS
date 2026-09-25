@@ -23,6 +23,7 @@ local Effects = require(script.Parent.Effects)
 local Hud = require(script.Parent.Hud)
 local InputMap = require(script.Parent.InputMap)
 local Puppets = require(script.Parent.Puppets)
+local Sounds = require(script.Parent.Sounds)
 local Viewmodel = require(script.Parent.Viewmodel)
 
 type Input = Types.Input
@@ -38,6 +39,9 @@ local LEAN_ROLL = math.rad(12)
 local HIP_FOV = 70
 local AIM_FOV = 64 -- aiming barely zooms
 local FOV_SPEED = 14
+local CASING_DELAY = 0.35 -- seconds after a shot that its case lands
+local DISTANT_SHOT = 200 -- studs beyond which others' shots use the distant sound
+local NEAR_MISS = 4 -- studs a bullet must pass within to be heard going by
 
 local Controller = {}
 
@@ -156,8 +160,16 @@ function Controller.start()
 		local delay = if weapon.instantDamage then 0 else (shot.hit - shot.origin).Magnitude / weapon.bulletSpeed
 		task.delay(delay, function()
 			Effects.impact(shot.hit, shot.kind)
-			if shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head then
+			local struck = shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head
+			if shot.kind ~= Protocol.HitKind.Nothing then
+				Sounds.at(weapon.name, if struck then Sounds.Cues.ImpactBody else Sounds.Cues.ImpactWorld, shot.hit)
+			end
+			if struck then
 				Hud.hit(shot.kind)
+				local played = shot.kind == Protocol.HitKind.Head and Sounds.play(weapon.name, Sounds.Cues.Headshot)
+				if not played then
+					Sounds.play(weapon.name, Sounds.Cues.HitMarker)
+				end
 			end
 		end)
 	end)
@@ -170,8 +182,27 @@ function Controller.start()
 		end
 		Effects.muzzleFlash(shot.origin)
 		Effects.tracer(shot.origin, shot.hit, weapon.bulletSpeed)
-		local delay = (shot.hit - shot.origin).Magnitude / weapon.bulletSpeed
-		task.delay(delay, Effects.impact, shot.hit, shot.kind)
+		local listener = camera.CFrame.Position
+		local far = (shot.origin - listener).Magnitude > DISTANT_SHOT
+		if not (far and Sounds.at(weapon.name, Sounds.Cues.FireDistant, shot.origin)) then
+			Sounds.at(weapon.name, Sounds.Cues.Fire, shot.origin)
+		end
+		-- A bullet passing close by is heard where it passes, when it gets there.
+		local path = shot.hit - shot.origin
+		local along = math.clamp((listener - shot.origin):Dot(path) / math.max(path:Dot(path), 1e-6), 0, 1)
+		local closest = shot.origin + path * along
+		if along > 0 and along < 1 and (closest - listener).Magnitude < NEAR_MISS then
+			local arrive = (closest - shot.origin).Magnitude / weapon.bulletSpeed
+			task.delay(arrive, Sounds.at, weapon.name, Sounds.Cues.NearMiss, closest)
+		end
+		local delay = path.Magnitude / weapon.bulletSpeed
+		task.delay(delay, function()
+			Effects.impact(shot.hit, shot.kind)
+			if shot.kind ~= Protocol.HitKind.Nothing then
+				local struck = shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head
+				Sounds.at(weapon.name, if struck then Sounds.Cues.ImpactBody else Sounds.Cues.ImpactWorld, shot.hit)
+			end
+		end)
 	end)
 
 	snapshotRemote.OnClientEvent:Connect(Puppets.receive)
@@ -200,6 +231,19 @@ function Controller.start()
 				seq += 1
 				local viewTick = Puppets.renderTick() * Protocol.VIEW_TICK_SCALE
 				local input = Protocol.quantizeInput(InputMap.sample(seq, viewTick))
+				-- A fresh pull with nothing left to fire or reload just clicks.
+				local pulled = bit32.btest(input.buttons, Types.Buttons.Fire) and not current.triggerHeld
+				if
+					pulled
+					and current.ammo == 0
+					and current.reserve == 0
+					and current.reloadTicks == 0
+					and current.drawTicks == 0
+					and current.raiseTicks == 0
+					and not current.sprinting
+				then
+					Sounds.play(weapon.name, Sounds.Cues.DryFire)
+				end
 				previous = current
 				local shot
 				current, shot = Simulation.step(current, input, world, weapon)
@@ -216,6 +260,8 @@ function Controller.start()
 					local hit = workspace:Raycast(camera.CFrame.Position, direction * weapon.range, world.raycast)
 					local target = if hit then hit.Position else camera.CFrame.Position + direction * weapon.range
 					Viewmodel.fired()
+					Sounds.play(weapon.name, Sounds.Cues.Fire)
+					task.delay(CASING_DELAY, Sounds.play, weapon.name, Sounds.Cues.Casing)
 					Effects.muzzleFlash(muzzle)
 					Effects.tracer(muzzle, target, weapon.bulletSpeed)
 				end
