@@ -30,9 +30,10 @@ local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when ai
 local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
 local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
 local RELOAD = CFrame.new(0.05, -0.32, -1.15) * CFrame.Angles(0.75, 0.25, -0.35) -- muzzle up, grip toward you: the magazine well shows
--- Racking: the gun is brought toward the middle and rolled onto its side, the
--- top of the slide facing left, so the left hand can come over the top.
-local RACK = CFrame.new(0.25, -0.2, -1.2) * CFrame.Angles(0.35, 0.4, 1.4)
+-- Racking: the gun is brought toward the middle, level, and rolled fully onto
+-- its side, the top of the slide facing left, so the left hand can come over
+-- the top.
+local RACK = CFrame.new(0.2, -0.38, -1.35) * CFrame.Angles(0, 0.45, math.pi / 2)
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
@@ -83,8 +84,8 @@ local GUN_TRACK = {
 	key(0.32, CFrame.Angles(0.06, 0.05, 0.12)), -- turn to meet the incoming magazine
 	key(0.47, CFrame.Angles(0.02, 0, 0.05)),
 	key(0.55, IDENTITY),
-	key(0.6, CFrame.new(0, 0, -0.05) * CFrame.Angles(0, 0, -0.1)), -- the right hand pushes against the rack
-	key(0.68, CFrame.new(0, 0, -0.07) * CFrame.Angles(0, 0, -0.12)),
+	key(0.6, CFrame.new(0, 0, -0.05)), -- the right hand pushes against the rack
+	key(0.68, CFrame.new(0, 0, -0.07)),
 	key(0.8, IDENTITY),
 }
 -- Moments that knock the gun (and nudge the view): velocity kicks in the
