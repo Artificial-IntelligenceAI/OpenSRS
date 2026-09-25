@@ -9,10 +9,11 @@
 -- the sights lined up on the center. It sways against mouse movement, bobs
 -- while walking, and kicks on each shot as the slide cycles. The slide locks
 -- back on the last round. Reloading drops the old magazine, fetches a new one
--- with the left hand and seats it, then racks the slide. So it reads as a
--- person rather than a machine, the gun follows the choreography through
--- springs, gets jolted when the magazine goes in and the slide slams home,
--- hands move in arcs, and no two reloads are timed or held quite the same.
+-- with the left hand and seats it, then rolls the gun onto its side and racks
+-- the slide over the top. So it reads as a person rather than a machine, the
+-- gun follows the choreography through springs, gets jolted when the magazine
+-- goes in and the slide slams home, hands move in arcs, and no two reloads are
+-- timed or held quite the same.
 
 local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
@@ -29,7 +30,9 @@ local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when ai
 local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
 local SPRINT = CFrame.new(0.22, -0.8, -0.75) * CFrame.Angles(-0.45, 0.85, 0.3)
 local RELOAD = CFrame.new(0.05, -0.32, -1.15) * CFrame.Angles(0.75, 0.25, -0.35) -- muzzle up, grip toward you: the magazine well shows
-local RACK = RELOAD * CFrame.new(0, 0, -0.1) -- pushed out a little for racking the slide
+-- Racking: the gun is brought toward the middle and rolled onto its side, the
+-- top of the slide facing left, so the left hand can come over the top.
+local RACK = CFrame.new(0.25, -0.2, -1.2) * CFrame.Angles(0.35, 0.4, 1.4)
 local POSE_SPEED = 16
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
@@ -124,15 +127,15 @@ local LEFT_HAND_TRACK = {
 	key(0.33, at(-0.05, -1.55, 0.22)),
 	key(0.41, at(-0.05, -0.45, 0.02)),
 	key(0.47, at(-0.05, -0.15, 0.02)),
-	key(0.56, at(-0.2, 0.45, 0.1)), -- pinch the back of the slide from its left side
-	key(0.6, at(-0.2, 0.45, 0.1)),
-	key(0.67, at(-0.2, 0.45, 0.31)), -- rack it back
-	key(0.7, at(-0.28, 0.4, 0.26)), -- let go
+	key(0.52, at(-0.4, 0.3, 0.2)), -- around the side of the gun
+	key(0.57, at(0, 0.6, 0.1)), -- over the top: grab the back of the slide
+	key(0.6, at(0, 0.6, 0.1)),
+	key(0.67, at(0, 0.6, 0.3)), -- rack it back
+	key(0.7, at(-0.15, 0.85, 0.4)), -- let go, the hand flying off
 	key(0.8, LEFT_HAND_AT),
 }
--- The gun is pushed out a little for the rack; the left hand pinches the slide
--- from its left side, so the forearm stays below it.
-local RACK_START = 0.5
+-- The gun starts rolling onto its side as soon as the magazine is home.
+local RACK_START = 0.48
 local RACK_END = 0.72
 local RACK_PULL = 0.6
 local RACK_RELEASE = 0.68
