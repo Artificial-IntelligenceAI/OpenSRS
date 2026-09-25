@@ -5,6 +5,7 @@
 --
 -- WASD move, mouse looks, Space jumps, Left Shift sprints, Left Alt slow-walks,
 -- C toggles crouch, Z toggles prone, Q and E toggle leaning left and right.
+-- Left click fires, right click aims, R reloads.
 
 local UserInputService = game:GetService("UserInputService")
 
@@ -24,6 +25,9 @@ local yaw = 0
 local pitch = 0
 local stance: number = Stance.Stand
 local lean = 0 -- -1 left, 0 upright, 1 right
+-- Presses shorter than a tick still count.
+local firePressed = false
+local reloadPressed = false
 
 local function down(key: Enum.KeyCode): boolean
 	return UserInputService:IsKeyDown(key)
@@ -34,8 +38,14 @@ function InputMap.start()
 		if processed then
 			return
 		end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			firePressed = true
+			return
+		end
 		local key = input.KeyCode
-		if key == Enum.KeyCode.C then
+		if key == Enum.KeyCode.R then
+			reloadPressed = true
+		elseif key == Enum.KeyCode.C then
 			stance = if stance == Stance.Crouch then Stance.Stand else Stance.Crouch
 		elseif key == Enum.KeyCode.Z then
 			stance = if stance == Stance.Prone then Stance.Stand else Stance.Prone
@@ -64,7 +74,8 @@ function InputMap.look(): (number, number)
 	return yaw, pitch
 end
 
-function InputMap.sample(seq: number): Input
+-- `viewTick` is the server tick other players are currently drawn at.
+function InputMap.sample(seq: number, viewTick: number): Input
 	local input: Input = {
 		seq = seq,
 		moveX = 0,
@@ -73,7 +84,12 @@ function InputMap.sample(seq: number): Input
 		pitch = pitch,
 		buttons = 0,
 		stance = stance,
+		viewTick = viewTick,
 	}
+	local fire = firePressed
+	local reload = reloadPressed
+	firePressed = false
+	reloadPressed = false
 	if UserInputService:GetFocusedTextBox() then
 		return input
 	end
@@ -95,6 +111,15 @@ function InputMap.sample(seq: number): Input
 		buttons += Buttons.LeanLeft
 	elseif lean == 1 then
 		buttons += Buttons.LeanRight
+	end
+	if fire or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+		buttons += Buttons.Fire
+	end
+	if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+		buttons += Buttons.Aim
+	end
+	if reload then
+		buttons += Buttons.Reload
 	end
 	input.buttons = buttons
 	return input

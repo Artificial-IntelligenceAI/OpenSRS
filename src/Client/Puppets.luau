@@ -74,12 +74,21 @@ function Puppets.receive(data: unknown)
 	end
 end
 
-function Puppets.render()
+-- The server tick other players are being drawn at right now, or 0 before
+-- the first snapshot. Shots tell the server this so it can rewind to it.
+function Puppets.renderTick(): number
 	local offset = clockOffset
-	if offset == nil or #snapshots == 0 then
+	if offset == nil then
+		return 0
+	end
+	return math.max(localTick() + offset - INTERPOLATION_TICKS, 0)
+end
+
+function Puppets.render()
+	if clockOffset == nil or #snapshots == 0 then
 		return
 	end
-	local renderTick = localTick() + offset - INTERPOLATION_TICKS
+	local renderTick = Puppets.renderTick()
 
 	local before: Snapshot? = nil
 	local after: Snapshot? = nil

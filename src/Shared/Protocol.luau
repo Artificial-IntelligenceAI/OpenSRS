@@ -29,6 +29,15 @@ export type StateMessage = {
 	epoch: number, -- changes whenever the server moves the player on its own (spawns, teleports)
 	ack: number, -- the last input the server has processed
 	state: State,
+	health: number,
+}
+
+-- What a shot hit. Shooters get their own; nearby players get everyone's.
+export type ShotEffect = {
+	slot: number, -- who fired
+	origin: Vector3,
+	hit: Vector3,
+	kind: number, -- see Protocol.HitKind
 }
 
 local M = Config.movement
@@ -39,13 +48,27 @@ Protocol.Remotes = table.freeze({
 	Input = "Input",
 	State = "State",
 	Snapshot = "Snapshot",
+	ShotResult = "ShotResult",
+	Shots = "Shots",
+	Life = "Life",
 })
+
+Protocol.HitKind = table.freeze({
+	Nothing = 0, -- flew out of range
+	World = 1,
+	Body = 2,
+	Head = 3,
+})
+
+-- Inputs carry the view tick in eighths of a tick.
+Protocol.VIEW_TICK_SCALE = 8
 
 -- Each input packet repeats the last few inputs, so one lost packet costs nothing.
 Protocol.MAX_INPUTS_PER_PACKET = 3
 
-local INPUT_SIZE = 12
-local STATE_SIZE = 32
+local INPUT_SIZE = 16
+local STATE_SIZE = 63
+local SHOT_SIZE = 26
 local SNAPSHOT_HEADER_SIZE = 5
 local SNAPSHOT_ENTRY_SIZE = 19
 local ANGLE_SCALE = 32767 / math.pi
@@ -75,6 +98,7 @@ function Protocol.quantizeInput(input: Input): Input
 		pitch = packPitch(input.pitch) / ANGLE_SCALE,
 		buttons = input.buttons,
 		stance = input.stance,
+		viewTick = math.clamp(math.floor(input.viewTick), 0, 0xFFFFFFFF),
 	}
 end
 
@@ -91,6 +115,7 @@ function Protocol.encodeInputs(inputs: { Input }): buffer
 		buffer.writei16(data, offset + 8, packPitch(input.pitch))
 		buffer.writeu8(data, offset + 10, input.buttons)
 		buffer.writeu8(data, offset + 11, input.stance)
+		buffer.writeu32(data, offset + 12, math.clamp(math.floor(input.viewTick), 0, 0xFFFFFFFF))
 	end
 	return data
 end
@@ -137,6 +162,7 @@ function Protocol.decodeInputs(data: unknown): { Input }?
 			pitch = pitch / ANGLE_SCALE,
 			buttons = buttons,
 			stance = stance,
+			viewTick = buffer.readu32(data, offset + 12),
 		}
 	end
 	return inputs
@@ -152,16 +178,32 @@ local function readVector(data: buffer, offset: number): Vector3
 	return Vector3.new(buffer.readf32(data, offset), buffer.readf32(data, offset + 4), buffer.readf32(data, offset + 8))
 end
 
--- The player's own authoritative state, sent back so the client can check its prediction.
-function Protocol.encodeState(epoch: number, ack: number, state: State): buffer
+-- The player's own authoritative state, sent back so the client can check its
+-- prediction. Recoil and bloom are sent at full precision because the client
+-- must reproduce them exactly.
+function Protocol.encodeState(epoch: number, ack: number, state: State, health: number): buffer
 	local data = buffer.create(STATE_SIZE)
 	buffer.writeu8(data, 0, epoch)
 	buffer.writeu32(data, 1, ack)
 	writeVector(data, 5, state.position)
 	writeVector(data, 17, state.velocity)
-	buffer.writeu8(data, 29, (if state.grounded then 1 else 0) + state.stance * 2)
+	local flags = state.stance * 2
+		+ (if state.grounded then 1 else 0)
+		+ (if state.sprinting then 8 else 0)
+		+ (if state.aiming then 16 else 0)
+		+ (if state.triggerHeld then 32 else 0)
+	buffer.writeu8(data, 29, flags)
 	buffer.writei8(data, 30, state.leanTicks)
 	buffer.writeu8(data, 31, state.jumpCooldown)
+	buffer.writeu8(data, 32, state.ammo)
+	buffer.writeu16(data, 33, state.reserve)
+	buffer.writeu8(data, 35, state.fireCooldown)
+	buffer.writeu8(data, 36, state.reloadTicks)
+	buffer.writeu8(data, 37, state.raiseTicks)
+	buffer.writef64(data, 38, state.recoilPitch)
+	buffer.writef64(data, 46, state.recoilYaw)
+	buffer.writef64(data, 54, state.bloom)
+	buffer.writeu8(data, 62, math.clamp(math.ceil(health), 0, 255))
 	return data
 end
 
@@ -177,12 +219,45 @@ function Protocol.decodeState(data: unknown): StateMessage?
 			position = readVector(data, 5),
 			velocity = readVector(data, 17),
 			grounded = bit32.btest(flags, 1),
-			stance = bit32.rshift(flags, 1),
+			stance = bit32.band(bit32.rshift(flags, 1), 3),
+			sprinting = bit32.btest(flags, 8),
+			aiming = bit32.btest(flags, 16),
 			leanTicks = buffer.readi8(data, 30),
 			jumpCooldown = buffer.readu8(data, 31),
 			yaw = 0,
 			pitch = 0,
+			ammo = buffer.readu8(data, 32),
+			reserve = buffer.readu16(data, 33),
+			fireCooldown = buffer.readu8(data, 35),
+			reloadTicks = buffer.readu8(data, 36),
+			raiseTicks = buffer.readu8(data, 37),
+			triggerHeld = bit32.btest(flags, 32),
+			recoilPitch = buffer.readf64(data, 38),
+			recoilYaw = buffer.readf64(data, 46),
+			bloom = buffer.readf64(data, 54),
 		},
+		health = buffer.readu8(data, 62),
+	}
+end
+
+function Protocol.encodeShot(effect: ShotEffect): buffer
+	local data = buffer.create(SHOT_SIZE)
+	buffer.writeu8(data, 0, effect.slot)
+	writeVector(data, 1, effect.origin)
+	writeVector(data, 13, effect.hit)
+	buffer.writeu8(data, 25, effect.kind)
+	return data
+end
+
+function Protocol.decodeShot(data: unknown): ShotEffect?
+	if typeof(data) ~= "buffer" or buffer.len(data) ~= SHOT_SIZE then
+		return nil
+	end
+	return {
+		slot = buffer.readu8(data, 0),
+		origin = readVector(data, 1),
+		hit = readVector(data, 13),
+		kind = buffer.readu8(data, 25),
 	}
 end
 

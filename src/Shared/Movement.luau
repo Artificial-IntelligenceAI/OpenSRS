@@ -38,19 +38,6 @@ function Movement.newWorld(exclude: { Instance }): World
 	return { raycast = raycast }
 end
 
-function Movement.newState(position: Vector3, yaw: number): State
-	return {
-		position = position,
-		velocity = Vector3.zero,
-		grounded = false,
-		stance = Stance.Stand,
-		leanTicks = 0,
-		jumpCooldown = 0,
-		yaw = yaw,
-		pitch = 0,
-	}
-end
-
 local function hull(position: Vector3, stance: StanceConfig): (CFrame, Vector3)
 	local height = stance.height - stance.stepUp
 	local width = M.width - 2 * M.skin
@@ -136,7 +123,9 @@ function Movement.step(state: State, input: Input, world: World): State
 	end
 	local stanceConfig = Config.stance(stance)
 
+	local aiming = bit32.btest(buttons, Buttons.Aim)
 	local sprinting = stance == Stance.Stand
+		and not aiming
 		and bit32.btest(buttons, Buttons.Sprint)
 		and input.moveZ >= M.sprintMinForward
 
@@ -164,6 +153,9 @@ function Movement.step(state: State, input: Input, world: World): State
 	local speed = speedFor(stance, buttons, sprinting)
 	if input.moveZ < 0 then
 		speed *= M.backwardMultiplier
+	end
+	if aiming then
+		speed *= M.aimSpeedMultiplier
 	end
 
 	local horizontal = Vector3.new(state.velocity.X, 0, state.velocity.Z)
@@ -223,16 +215,18 @@ function Movement.step(state: State, input: Input, world: World): State
 		end
 	end
 
-	return {
-		position = position,
-		velocity = Vector3.new(horizontal.X, vertical, horizontal.Z),
-		grounded = grounded,
-		stance = stance,
-		leanTicks = leanTicks,
-		jumpCooldown = jumpCooldown,
-		yaw = input.yaw,
-		pitch = input.pitch,
-	}
+	local nextState = table.clone(state)
+	nextState.position = position
+	nextState.velocity = Vector3.new(horizontal.X, vertical, horizontal.Z)
+	nextState.grounded = grounded
+	nextState.stance = stance
+	nextState.sprinting = sprinting
+	nextState.aiming = aiming
+	nextState.leanTicks = leanTicks
+	nextState.jumpCooldown = jumpCooldown
+	nextState.yaw = input.yaw
+	nextState.pitch = input.pitch
+	return nextState
 end
 
 return table.freeze(Movement)

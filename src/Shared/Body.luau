@@ -55,8 +55,9 @@ local function prone(pitch: number): Pose
 		Torso = CFrame.new(0, 0.5, 1.6) * flat,
 		["Left Leg"] = CFrame.new(-0.5, 0.5, 3.6) * flat,
 		["Right Leg"] = CFrame.new(0.5, 0.5, 3.6) * flat,
-		["Left Arm"] = CFrame.new(-1.2, 0.5, -0.6) * flat,
-		["Right Arm"] = CFrame.new(1.2, 0.5, -0.6) * flat,
+		-- Arms reach forward; their -Y points ahead, like the upright aiming arms.
+		["Left Arm"] = CFrame.new(-1.2, 0.5, -0.6) * CFrame.Angles(HALF_PI, 0, 0),
+		["Right Arm"] = CFrame.new(1.2, 0.5, -0.6) * CFrame.Angles(HALF_PI, 0, 0),
 	}
 end
 
@@ -89,6 +90,12 @@ function Body.pose(position: Vector3, yaw: number, pitch: number, stance: number
 		world[name] = root * cframe
 	end
 	return world
+end
+
+-- Where a held gun sits: in the right hand, pointing where the arm points.
+-- Not a hitbox.
+function Body.gun(pose: Pose): CFrame
+	return pose["Right Arm"] * CFrame.new(0, -1.15, 0) * CFrame.Angles(-HALF_PI, 0, 0) * CFrame.new(0, 0.15, -0.35)
 end
 
 return table.freeze(Body)

@@ -72,10 +72,14 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Weapons
 
-- **Hitscan.** When a player fires, the server rewinds everyone's hitboxes to what the shooter saw at that moment and raycasts itself. The client only sends when and where it aimed.
+- **Part of the input stream.** Fire, aim and reload are buttons in each tick's input. Server and client run the same weapon rules (ammo, fire rate, reload timing, the delay before firing after a sprint), so rapid fire and infinite ammo don't work.
+- **Hitscan with rewind.** Each input also says which server tick the player was seeing others at. The server rewinds other players to that moment (from the same snapshots clients saw) and casts the bullet itself. The client never says what it hit.
+- **No backtracking.** A shot may only rewind about as far as that player normally sees others behind (within 3 ticks, and never more than 0.4 s). Claiming to see further back, to hit someone who was exposed a moment ago, gets clamped.
+- **Recoil is server-side.** The kick is added to the aim on the server, and the client shows the same kick on the camera. Skipping it on the client ("no recoil") changes nothing.
+- **Spread is secret.** Where a bullet lands inside the spread cone is decided by a random generator only the server has, so "no spread" cheats can't predict and cancel it.
 - **Bullet speed.** Set per weapon. By default the hit is decided the instant the gun fires, but damage lands when the bullet would arrive, based on distance and speed. Games can switch any weapon to instant damage instead.
 - **Accuracy.** Spread depends on movement state (standing, walking, sprinting, jumping, crouching, prone, aiming down sights). The defaults are forgiving, not Valorant-harsh. Every value is configurable per weapon and per state.
-- **Server-validated:** fire rate, ammo, reload timing, and line of sight from the shooter.
+- **Damage.** Per weapon, with falloff over distance, a headshot multiplier and a limb multiplier. Players have 100 health and respawn 3 seconds after dying.
 
 ## Networking
 
@@ -99,7 +103,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 ## First release scope
 
 - The full character system: all movement including prone, server authority, anti-wallhack visibility, and the avatar system with the placeholder avatar.
-- The X16 pistol: ammo, reload, recoil, accuracy and delayed damage.
+- The X16 pistol: ammo, reload, recoil, accuracy and delayed damage. Until the game-ready model is done, a block stand-in is used.
 - More weapons come after the core feels right in playtesting.
 
 ## Cheat flags

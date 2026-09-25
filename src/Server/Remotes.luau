@@ -7,6 +7,9 @@ export type Remotes = {
 	input: UnreliableRemoteEvent,
 	state: UnreliableRemoteEvent,
 	snapshot: UnreliableRemoteEvent,
+	shotResult: RemoteEvent,
+	shots: UnreliableRemoteEvent,
+	life: RemoteEvent,
 }
 
 local Remotes = {}
@@ -15,17 +18,27 @@ function Remotes.create(parent: Instance): Remotes
 	local folder = Instance.new("Folder")
 	folder.Name = "Remotes"
 
-	local function make(name: string): UnreliableRemoteEvent
+	local function unreliable(name: string): UnreliableRemoteEvent
 		local remote = Instance.new("UnreliableRemoteEvent")
 		remote.Name = name
 		remote.Parent = folder
 		return remote
 	end
 
+	local function reliable(name: string): RemoteEvent
+		local remote = Instance.new("RemoteEvent")
+		remote.Name = name
+		remote.Parent = folder
+		return remote
+	end
+
 	local remotes = {
-		input = make(Protocol.Remotes.Input),
-		state = make(Protocol.Remotes.State),
-		snapshot = make(Protocol.Remotes.Snapshot),
+		input = unreliable(Protocol.Remotes.Input),
+		state = unreliable(Protocol.Remotes.State),
+		snapshot = unreliable(Protocol.Remotes.Snapshot),
+		shotResult = reliable(Protocol.Remotes.ShotResult),
+		shots = unreliable(Protocol.Remotes.Shots),
+		life = reliable(Protocol.Remotes.Life),
 	}
 	folder.Parent = parent
 	return remotes

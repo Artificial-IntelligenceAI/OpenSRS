@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -- Server-authoritative characters. Clients only send inputs; the server runs
--- the movement simulation and tells each client where it really is.
+-- the movement and weapon simulation and tells each client where it really is.
 --
 -- Anti-speedhack: every player earns one input per server tick and can bank a
 -- few. Sending inputs faster than the tick rate just makes them queue up, and
@@ -16,7 +16,10 @@ local Config = require(Shared.Config)
 local Eye = require(Shared.Eye)
 local Movement = require(Shared.Movement)
 local Protocol = require(Shared.Protocol)
+local Simulation = require(Shared.Simulation)
 local Types = require(Shared.Types)
+local Weapons = require(Shared.Weapons)
+local Combat = require(script.Parent.Combat)
 local Flags = require(script.Parent.Flags)
 local Remotes = require(script.Parent.Remotes)
 local Visibility = require(script.Parent.Visibility)
@@ -50,6 +53,9 @@ local STREAM_REFRESH_TICKS = 60 -- streaming requests expire, so they're renewed
 local RESEND_TICKS = 10 -- how often to repeat the spawn until the client starts sending inputs
 local FALL_LIMIT = -500
 local VISIBILITY_GROUPS = 4 -- each player's visibility is checked every 4 ticks (15 a second)
+local RESPAWN_DELAY = 3
+-- Buttons a filler input must never repeat: a silent client shouldn't keep shooting.
+local ONE_SHOT_BUTTONS = Types.Buttons.Fire + Types.Buttons.Reload + Types.Buttons.Jump
 
 local Characters = {}
 
@@ -100,9 +106,12 @@ local function spawn(record: Record)
 	if records[record.player] ~= record then
 		return
 	end
-	record.state = Movement.newState(position, 0)
+	record.state = Simulation.newState(position, 0, Weapons.default)
 	record.epoch = (record.epoch + 1) % 256
 	record.dirty = true
+	record.pending = {}
+	Combat.spawned(record.slot)
+	remotes.life:FireClient(record.player, true)
 end
 
 local function onInput(player: Player, data: unknown)
@@ -166,6 +175,7 @@ local function simulate(record: Record)
 			if queued then
 				input = queued
 				record.lastSeq = queued.seq
+				Combat.observe(record.slot, queued, tickCount)
 			else
 				local lastInput = record.lastInput
 				if record.tokens < MAX_TOKENS or not lastInput then
@@ -174,13 +184,19 @@ local function simulate(record: Record)
 				-- The client has gone quiet. Keep simulating with its last input so
 				-- going silent can't freeze the character, such as mid-air. This
 				-- doesn't count as processing any input, so late ones still apply.
-				input = lastInput
+				input = table.clone(lastInput)
+				input.buttons = bit32.band(input.buttons, bit32.bnot(ONE_SHOT_BUTTONS))
 			end
 
-			state = Movement.step(state, input, world)
+			local shot
+			state, shot = Simulation.step(state, input, world, Weapons.default)
 			record.lastInput = input
 			record.tokens -= 1
 			processed = true
+			if shot then
+				record.state = state
+				Combat.fire(record.slot, shot, input, tickCount)
+			end
 		end
 	end
 
@@ -197,7 +213,8 @@ local function simulate(record: Record)
 	local waitingForClient = not started and (tickCount + record.slot) % RESEND_TICKS == 0
 	if processed or record.dirty or waitingForClient then
 		record.dirty = false
-		remotes.state:FireClient(record.player, Protocol.encodeState(record.epoch, record.lastSeq or 0, state))
+		local message = Protocol.encodeState(record.epoch, record.lastSeq or 0, state, Combat.health(record.slot))
+		remotes.state:FireClient(record.player, message)
 	end
 
 	if (tickCount + record.slot) % STREAM_REFRESH_TICKS == 0 then
@@ -230,6 +247,10 @@ local function sendSnapshots()
 				leanOffset = Eye.leanOffset(state, world),
 			}
 		end
+	end
+
+	for player, entry in remote do
+		Combat.record(tickCount, records[player].slot, entry)
 	end
 
 	for viewer, viewerRecord in records do
@@ -295,11 +316,37 @@ local function onPlayerRemoving(player: Player)
 		records[player] = nil
 		slots[record.slot] = nil
 		Visibility.forget(record.slot)
+		Combat.forget(record.slot)
 	end
+end
+
+local function lookup(slot: number): Combat.Target?
+	local player = slots[slot]
+	local record = player and records[player]
+	if not record then
+		return nil
+	end
+	return { player = record.player, epoch = record.epoch, alive = record.state ~= nil }
+end
+
+local function onDied(victim: Player)
+	local record = records[victim]
+	if not record or not record.state then
+		return
+	end
+	record.state = nil
+	remotes.life:FireClient(victim, false)
+	task.delay(RESPAWN_DELAY, function()
+		if records[victim] == record and record.state == nil then
+			spawn(record)
+		end
+	end)
 end
 
 function Characters.start(created: Remotes.Remotes)
 	remotes = created
+	Combat.start(remotes, lookup)
+	Combat.Died:Connect(onDied)
 	Players.CharacterAutoLoads = false
 	remotes.input.OnServerEvent:Connect(onInput)
 	Players.PlayerAdded:Connect(onPlayerAdded)
