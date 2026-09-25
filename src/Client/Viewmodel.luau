@@ -9,8 +9,10 @@
 -- the sights lined up on the center. It sways against mouse movement, bobs
 -- while walking, and kicks on each shot as the slide cycles. The slide locks
 -- back on the last round. Reloading drops the old magazine, fetches a new one
--- with the left hand and seats it; from empty, the thumb then hits the slide
--- release and the slide snaps forward.
+-- with the left hand and seats it, then racks the slide. So it reads as a
+-- person rather than a machine, the gun follows the choreography through
+-- springs, gets jolted when the magazine goes in and the slide slams home,
+-- hands move in arcs, and no two reloads are timed or held quite the same.
 
 local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
@@ -18,6 +20,7 @@ local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
 local Avatar = require(script.Parent.Avatar)
 local GunModel = require(script.Parent.GunModel)
+local Spring = require(script.Parent.Spring)
 
 type State = Types.State
 
@@ -69,25 +72,50 @@ end
 
 local IDENTITY = CFrame.identity
 
--- Gun: a flick when the magazine release is pressed, a bump up as the new
--- magazine seats, and a jolt when the racked slide slams forward.
+-- Where the gun is guided during the reload. It follows this through a spring
+-- (so it has weight), and the moments below knock it around on top.
 local GUN_TRACK = {
 	key(0, IDENTITY),
-	key(0.1, CFrame.Angles(0.06, 0, 0.05)),
-	key(0.2, IDENTITY),
-	key(0.46, IDENTITY),
-	key(0.49, CFrame.new(0, 0.05, 0) * CFrame.Angles(-0.05, 0, 0)),
-	key(0.53, IDENTITY),
-	key(0.67, IDENTITY),
-	key(0.7, CFrame.new(0, 0, 0.05) * CFrame.Angles(0.06, 0, 0)),
-	key(0.78, IDENTITY),
+	key(0.1, IDENTITY),
+	key(0.32, CFrame.Angles(0.06, 0.05, 0.12)), -- turn to meet the incoming magazine
+	key(0.47, CFrame.Angles(0.02, 0, 0.05)),
+	key(0.55, IDENTITY),
+	key(0.6, CFrame.new(0, 0, -0.05) * CFrame.Angles(0, 0, -0.1)), -- the right hand pushes against the rack
+	key(0.68, CFrame.new(0, 0, -0.07) * CFrame.Angles(0, 0, -0.12)),
+	key(0.8, IDENTITY),
 }
--- The old magazine slides out, then drops out of view.
-local OLD_MAGAZINE = { key(0.12, IDENTITY), key(0.18, at(0, -0.35, 0)), key(0.28, at(0, -2.6, 0)) }
+-- Moments that knock the gun (and nudge the view): velocity kicks in the
+-- gun's space, as position and rotation (radians a second).
+type Hit = { t: number, move: Vector3, turn: Vector3, look: Vector3 }
+local HITS: { Hit } = {
+	{ t = 0.12, move = Vector3.new(0, 0.4, 0), turn = Vector3.new(0.9, 0, 0.5), look = Vector3.new(0.2, 0, 0.1) }, -- magazine release
+	{ t = 0.47, move = Vector3.new(0, 1.6, 0.1), turn = Vector3.new(-1.4, 0, -0.6), look = Vector3.new(-0.3, 0, 0.15) }, -- magazine slapped home
+	{ t = 0.6, move = Vector3.new(0, 0, 0.35), turn = Vector3.new(0.3, 0, 0), look = Vector3.zero }, -- slide grabbed
+	{ t = 0.68, move = Vector3.new(0, 0, -1.4), turn = Vector3.new(1.6, 0, 0.4), look = Vector3.new(0.4, 0, 0) }, -- slide slams forward
+}
+-- How the gun and the view respond: stiff enough to follow, loose enough to
+-- overshoot a little and settle.
+local GUN_STIFFNESS = 260
+local GUN_DAMPING = 0.5
+local LOOK_STIFFNESS = 180
+local LOOK_DAMPING = 0.6
+local MAX_FRAME = 0.1 -- longer frames (hitches) are treated as this long
+-- No two reloads are quite the same: the timing drifts a little in the middle
+-- and the gun is held at a slightly different angle.
+local TIMING_DRIFT = 0.02
+local HOLD_DRIFT = Vector3.new(0.05, 0.06, 0.06) -- radians
+-- The old magazine slides out, then falls out of view, tumbling.
+local OLD_MAGAZINE_RELEASED = 0.12
+local OLD_MAGAZINE_FREE = 0.18
 local OLD_MAGAZINE_GONE = 0.28
--- The new magazine comes up from below in the left hand and goes straight in.
-local NEW_MAGAZINE = { key(0.32, at(0, -1.4, 0.2)), key(0.41, at(0, -0.3, 0.02)), key(0.47, IDENTITY) }
+-- The new magazine rides in the left hand until it's seated.
 local NEW_MAGAZINE_SHOWN = 0.32
+local NEW_MAGAZINE_SEATED = 0.47
+local NEW_MAGAZINE_TILT = 0.3 -- radians, nose first into the well, straightening as it goes in
+local HAND_WHEN_SEATED = Vector3.new(-0.05, -0.15, 0.02) -- where the hand is when the magazine is home
+-- Hands travel in arcs, swinging out to the left and toward the player
+-- between keyframes, rather than in straight lines.
+local ARC = Vector3.new(-0.3, 0, 0.2)
 local LEFT_HAND_TRACK = {
 	key(0, LEFT_HAND_AT),
 	key(0.12, LEFT_HAND_AT),
@@ -108,6 +136,25 @@ local RACK_START = 0.5
 local RACK_END = 0.72
 local RACK_PULL = 0.6
 local RACK_RELEASE = 0.68
+
+-- Eased position along a keyframe track at `t`, bowed out along ARC in the
+-- middle of each move.
+local function sampleArc(keys: { Key }, t: number): Vector3
+	if t <= keys[1].t then
+		return keys[1].value.Position
+	end
+	for index = 2, #keys do
+		local after = keys[index]
+		if t <= after.t then
+			local before = keys[index - 1]
+			local u = (t - before.t) / (after.t - before.t)
+			local eased = u * u * (3 - 2 * u)
+			local from, to = before.value.Position, after.value.Position
+			return from:Lerp(to, eased) + ARC * (to - from).Magnitude * math.sin(u * math.pi) * 0.5
+		end
+	end
+	return keys[#keys].value.Position
+end
 
 -- Eased value of a keyframe track at `t`.
 local function sample(keys: { Key }, t: number): CFrame
@@ -205,6 +252,13 @@ local kick = 0
 local reloadLength = 0
 local sway = Vector2.zero
 local walked = 0
+local gunMove = Spring.new(GUN_STIFFNESS, GUN_DAMPING)
+local gunTurn = Spring.new(GUN_STIFFNESS, GUN_DAMPING)
+local look = Spring.new(LOOK_STIFFNESS, LOOK_DAMPING)
+local lastProgress = 0
+local drift = 0
+local hold = IDENTITY
+local random = Random.new()
 
 function Viewmodel.show(visible: boolean)
 	model.Parent = if visible then workspace.CurrentCamera else nil
@@ -212,6 +266,12 @@ end
 
 function Viewmodel.fired()
 	kick = KICK_TIME
+end
+
+-- A small turn of the view from the reload's jolts, to put on the camera.
+function Viewmodel.cameraOffset(): CFrame
+	local angles = look.position
+	return CFrame.Angles(angles.X, angles.Y, angles.Z)
 end
 
 -- How far through the reload we are, from 0 to 1.
@@ -225,15 +285,38 @@ local function reloadProgress(state: State): number
 end
 
 -- Where the magazine is relative to where it seats, and whether it's shown.
-local function magazineAt(progress: number): (CFrame, boolean)
-	if progress <= 0 then
+-- `hand` is where the left hand is, in the gun's space.
+local function magazineAt(progress: number, hand: Vector3): (CFrame, boolean)
+	if progress <= OLD_MAGAZINE_RELEASED then
 		return IDENTITY, true
+	elseif progress < OLD_MAGAZINE_FREE then
+		local u = (progress - OLD_MAGAZINE_RELEASED) / (OLD_MAGAZINE_FREE - OLD_MAGAZINE_RELEASED)
+		return CFrame.new(0, -0.35 * (1 - (1 - u) ^ 2), 0), true
 	elseif progress < OLD_MAGAZINE_GONE then
-		return sample(OLD_MAGAZINE, progress), true
+		-- Falling: slow at first, then faster, turning over as it goes.
+		local u = (progress - OLD_MAGAZINE_FREE) / (OLD_MAGAZINE_GONE - OLD_MAGAZINE_FREE)
+		return CFrame.new(0.05 * u, -0.35 - 0.6 * u - 1.65 * u * u, 0.1 * u) * CFrame.Angles(0.8 * u * u, 0, 0.3 * u),
+			true
 	elseif progress < NEW_MAGAZINE_SHOWN then
 		return IDENTITY, false
+	elseif progress < NEW_MAGAZINE_SEATED then
+		local remaining = (NEW_MAGAZINE_SEATED - progress) / (NEW_MAGAZINE_SEATED - NEW_MAGAZINE_SHOWN)
+		return CFrame.new(hand - HAND_WHEN_SEATED) * CFrame.Angles(NEW_MAGAZINE_TILT * remaining * remaining, 0, 0),
+			true
 	end
-	return sample(NEW_MAGAZINE, progress), true
+	return IDENTITY, true
+end
+
+-- A rotation from a spring's rotation vector (axis times angle).
+local function turned(rotation: Vector3): CFrame
+	local angle = rotation.Magnitude
+	return if angle > 1e-6 then CFrame.fromAxisAngle(rotation / angle, angle) else IDENTITY
+end
+
+-- A CFrame's rotation as a rotation vector, which springs can follow.
+local function rotationOf(frame: CFrame): Vector3
+	local axis, angle = frame:ToAxisAngle()
+	return axis * angle
 end
 
 -- An arm reaching from a shoulder to a hand; only the hand end is usually on screen.
@@ -244,10 +327,20 @@ end
 
 -- Positions the gun and arms for this frame and returns where the muzzle is.
 function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, frameTime: number): Vector3
-	local progress = reloadProgress(state)
+	local raw = reloadProgress(state)
+	if raw > 0 and lastProgress == 0 then
+		-- A new reload: pick how this one differs.
+		drift = random:NextNumber(-TIMING_DRIFT, TIMING_DRIFT)
+		hold = CFrame.Angles(
+			random:NextNumber(-HOLD_DRIFT.X, HOLD_DRIFT.X),
+			random:NextNumber(-HOLD_DRIFT.Y, HOLD_DRIFT.Y),
+			random:NextNumber(-HOLD_DRIFT.Z, HOLD_DRIFT.Z)
+		)
+	end
+	local progress = if raw > 0 then raw + math.sin(raw * math.pi) * drift else 0
 	local aiming = state.aiming and progress == 0 and not state.sprinting and state.raiseTicks == 0
 	local target = if progress > 0
-		then (if progress >= RACK_START and progress < RACK_END then RACK else RELOAD)
+		then (if progress >= RACK_START and progress < RACK_END then RACK else RELOAD) * hold
 		elseif state.sprinting or state.raiseTicks > 0 then SPRINT
 		elseif aiming then AIM
 		else HIP
@@ -276,7 +369,23 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 
 	local reloading = progress > 0
 	local empty = reloading and reloadLength > weapon.reloadTicks
-	local gunMotion = if reloading then sample(GUN_TRACK, progress) else IDENTITY
+
+	-- The gun follows the reload's guide through springs, and gets knocked at
+	-- the moments that would jolt it; the view gets a smaller nudge.
+	local step = math.min(frameTime, MAX_FRAME)
+	for _, hit in HITS do
+		if lastProgress < hit.t and progress >= hit.t then
+			Spring.impulse(gunMove, hit.move)
+			Spring.impulse(gunTurn, hit.turn)
+			Spring.impulse(look, hit.look)
+		end
+	end
+	lastProgress = progress
+	local guide = if reloading then sample(GUN_TRACK, progress) else IDENTITY
+	Spring.step(gunMove, guide.Position, step)
+	Spring.step(gunTurn, rotationOf(guide), step)
+	Spring.step(look, Vector3.zero, step)
+	local gunMotion = CFrame.new(gunMove.position) * turned(gunTurn.position)
 	local origin = camera * bob * swayFrame * current * recoil * gunMotion
 
 	-- The slide locks back on an empty magazine; the reload's rack pulls it
@@ -294,7 +403,8 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	end
 	local slide = CFrame.new(0, 0, SLIDE_TRAVEL * slideBack)
 	local barrel = CFrame.new(0, 0, BARREL_TRAVEL * slideBack)
-	local magazine, magazineShown = magazineAt(progress)
+	local leftHand = if reloading then CFrame.new(sampleArc(LEFT_HAND_TRACK, progress)) else LEFT_HAND_AT
+	local magazine, magazineShown = magazineAt(progress, leftHand.Position)
 	for index, part in gunParts do
 		local offset = rest[index]
 		if part.Name == "Slide" then
@@ -308,7 +418,6 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		cframes[index] = origin * offset
 	end
 
-	local leftHand = if reloading then sample(LEFT_HAND_TRACK, progress) else LEFT_HAND_AT
 	local leftHandPoint = (origin * leftHand).Position
 	local rightHandPoint = (origin * CFrame.new(RIGHT_HAND)).Position
 	local count = #gunParts

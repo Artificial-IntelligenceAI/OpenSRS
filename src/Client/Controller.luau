@@ -243,16 +243,18 @@ function Controller.start()
 			local recoilPitch = last.recoilPitch + (current.recoilPitch - last.recoilPitch) * alpha
 			local recoilYaw = last.recoilYaw + (current.recoilYaw - last.recoilYaw) * alpha
 			local roll = LEAN_ROLL * leanOffset / Config.movement.leanDistance
-			camera.CFrame = CFrame.new(shown.position + smoothed)
+			local view = CFrame.new(shown.position + smoothed)
 				* CFrame.Angles(0, yaw + recoilYaw, 0)
 				* CFrame.Angles(pitch + recoilPitch, 0, 0)
 				* CFrame.Angles(0, 0, -roll)
+			-- The reload's jolts nudge the head, not the hands: the gun stays put.
+			camera.CFrame = view * Viewmodel.cameraOffset()
 
 			local targetFov = if current.aiming then AIM_FOV else HIP_FOV
 			fieldOfView += (targetFov - fieldOfView) * (1 - math.exp(-FOV_SPEED * frameTime))
 			camera.FieldOfView = fieldOfView
 
-			muzzle = Viewmodel.update(camera.CFrame, current, InputMap.mouseDelta(), frameTime)
+			muzzle = Viewmodel.update(view, current, InputMap.mouseDelta(), frameTime)
 			Hud.update(
 				current.ammo,
 				current.reserve,
