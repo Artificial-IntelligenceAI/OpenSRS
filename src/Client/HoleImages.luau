@@ -178,8 +178,17 @@ local function draw(painter: Painter, patient: boolean): Content?
 			task.wait()
 		end
 	end
-	image:WritePixelsBuffer(Vector2.zero, Vector2.new(SIZE, SIZE), pixels)
-	return Content.fromObject(image)
+	-- Making the image can work while using it doesn't (the game hasn't
+	-- allowed EditableImage), so a failure here means no picture too.
+	local written, picture = pcall(function()
+		image:WritePixelsBuffer(Vector2.zero, Vector2.new(SIZE, SIZE), pixels)
+		return Content.fromObject(image)
+	end)
+	if not written then
+		image:Destroy()
+		return nil
+	end
+	return picture
 end
 
 local function add(kind: string, patient: boolean): Content?

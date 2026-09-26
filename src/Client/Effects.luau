@@ -116,8 +116,17 @@ local function drawPicture(
 			buffer.writeu8(pixels, offset + 3, math.clamp(math.round(a * 255), 0, 255))
 		end
 	end
-	image:WritePixelsBuffer(Vector2.zero, Vector2.new(width, height), pixels)
-	return Content.fromObject(image)
+	-- Making the image can work while using it doesn't (the game hasn't
+	-- allowed EditableImage), so a failure here means no picture too.
+	local written, picture = pcall(function()
+		image:WritePixelsBuffer(Vector2.zero, Vector2.new(width, height), pixels)
+		return Content.fromObject(image)
+	end)
+	if not written then
+		image:Destroy()
+		return nil
+	end
+	return picture
 end
 
 -- A soft round glow: pale cream in the middle, orange at the edge.
