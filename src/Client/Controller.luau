@@ -276,7 +276,9 @@ function Controller.start()
 					local hit = workspace:Raycast(camera.CFrame.Position, direction * weapon.range, world.raycast)
 					local target = if hit then hit.Position else camera.CFrame.Position + direction * weapon.range
 					Viewmodel.fired()
-					Sounds.shot(weapon.name, muzzle)
+					Sounds.shot(weapon.name, muzzle, function()
+						return Viewmodel.muzzle().Position
+					end)
 					Casings.eject(weapon.name, Viewmodel.ejectionPort(), current.velocity)
 					Effects.muzzleFlash(weapon.name, Viewmodel.muzzle(), Viewmodel.muzzle)
 					Effects.tracer(muzzle, target, weapon.bulletSpeed)
@@ -331,6 +333,7 @@ function Controller.start()
 
 		Puppets.render()
 		Effects.update(frameTime)
+		Sounds.update(frameTime)
 		Casings.update(frameTime)
 	end)
 end

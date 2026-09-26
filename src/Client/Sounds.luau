@@ -34,6 +34,8 @@ local PITCH_VARIATION = 0.03 -- each play is up to this much higher or lower, so
 local MAX_LIFETIME = 10 -- seconds a played sound is kept, in case it never reports finishing
 local FALLOFF_STEP = 1.5 -- distance ratio between points on a sound's volume-over-distance curve
 local ENCLOSURE_RANGE = 60 -- studs: walls and roofs further away than this don't count as being indoors
+local REMIX_EVERY = 0.1 -- seconds between re-judging a moving shot's surroundings
+local REMIX_SPEED = 12 -- how quickly a moving shot's tails cross-fade to fit where it is now
 
 local Sounds = {}
 
@@ -69,6 +71,20 @@ local probe = RaycastParams.new()
 probe.FilterType = Enum.RaycastFilterType.Exclude
 probe.IgnoreWater = true
 local ignored: { Instance } = {}
+-- Sounds that move with something (your own gun, your view) while they play.
+local following: { { attachment: Attachment, follow: () -> Vector3 } } = {}
+-- Moving shots whose indoor and outdoor tails are re-mixed as they go.
+type Mix = {
+	indoor: AudioPlayer?,
+	outdoor: AudioPlayer?,
+	indoorVolume: number,
+	outdoorVolume: number,
+	follow: () -> Vector3,
+	inside: number,
+	target: number,
+	sinceJudged: number,
+}
+local mixes: { Mix } = {}
 
 local EFFECTS = table.freeze({
 	AudioChorus = true,
@@ -148,7 +164,7 @@ end
 
 -- Plays `source` through its effects into `target`, then cleans up `holder`
 -- (which contains all of it). `gain` scales the Sound's own volume.
-local function start(source: Sound, target: Instance, holder: Instance, gain: number?)
+local function start(source: Sound, target: Instance, holder: Instance, gain: number?): AudioPlayer
 	local player = Instance.new("AudioPlayer")
 	player.Asset = source.SoundId
 	player.Volume = source.Volume * (gain or 1)
@@ -173,6 +189,7 @@ local function start(source: Sound, target: Instance, holder: Instance, gain: nu
 	end)
 	Debris:AddItem(holder, MAX_LIFETIME + tail)
 	player:Play()
+	return player
 end
 
 -- Plays an interface cue straight to the player's ears, not placed in the
@@ -190,11 +207,19 @@ function Sounds.play(weapon: string, cue: string): boolean
 end
 
 -- Plays a cue at a point in the world, `gain` times as loud as its Sound says.
+-- If `follow` is given, the sound moves to where it says each frame while it
+-- plays (see Sounds.update), so it stays with something that moves.
 -- Returns whether there was a sound to play.
-function Sounds.at(weapon: string, cue: string, position: Vector3, gain: number?): boolean
+local function playAt(
+	weapon: string,
+	cue: string,
+	position: Vector3,
+	gain: number?,
+	follow: (() -> Vector3)?
+): AudioPlayer?
 	local source = pick(weapon, cue)
 	if not source then
-		return false
+		return nil
 	end
 	local attachment = Instance.new("Attachment")
 	attachment.Name = cue
@@ -203,8 +228,15 @@ function Sounds.at(weapon: string, cue: string, position: Vector3, gain: number?
 	emitter:SetDistanceAttenuation(falloff(source))
 	emitter.Parent = attachment
 	attachment.Parent = workspace.Terrain
-	start(source, emitter, attachment, gain)
-	return true
+	local player = start(source, emitter, attachment, gain)
+	if follow then
+		table.insert(following, { attachment = attachment, follow = follow })
+	end
+	return player
+end
+
+function Sounds.at(weapon: string, cue: string, position: Vector3, gain: number?, follow: (() -> Vector3)?): boolean
+	return playAt(weapon, cue, position, gain, follow) ~= nil
 end
 
 -- Things that don't count as walls when judging how enclosed a spot is: the
@@ -246,13 +278,39 @@ end
 -- A gunshot at `position`: the blast, then the tail a room or the open air
 -- gives it, mixed by how enclosed the spot is. (Acoustic simulation adds the
 -- actual map's echoes on top of either.) Weapons without tails just play Fire.
+-- `follow` keeps it with the gun (your own shots), as for Sounds.at.
 -- Returns whether there was a sound to play.
-function Sounds.shot(weapon: string, position: Vector3): boolean
-	if not Sounds.at(weapon, Sounds.Cues.Fire, position) then
+function Sounds.shot(weapon: string, position: Vector3, follow: (() -> Vector3)?): boolean
+	if not Sounds.at(weapon, Sounds.Cues.Fire, position, nil, follow) then
 		return false
 	end
 	local inside = enclosure(position)
-	-- Equal power, so a half-enclosed spot isn't quieter than either extreme.
+	if follow then
+		-- Both tails play, re-mixed as the shooter moves (see Sounds.update), so
+		-- a shot fired just before going outside doesn't ring like a room out
+		-- there.
+		local indoor = playAt(weapon, Sounds.Cues.FireTailIndoor, position, nil, follow)
+		local outdoor = playAt(weapon, Sounds.Cues.FireTailOutdoor, position, nil, follow)
+		local mix: Mix = {
+			indoor = indoor,
+			outdoor = outdoor,
+			indoorVolume = if indoor then indoor.Volume else 0,
+			outdoorVolume = if outdoor then outdoor.Volume else 0,
+			follow = follow,
+			inside = inside,
+			target = inside,
+			sinceJudged = 0,
+		}
+		table.insert(mixes, mix)
+		-- Equal power, so a half-enclosed spot isn't quieter than either extreme.
+		if indoor then
+			indoor.Volume = mix.indoorVolume * math.sqrt(inside)
+		end
+		if outdoor then
+			outdoor.Volume = mix.outdoorVolume * math.sqrt(1 - inside)
+		end
+		return true
+	end
 	if inside > 0 then
 		Sounds.at(weapon, Sounds.Cues.FireTailIndoor, position, math.sqrt(inside))
 	end
@@ -262,11 +320,49 @@ function Sounds.shot(weapon: string, position: Vector3): boolean
 	return true
 end
 
+-- Moves the sounds that follow something, and re-mixes moving shots' tails
+-- for where they are now; call once a frame.
+function Sounds.update(frameTime: number)
+	for index = #following, 1, -1 do
+		local sound = following[index]
+		if sound.attachment.Parent then
+			sound.attachment.Position = sound.follow()
+		else
+			table.remove(following, index)
+		end
+	end
+	for index = #mixes, 1, -1 do
+		local mix = mixes[index]
+		local indoor, outdoor = mix.indoor, mix.outdoor
+		local playing = (indoor and indoor.Parent) or (outdoor and outdoor.Parent)
+		if not playing then
+			table.remove(mixes, index)
+			continue
+		end
+		mix.sinceJudged += frameTime
+		if mix.sinceJudged >= REMIX_EVERY then
+			mix.sinceJudged = 0
+			mix.target = enclosure(mix.follow())
+		end
+		mix.inside += (mix.target - mix.inside) * (1 - math.exp(-REMIX_SPEED * frameTime))
+		if indoor and indoor.Parent then
+			indoor.Volume = mix.indoorVolume * math.sqrt(mix.inside)
+		end
+		if outdoor and outdoor.Parent then
+			outdoor.Volume = mix.outdoorVolume * math.sqrt(1 - mix.inside)
+		end
+	end
+end
+
 -- Plays a cue close to the player, `offset` from their view (in the view's
--- space: +X right, +Y up, -Z ahead). Used for their own gun's handling sounds.
-function Sounds.near(weapon: string, cue: string, offset: Vector3): boolean
-	local view = workspace.CurrentCamera.CFrame
-	return Sounds.at(weapon, cue, view:PointToWorldSpace(offset))
+-- space: +X right, +Y up, -Z ahead), and keeps it there while it plays unless
+-- `stays` (for something left behind, like a dropped magazine). Used for their
+-- own gun's handling sounds.
+function Sounds.near(weapon: string, cue: string, offset: Vector3, stays: boolean?): boolean
+	local function place(): Vector3
+		return workspace.CurrentCamera.CFrame:PointToWorldSpace(offset)
+	end
+	return Sounds.at(weapon, cue, place(), nil, if stays then nil else place)
 end
 
 -- Starts loading every sound a weapon has, so the first shot isn't silent
