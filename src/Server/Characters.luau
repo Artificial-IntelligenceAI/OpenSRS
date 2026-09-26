@@ -35,6 +35,8 @@ type Record = {
 	slot: number,
 	state: State?, -- nil until spawned
 	epoch: number,
+	life: number, -- unique to this life, across every player (see Combat.Target)
+	malformedPackets: number,
 	dirty: boolean, -- the client must be told about a server-side change
 	canShoot: boolean, -- what the game last set with API.setCanShoot; kept through respawns
 	lastSeq: number?, -- the last real input processed; nil until the first one
@@ -46,7 +48,6 @@ type Record = {
 	streaming: boolean, -- a streaming request is in flight
 }
 
-local DT = 1 / Config.tickRate
 local MAX_TOKENS = 8 -- how far (in ticks) a player can fall behind before the server moves them on
 local MAX_PENDING = 12 -- queued inputs beyond this are dropped, oldest first
 local MAX_TICKS_PER_FRAME = 4
@@ -68,6 +69,7 @@ local slots: { [number]: Player } = {}
 local world = Movement.newWorld({})
 local remotes: Remotes.Remotes
 local tickCount = 0
+local lives = 0 -- the last life number handed out
 
 local function claimSlot(): number?
 	for slot = 1, 255 do
@@ -114,8 +116,11 @@ local function spawn(record: Record)
 	state.canShoot = record.canShoot
 	record.state = state
 	record.epoch = (record.epoch + 1) % 256
+	lives += 1
+	record.life = lives
 	record.dirty = true
 	record.pending = {}
+	Visibility.forgetTarget(record.slot)
 	Combat.spawned(record.slot)
 	AimWatch.reset(record.slot)
 	remotes.life:FireClient(record.player, true)
@@ -138,7 +143,12 @@ local function onInput(player: Player, data: unknown)
 
 	local inputs = Protocol.decodeInputs(data)
 	if not inputs then
-		Flags.raise(player, "MalformedInput", "input packet failed validation")
+		-- Flag the first, then every so often: one a packet would let a client
+		-- flood whatever the game does with flags.
+		record.malformedPackets += 1
+		if record.malformedPackets == 1 or record.malformedPackets % FLOOD_THRESHOLD == 0 then
+			Flags.raise(player, "MalformedInput", `{record.malformedPackets} input packets failed validation`)
+		end
 		return
 	end
 
@@ -344,6 +354,8 @@ local function onPlayerAdded(player: Player)
 		slot = slot,
 		state = nil,
 		epoch = 0,
+		life = 0,
+		malformedPackets = 0,
 		dirty = false,
 		canShoot = true,
 		lastSeq = nil,
@@ -375,7 +387,7 @@ local function lookup(slot: number): Combat.Target?
 	if not record then
 		return nil
 	end
-	return { player = record.player, epoch = record.epoch, alive = record.state ~= nil }
+	return { player = record.player, life = record.life, alive = record.state ~= nil }
 end
 
 local function onDied(victim: Player)
@@ -430,6 +442,7 @@ function Characters.teleport(player: Player, position: Vector3): boolean
 	if not record or not record.state then
 		return false
 	end
+	local life = record.life
 	-- Give the map there a moment to reach the client, but don't hold the
 	-- teleport up for it: loading can take over a second even for places the
 	-- player has just been.
@@ -443,14 +456,15 @@ function Characters.teleport(player: Player, position: Vector3): boolean
 		waited += task.wait()
 	end
 	local state = record.state
-	if records[player] ~= record or not state then
-		return false
+	if records[player] ~= record or not state or record.life ~= life then
+		return false -- left, or died (and maybe respawned) while waiting
 	end
 	local moved = table.clone(state)
 	moved.position = position
 	moved.velocity = Vector3.zero
 	record.state = moved
 	record.epoch = (record.epoch + 1) % 256 -- the client sees a new epoch and starts over from the server's state
+	Visibility.forgetTarget(record.slot)
 	AimWatch.reset(record.slot)
 	record.dirty = true
 	record.pending = {}
@@ -481,6 +495,7 @@ function Characters.start(created: Remotes.Remotes)
 	RunService.Heartbeat:Connect(function(frameTime)
 		accumulator += frameTime
 		local ticks = 0
+		local DT = 1 / Config.tickRate
 		while accumulator >= DT and ticks < MAX_TICKS_PER_FRAME do
 			accumulator -= DT
 			ticks += 1

@@ -83,7 +83,8 @@ function Firearm.spread(state: State, weapon: Weapon): number
 		elseif state.stance == Stance.Crouch then spread.crouch
 		else spread.stand
 	local speed = Vector3.new(state.velocity.X, 0, state.velocity.Z).Magnitude
-	degrees += spread.moving * math.min(speed / Config.stance(Stance.Stand).speed, 1.5)
+	-- (WalkSpeed can be 0: any movement then counts as the most.)
+	degrees += spread.moving * math.min(speed / math.max(Config.stance(Stance.Stand).speed, 0.001), 1.5)
 	if not state.grounded then
 		degrees += spread.airborne
 	end

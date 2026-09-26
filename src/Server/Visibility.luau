@@ -199,6 +199,18 @@ function Visibility.canSee(viewer: number, target: number, now: number): boolean
 	return at ~= nil and now - at <= GRACE
 end
 
+-- Call when the player in `slot` jumps somewhere (a spawn or teleport): who
+-- could see them where they were says nothing about where they are now, and
+-- the grace period would otherwise show them there to those people.
+function Visibility.forgetTarget(slot: number)
+	for _, seen in lastSeen do
+		seen[slot] = nil
+	end
+	for _, hinted in hints do
+		hinted[slot] = nil
+	end
+end
+
 -- Call when a slot is freed, so a new player in it starts with a clean slate.
 function Visibility.forget(slot: number)
 	lastSeen[slot] = nil

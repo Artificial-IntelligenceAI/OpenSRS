@@ -27,6 +27,9 @@ function Eye.leanOffset(state: State, world: World): number
 		return 0
 	end
 	local wanted = M.leanDistance * state.leanTicks / M.leanTicks
+	if wanted == 0 then
+		return 0 -- LeanDistance 0: leaning doesn't move the eye (and a zero-length cast can't be made)
+	end
 	local base = state.position + Vector3.new(0, Config.stance(state.stance).eyeHeight, 0)
 	local direction = rightVector(state.yaw) * wanted
 	local result = workspace:Spherecast(base, M.eyeRadius, direction, world.raycast)

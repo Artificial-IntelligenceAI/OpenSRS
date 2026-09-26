@@ -23,7 +23,6 @@ export type World = {
 local Buttons = Types.Buttons
 local Stance = Types.Stance
 local M = Config.movement
-local DT = 1 / Config.tickRate
 local SLIDE_ITERATIONS = 3
 local SLIDE_INSET = 0.05 -- how much narrower than the hull its sideways casts are, per side
 
@@ -124,6 +123,7 @@ local function speedFor(stance: number, buttons: number, sprinting: boolean): nu
 end
 
 function Movement.step(state: State, input: Input, world: World): State
+	local DT = 1 / Config.tickRate -- read now: settings may be applied after this module loads
 	local position = state.position
 	local grounded = state.grounded
 	local buttons = input.buttons

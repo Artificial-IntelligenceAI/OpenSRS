@@ -35,14 +35,19 @@ type Shot = Simulation.Shot
 -- What Combat needs to know about the player in a slot.
 export type Target = {
 	player: Player,
-	epoch: number, -- changes on every respawn
+	life: number, -- a new number for every life, never reused (even by another player)
 	alive: boolean,
 }
 
 type Entry = { tick: number, pose: Pose }
 
-local HISTORY_TICKS = Config.tickRate -- one second of rewind history
-local MAX_REWIND_TICKS = math.round(Config.tickRate * 0.4)
+-- Read when used: settings may be applied after this module loads.
+local function historyTicks(): number
+	return Config.tickRate -- one second of rewind history
+end
+local function maxRewindTicks(): number
+	return math.round(Config.tickRate * 0.4)
+end
 -- A shot's rewind may only differ this much (in ticks) from the player's usual
 -- delay. Jumping further back is how "backtrack" cheats pick a moment when the
 -- target was exposed.
@@ -103,14 +108,30 @@ function Combat.record(tick: number, slot: number, pose: Pose)
 		return
 	end
 	table.insert(entries, { tick = tick, pose = pose })
-	while entries[1] and entries[1].tick < tick - HISTORY_TICKS do
+	while entries[1] and entries[1].tick < tick - historyTicks() do
 		table.remove(entries, 1)
 	end
 end
 
+-- The furthest back (in ticks) the player in `slot` could really be seeing
+-- others: their connection's delay there and back, plus how far behind clients
+-- draw others (INTERPOLATION_TICKS in Puppets) and a snapshot's wait, plus some
+-- slack. Without it, a player with a fast connection could claim to be seeing
+-- the past as far back as the laggiest player.
+local REWIND_SLACK_TICKS = 6
+local function rewindLimit(slot: number): number
+	local target = lookup(slot)
+	local ok, ping = pcall(function()
+		return if target then target.player:GetNetworkPing() else 0
+	end)
+	local delay = if ok and typeof(ping) == "number" then ping * 2 * Config.tickRate else 0
+	local drawn = Config.snapshotInterval * 3 + 1
+	return math.min(delay + drawn + REWIND_SLACK_TICKS, maxRewindTicks())
+end
+
 -- Tracks how far behind the server each player normally sees others.
 function Combat.observe(slot: number, input: Input, serverTick: number)
-	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, MAX_REWIND_TICKS)
+	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, rewindLimit(slot))
 	local usual = usualRewind[slot]
 	usualRewind[slot] = if usual then usual + (rewind - usual) * REWIND_SMOOTHING else rewind
 end
@@ -153,10 +174,10 @@ end
 -- The server tick the player in `slot` was seeing others at when sending
 -- `input`, kept close to their usual delay (so it can't be used to backtrack).
 local function viewedTick(slot: number, input: Input, serverTick: number): number
-	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, MAX_REWIND_TICKS)
+	local limit = rewindLimit(slot)
+	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, limit)
 	local usual = usualRewind[slot] or rewind
-	rewind =
-		math.clamp(rewind, math.max(usual - REWIND_TOLERANCE, 0), math.min(usual + REWIND_TOLERANCE, MAX_REWIND_TICKS))
+	rewind = math.clamp(rewind, math.max(usual - REWIND_TOLERANCE, 0), math.min(usual + REWIND_TOLERANCE, limit))
 	return serverTick - rewind
 end
 Combat.viewedTick = viewedTick
@@ -202,14 +223,14 @@ local function damageFor(weapon: Weapons.Weapon, distance: number, part: string)
 	return damage
 end
 
-local function applyDamage(victimSlot: number, epoch: number, attackerSlot: number, amount: number, part: string)
+-- `attacker` is who fired, decided when they fired: by the time a bullet
+-- lands they may have left, and someone else may have their slot.
+local function applyDamage(victimSlot: number, life: number, attackerPlayer: Player?, amount: number, part: string)
 	local victim = lookup(victimSlot)
 	local current = health[victimSlot]
-	if not victim or not victim.alive or victim.epoch ~= epoch or not current or current <= 0 then
-		return -- respawned or already dead while the bullet was in flight
+	if not victim or not victim.alive or victim.life ~= life or not current or current <= 0 then
+		return -- respawned, left, or already dead while the bullet was in flight
 	end
-	local attacker = lookup(attackerSlot)
-	local attackerPlayer = if attacker then attacker.player else nil
 	local remaining = math.max(current - amount, 0)
 	health[victimSlot] = remaining
 	damaged:Fire(victim.player, attackerPlayer, amount, part)
@@ -223,7 +244,7 @@ function Combat.kill(victimSlot: number)
 	local victim = lookup(victimSlot)
 	local current = health[victimSlot]
 	if victim and current and current > 0 then
-		applyDamage(victimSlot, victim.epoch, 0, current, TORSO)
+		applyDamage(victimSlot, victim.life, nil, current, TORSO)
 	end
 end
 
@@ -231,7 +252,7 @@ end
 function Combat.hurt(victimSlot: number, amount: number)
 	local victim = lookup(victimSlot)
 	if victim and amount > 0 then
-		applyDamage(victimSlot, victim.epoch, 0, amount, TORSO)
+		applyDamage(victimSlot, victim.life, nil, amount, TORSO)
 	end
 end
 
@@ -247,7 +268,6 @@ local function latestPosition(slot: number): Vector3?
 	return if last then last.pose.position else nil
 end
 
--- Resolves a shot fired during `serverTick`.
 -- Whether the player in `viewerSlot` is being shown the player in `slot`: the
 -- same rule as who's in their snapshots. Shots from and at anyone else must
 -- not give away where they are.
@@ -294,9 +314,12 @@ local function hideVictim(effect: Protocol.ShotEffect, shooterShown: boolean): P
 	}
 end
 
+-- Resolves a shot fired during `serverTick`.
 function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: number)
 	local shooter = lookup(shooterSlot)
-	if not shooter or not shooter.alive then
+	-- Health is checked too: a player killed earlier this frame is only told
+	-- they're dead (Died) once the frame's ticks are done.
+	if not shooter or not shooter.alive or (health[shooterSlot] or 0) <= 0 then
 		return
 	end
 	local weapon = Weapons.default
@@ -373,12 +396,12 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 		local victim = lookup(victimSlot)
 		if victim then
 			local amount = damageFor(weapon, distance, victimPart)
-			local slot, epoch, part = victimSlot, victim.epoch, victimPart
+			local slot, life, part = victimSlot, victim.life, victimPart
 			if weapon.instantDamage then
-				applyDamage(slot, epoch, shooterSlot, amount, part)
+				applyDamage(slot, life, shooter.player, amount, part)
 			else
 				-- The hit is decided now; the damage lands when the bullet would arrive.
-				task.delay(distance / weapon.bulletSpeed, applyDamage, slot, epoch, shooterSlot, amount, part)
+				task.delay(distance / weapon.bulletSpeed, applyDamage, slot, life, shooter.player, amount, part)
 			end
 		end
 	end

@@ -281,7 +281,11 @@ function Protocol.encodeSnapshot(tick: number, players: { [number]: Remote }): b
 		buffer.writei16(data, offset + 13, packYaw(remote.yaw))
 		buffer.writei16(data, offset + 15, packPitch(remote.pitch))
 		buffer.writeu8(data, offset + 17, remote.stance)
-		buffer.writei8(data, offset + 18, packUnit(remote.leanOffset / M.leanDistance))
+		buffer.writei8(
+			data,
+			offset + 18,
+			if M.leanDistance > 0 then packUnit(remote.leanOffset / M.leanDistance) else 0
+		)
 		offset += SNAPSHOT_ENTRY_SIZE
 	end
 	return data

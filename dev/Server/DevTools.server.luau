@@ -48,7 +48,14 @@ local teleport = Instance.new("RemoteEvent")
 teleport.Name = "OpenSRSDevTeleport"
 teleport.Parent = ReplicatedStorage
 local shootingOff: { [Player]: boolean } = {}
+local lastAsked: { [Player]: number } = {}
+local ASK_EVERY = 0.25 -- seconds; each teleport waits a moment for the map, so spam would pile up
 teleport.OnServerEvent:Connect(function(player: Player, where: unknown)
+	local now = os.clock()
+	if now - (lastAsked[player] or -math.huge) < ASK_EVERY then
+		return
+	end
+	lastAsked[player] = now
 	if where == "ToggleShooting" then
 		shootingOff[player] = not shootingOff[player]
 		OpenSRS.setCanShoot(player, not shootingOff[player])
@@ -61,6 +68,7 @@ teleport.OnServerEvent:Connect(function(player: Player, where: unknown)
 end)
 Players.PlayerRemoving:Connect(function(player)
 	shootingOff[player] = nil
+	lastAsked[player] = nil
 end)
 
 -- Aimbot flags (and any other cheat flags) show in the output and on every

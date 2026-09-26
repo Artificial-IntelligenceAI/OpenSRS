@@ -20,7 +20,6 @@ local GunModel = require(script.Parent.GunModel)
 type Snapshot = Protocol.Snapshot
 type Remote = Protocol.Remote
 
-local INTERPOLATION_TICKS = Config.snapshotInterval * 2 + 1
 local MAX_SNAPSHOTS = 30
 local CLOCK_SMOOTHING = 0.02
 local HIGHLIGHT = "OpenSRSTeammate"
@@ -137,7 +136,7 @@ function Puppets.renderTick(): number
 	if offset == nil then
 		return 0
 	end
-	return math.max(localTick() + offset - INTERPOLATION_TICKS, 0)
+	return math.max(localTick() + offset - (Config.snapshotInterval * 2 + 1), 0)
 end
 
 function Puppets.render()

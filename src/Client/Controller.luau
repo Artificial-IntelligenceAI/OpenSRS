@@ -33,7 +33,6 @@ type Input = Types.Input
 type State = Types.State
 type HistoryEntry = { input: Input, state: State }
 
-local DT = 1 / Config.tickRate
 local MAX_TICKS_PER_FRAME = 8
 local TOLERANCE = 1e-3
 local CORRECTION_DECAY = 15 -- how fast a visible correction fades out
@@ -257,6 +256,7 @@ function Controller.start()
 		camera.CameraType = Enum.CameraType.Scriptable
 		InputMap.updateLook()
 
+		local DT = 1 / Config.tickRate
 		local current = state
 		if current then
 			accumulator += frameTime
@@ -328,7 +328,8 @@ function Controller.start()
 			-- Recoil moves the view, exactly as it moves the server's aim.
 			local recoilPitch = last.recoilPitch + (current.recoilPitch - last.recoilPitch) * alpha
 			local recoilYaw = last.recoilYaw + (current.recoilYaw - last.recoilYaw) * alpha
-			local roll = LEAN_ROLL * leanOffset / Config.movement.leanDistance
+			local leanDistance = Config.movement.leanDistance
+			local roll = if leanDistance > 0 then LEAN_ROLL * leanOffset / leanDistance else 0
 			local view = CFrame.new(shown.position + smoothed)
 				* CFrame.Angles(0, yaw + recoilYaw, 0)
 				* CFrame.Angles(pitch + recoilPitch, 0, 0)
