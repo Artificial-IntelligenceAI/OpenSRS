@@ -28,12 +28,14 @@ local ContentProvider = game:GetService("ContentProvider")
 local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 
+local Living = require(script.Parent.Parent.Shared.Living)
 local Assets = require(script.Parent.Assets)
 
 local PITCH_VARIATION = 0.03 -- each play is up to this much higher or lower, so repeats don't sound identical
 local MAX_LIFETIME = 10 -- seconds a played sound is kept, in case it never reports finishing
 local FALLOFF_STEP = 1.5 -- distance ratio between points on a sound's volume-over-distance curve
 local ENCLOSURE_RANGE = 60 -- studs: walls and roofs further away than this don't count as being indoors
+local MAX_LIVING_SKIPPED = 4 -- living things one enclosure ray may pass through
 local SETTLE_TIME = 1 -- seconds after the player jumps (see Sounds.jumped) before acoustic simulation is trusted again
 local REMIX_EVERY = 0.1 -- seconds between re-judging a moving shot's surroundings
 local REMIX_SPEED = 12 -- how quickly a moving shot's tails cross-fade to fit where it is now
@@ -265,13 +267,36 @@ for index = 0, 7 do
 	end
 end
 
+-- Whether anything walls or roofs a spot in `direction`. Living things (see
+-- Living) don't count: a zombie pressed against the shooter isn't a room.
+local function walled(position: Vector3, direction: Vector3): boolean
+	local result = workspace:Raycast(position, direction * ENCLOSURE_RANGE, probe)
+	if not (result and Living.humanoidOf(result.Instance)) then
+		return result ~= nil
+	end
+	local past = RaycastParams.new()
+	past.FilterType = Enum.RaycastFilterType.Exclude
+	past.IgnoreWater = true
+	local skipped = table.clone(ignored)
+	for _ = 1, MAX_LIVING_SKIPPED do
+		local owner = if result then Living.humanoidOf(result.Instance) else nil
+		if not owner then
+			return result ~= nil
+		end
+		table.insert(skipped, owner.Parent :: Instance)
+		past.FilterDescendantsInstances = skipped
+		result = workspace:Raycast(position, direction * ENCLOSURE_RANGE, past)
+	end
+	return false
+end
+
 -- How enclosed a spot is, from 0 (in the open) to 1 (in a room): half from
 -- how much roof is over it, half from how many walls are around it.
 local function enclosure(position: Vector3): number
 	local function blocked(directions: { Vector3 }): number
 		local count = 0
 		for _, direction in directions do
-			if workspace:Raycast(position, direction * ENCLOSURE_RANGE, probe) then
+			if walled(position, direction) then
 				count += 1
 			end
 		end
