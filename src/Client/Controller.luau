@@ -74,8 +74,8 @@ end
 -- Shows where a shot landed: a hole and a burst of particles, and its sound.
 local function landed(shot: Protocol.ShotEffect)
 	if shot.kind == Protocol.HitKind.World then
-		Impacts.world(shot.origin, shot.hit)
-		Sounds.at(weapon.name, Sounds.Cues.ImpactWorld, shot.hit)
+		local alive = Impacts.world(shot.origin, shot.hit)
+		Sounds.at(weapon.name, if alive then Sounds.Cues.ImpactBody else Sounds.Cues.ImpactWorld, shot.hit)
 	elseif shot.kind == Protocol.HitKind.Body or shot.kind == Protocol.HitKind.Head then
 		Impacts.body(shot.origin, shot.hit)
 		Sounds.at(weapon.name, Sounds.Cues.ImpactBody, shot.hit)
