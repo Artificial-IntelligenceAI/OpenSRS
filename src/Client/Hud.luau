@@ -1,7 +1,8 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- The on-screen HUD: crosshair, ammo, health, hit markers and the death notice.
+-- The on-screen HUD: crosshair, ammo, health, hit markers, the death notice,
+-- and a tag while the game has stopped the player shooting.
 
 local Players = game:GetService("Players")
 
@@ -10,6 +11,7 @@ local Protocol = require(script.Parent.Parent.Shared.Protocol)
 local HITMARKER_TIME = 0.15
 local WHITE = Color3.new(1, 1, 1)
 local RED = Color3.fromRGB(255, 70, 70)
+local CANT_SHOOT_TEXT = "Can't shoot"
 
 local Hud = {}
 
@@ -36,6 +38,10 @@ end
 
 local ammo = label("Ammo", Vector2.new(1, 1), UDim2.new(1, -24, 1, -20), 28)
 local health = label("Health", Vector2.new(0, 1), UDim2.new(0, 24, 1, -20), 28)
+local cantShoot = label("CantShoot", Vector2.new(1, 1), UDim2.new(1, -24, 1, -56), 18)
+cantShoot.Text = CANT_SHOOT_TEXT
+cantShoot.TextColor3 = RED
+cantShoot.Visible = false
 local notice = label("Notice", Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.4), 32)
 notice.TextXAlignment = Enum.TextXAlignment.Center
 notice.Visible = false
@@ -78,9 +84,11 @@ function Hud.update(
 	healthPoints: number,
 	spreadDegrees: number,
 	fieldOfView: number,
-	showCrosshair: boolean
+	showCrosshair: boolean,
+	canShoot: boolean
 )
 	ammo.Text = if reloading then "Reloading…" else `{ammoCount} / {reserve}`
+	cantShoot.Visible = not canShoot
 	health.Text = `{math.ceil(healthPoints)} HP`
 
 	local viewport = workspace.CurrentCamera.ViewportSize
@@ -110,6 +118,9 @@ function Hud.setAlive(alive: boolean)
 	notice.Visible = not alive
 	ammo.Visible = alive
 	health.Visible = alive
+	if not alive then
+		cantShoot.Visible = false
+	end
 end
 
 return table.freeze(Hud)

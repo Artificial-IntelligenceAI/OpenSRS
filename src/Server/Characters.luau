@@ -34,6 +34,7 @@ type Record = {
 	state: State?, -- nil until spawned
 	epoch: number,
 	dirty: boolean, -- the client must be told about a server-side change
+	canShoot: boolean, -- what the game last set with API.setCanShoot; kept through respawns
 	lastSeq: number?, -- the last real input processed; nil until the first one
 	pending: { Input }, -- received but not yet processed, oldest first
 	lastInput: Input?,
@@ -107,7 +108,9 @@ local function spawn(record: Record)
 	if records[record.player] ~= record then
 		return
 	end
-	record.state = Simulation.newState(position, 0, Weapons.default)
+	local state = Simulation.newState(position, 0, Weapons.default)
+	state.canShoot = record.canShoot
+	record.state = state
 	record.epoch = (record.epoch + 1) % 256
 	record.dirty = true
 	record.pending = {}
@@ -302,6 +305,7 @@ local function onPlayerAdded(player: Player)
 		state = nil,
 		epoch = 0,
 		dirty = false,
+		canShoot = true,
 		lastSeq = nil,
 		pending = {},
 		lastInput = nil,
@@ -358,6 +362,23 @@ end
 function Characters.slotOf(player: Player): number?
 	local record = records[player]
 	return if record then record.slot else nil
+end
+
+-- Lets a player shoot or not, until changed again (respawning doesn't reset
+-- it). Their client is told, so it doesn't show shots that won't happen.
+function Characters.setCanShoot(player: Player, allowed: boolean)
+	local record = records[player]
+	if not record then
+		return
+	end
+	record.canShoot = allowed
+	local state = record.state
+	if state and state.canShoot ~= allowed then
+		local changed = table.clone(state)
+		changed.canShoot = allowed
+		record.state = changed
+		record.dirty = true
+	end
 end
 
 -- Moves a living player's character to `position` (where their feet go),

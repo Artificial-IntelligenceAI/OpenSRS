@@ -5,7 +5,8 @@
 -- never part of OpenSRS itself. It also shows a game using OpenSRS's API.
 --
 -- Teleports: players ask (see DevTools.client) to go inside the spawn box,
--- outside it, or to the zombie arena.
+-- outside it, or to the zombie arena. They can also switch their own shooting
+-- off and on, to try OpenSRS.setCanShoot.
 --
 -- The zombie arena: a walled yard away from the spawn with some cover. While
 -- anyone is in it, zombies keep coming: plain R6 figures with a Humanoid, so
@@ -46,11 +47,20 @@ local THINK_EVERY = 0.2 -- seconds between zombies picking where to go
 local teleport = Instance.new("RemoteEvent")
 teleport.Name = "OpenSRSDevTeleport"
 teleport.Parent = ReplicatedStorage
+local shootingOff: { [Player]: boolean } = {}
 teleport.OnServerEvent:Connect(function(player: Player, where: unknown)
+	if where == "ToggleShooting" then
+		shootingOff[player] = not shootingOff[player]
+		OpenSRS.setCanShoot(player, not shootingOff[player])
+		return
+	end
 	local place = if typeof(where) == "string" then PLACES[where] else nil
 	if place then
 		OpenSRS.teleport(player, place)
 	end
+end)
+Players.PlayerRemoving:Connect(function(player)
+	shootingOff[player] = nil
 end)
 
 -- The arena ---------------------------------------------------------------------

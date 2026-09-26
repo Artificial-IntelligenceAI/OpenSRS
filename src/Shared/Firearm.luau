@@ -37,7 +37,8 @@ function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 		end
 	end
 
-	local pulling = bit32.btest(buttons, Buttons.Fire)
+	-- While the game has stopped this player shooting, the trigger does nothing.
+	local pulling = bit32.btest(buttons, Buttons.Fire) and state.canShoot
 	local wantsReload = bit32.btest(buttons, Buttons.Reload) or (pulling and state.ammo == 0)
 	if
 		wantsReload

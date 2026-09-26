@@ -9,6 +9,7 @@
 --
 --     OpenSRS.teleport(player, Vector3.new(0, 5, 0)) -- where their feet go
 --     OpenSRS.damage(player, 25)
+--     OpenSRS.setCanShoot(player, false) -- lobbies, safe zones, round countdowns
 --     print(OpenSRS.position(player), OpenSRS.health(player))
 --
 --     OpenSRS.Died:Connect(function(victim: Player, killer: Player?)
@@ -44,6 +45,14 @@ function API.damage(player: Player, amount: number)
 	if slot then
 		Combat.hurt(slot, amount)
 	end
+end
+
+-- Stops a player shooting (false) or lets them again (true). It lasts until
+-- changed, through deaths and respawns. While stopped, pulling the trigger
+-- does nothing, their HUD says they can't shoot, and aiming and reloading
+-- still work. Players can shoot by default.
+function API.setCanShoot(player: Player, allowed: boolean)
+	Characters.setCanShoot(player, allowed)
 end
 
 -- Where a living player's feet are, or nil if they're dead or not spawned.

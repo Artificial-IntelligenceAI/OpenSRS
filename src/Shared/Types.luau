@@ -37,6 +37,7 @@ export type State = {
 	drawTicks: number, -- ticks until the gun is drawn after spawning
 	raiseTicks: number, -- ticks until the gun is raised after sprinting
 	triggerHeld: boolean, -- the trigger was held last tick (semi-automatic needs a fresh press)
+	canShoot: boolean, -- false while the game has stopped this player shooting (see API.setCanShoot)
 	recoilPitch: number, -- radians added to the aim by recoil
 	recoilYaw: number,
 	bloom: number, -- degrees of extra spread from recent shots

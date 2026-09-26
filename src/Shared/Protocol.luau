@@ -192,6 +192,7 @@ function Protocol.encodeState(epoch: number, ack: number, state: State, health: 
 		+ (if state.sprinting then 8 else 0)
 		+ (if state.aiming then 16 else 0)
 		+ (if state.triggerHeld then 32 else 0)
+		+ (if state.canShoot then 0 else 64)
 	buffer.writeu8(data, 29, flags)
 	buffer.writei8(data, 30, state.leanTicks)
 	buffer.writeu8(data, 31, state.jumpCooldown)
@@ -234,6 +235,7 @@ function Protocol.decodeState(data: unknown): StateMessage?
 			drawTicks = buffer.readu8(data, 65),
 			raiseTicks = buffer.readu8(data, 38),
 			triggerHeld = bit32.btest(flags, 32),
+			canShoot = not bit32.btest(flags, 64),
 			recoilPitch = buffer.readf64(data, 39),
 			recoilYaw = buffer.readf64(data, 47),
 			bloom = buffer.readf64(data, 55),

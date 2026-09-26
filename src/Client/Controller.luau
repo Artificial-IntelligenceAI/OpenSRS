@@ -66,6 +66,7 @@ local function matches(a: State, b: State): boolean
 		and a.drawTicks == b.drawTicks
 		and a.raiseTicks == b.raiseTicks
 		and a.triggerHeld == b.triggerHeld
+		and a.canShoot == b.canShoot
 		and math.abs(a.recoilPitch - b.recoilPitch) < TOLERANCE
 		and math.abs(a.recoilYaw - b.recoilYaw) < TOLERANCE
 		and math.abs(a.bloom - b.bloom) < TOLERANCE
@@ -257,6 +258,7 @@ function Controller.start()
 					and current.drawTicks == 0
 					and current.raiseTicks == 0
 					and not current.sprinting
+					and current.canShoot
 				then
 					Sounds.near(weapon.name, Sounds.Cues.DryFire, HANDS)
 				end
@@ -327,7 +329,8 @@ function Controller.start()
 				health,
 				Firearm.spread(current, weapon),
 				fieldOfView,
-				not current.aiming and not current.sprinting
+				not current.aiming and not current.sprinting,
+				current.canShoot
 			)
 		end
 
