@@ -198,7 +198,7 @@ function Controller.start()
 		local listener = camera.CFrame.Position
 		local far = (shot.origin - listener).Magnitude > DISTANT_SHOT
 		if not (far and Sounds.at(weapon.name, Sounds.Cues.FireDistant, shot.origin)) then
-			Sounds.at(weapon.name, Sounds.Cues.Fire, shot.origin)
+			Sounds.shot(weapon.name, shot.origin)
 		end
 		-- A bullet passing close by is heard where it passes, when it gets there.
 		local path = shot.hit - shot.origin
@@ -215,6 +215,7 @@ function Controller.start()
 	snapshotRemote.OnClientEvent:Connect(Puppets.receive)
 	Sounds.preload(weapon.name)
 	Casings.ignore({ camera, Puppets.folder, Effects.folder })
+	Sounds.ignore({ camera, Puppets.folder, Effects.folder, Casings.folder })
 	InputMap.start()
 	Hud.start()
 
@@ -269,7 +270,7 @@ function Controller.start()
 					local hit = workspace:Raycast(camera.CFrame.Position, direction * weapon.range, world.raycast)
 					local target = if hit then hit.Position else camera.CFrame.Position + direction * weapon.range
 					Viewmodel.fired()
-					Sounds.at(weapon.name, Sounds.Cues.Fire, muzzle)
+					Sounds.shot(weapon.name, muzzle)
 					Casings.eject(weapon.name, Viewmodel.ejectionPort(), current.velocity)
 					Effects.muzzleFlash(muzzle)
 					Effects.tracer(muzzle, target, weapon.bulletSpeed)

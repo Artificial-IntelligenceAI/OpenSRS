@@ -17,6 +17,12 @@
 -- RollOffMinDistance (full volume within it) and RollOffMaxDistance (silent
 -- beyond it). Missing cues are simply silent, so the "systems only" download,
 -- which has no assets, works without any sound at all.
+--
+-- A cue can also be shaped with Roblox's audio effects (AudioCompressor,
+-- AudioDistortion, AudioEqualizer, AudioReverb and the like): put them in the
+-- Sound, or in the cue's Folder to shape every variation. The sound passes
+-- through them in order of their names, so name them "1 Compress",
+-- "2 Distort" and so on.
 
 local ContentProvider = game:GetService("ContentProvider")
 local Debris = game:GetService("Debris")
@@ -27,11 +33,14 @@ local Assets = require(script.Parent.Assets)
 local PITCH_VARIATION = 0.03 -- each play is up to this much higher or lower, so repeats don't sound identical
 local MAX_LIFETIME = 10 -- seconds a played sound is kept, in case it never reports finishing
 local FALLOFF_STEP = 1.5 -- distance ratio between points on a sound's volume-over-distance curve
+local ENCLOSURE_RANGE = 60 -- studs: walls and roofs further away than this don't count as being indoors
 
 local Sounds = {}
 
 Sounds.Cues = table.freeze({
-	Fire = "Fire", -- a shot, yours or someone else's up close
+	Fire = "Fire", -- a shot, yours or someone else's up close: the blast itself
+	FireTailIndoor = "FireTailIndoor", -- what follows the blast in a room: played with Fire, by how enclosed the shot is
+	FireTailOutdoor = "FireTailOutdoor", -- what follows the blast in the open
 	FireDistant = "FireDistant", -- others' shots from far away; Fire is used if there isn't one
 	DryFire = "DryFire", -- pulling the trigger with no ammo left at all
 	Casing = "Casing", -- a spent case landing, just after each of your shots
@@ -56,6 +65,43 @@ output.Name = "OpenSRS"
 output.Parent = SoundService
 
 local random = Random.new()
+local probe = RaycastParams.new()
+probe.FilterType = Enum.RaycastFilterType.Exclude
+probe.IgnoreWater = true
+local ignored: { Instance } = {}
+
+local EFFECTS = table.freeze({
+	AudioChorus = true,
+	AudioCompressor = true,
+	AudioDistortion = true,
+	AudioEcho = true,
+	AudioEqualizer = true,
+	AudioFader = true,
+	AudioFilter = true,
+	AudioFlanger = true,
+	AudioLimiter = true,
+	AudioPitchShifter = true,
+	AudioReverb = true,
+	AudioTremolo = true,
+})
+
+-- The effects a sound passes through, in order: its own and its cue Folder's.
+local function effectsOf(source: Sound): { Instance }
+	local found = {}
+	for _, container in { source.Parent, source } do
+		if container and (container == source or container:IsA("Folder")) then
+			for _, child in container:GetChildren() do
+				if EFFECTS[child.ClassName] then
+					table.insert(found, child)
+				end
+			end
+		end
+	end
+	table.sort(found, function(a, b)
+		return a.Name < b.Name
+	end)
+	return found
+end
 
 local function pick(weapon: string, cue: string): Sound?
 	local folder = Assets.weaponPart(weapon, "Sounds")
@@ -93,21 +139,39 @@ local function falloff(source: Sound): { [number]: number }
 	return curve
 end
 
--- Plays `source` into `target`, then cleans up `holder` (which contains both).
-local function start(source: Sound, target: Instance, holder: Instance)
+local function connect(from: Instance, to: Instance, holder: Instance)
+	local wire = Instance.new("Wire")
+	wire.SourceInstance = from
+	wire.TargetInstance = to
+	wire.Parent = holder
+end
+
+-- Plays `source` through its effects into `target`, then cleans up `holder`
+-- (which contains all of it). `gain` scales the Sound's own volume.
+local function start(source: Sound, target: Instance, holder: Instance, gain: number?)
 	local player = Instance.new("AudioPlayer")
 	player.Asset = source.SoundId
-	player.Volume = source.Volume
+	player.Volume = source.Volume * (gain or 1)
 	player.PlaybackSpeed = source.PlaybackSpeed * (1 + random:NextNumber(-PITCH_VARIATION, PITCH_VARIATION))
 	player.Parent = holder
-	local wire = Instance.new("Wire")
-	wire.SourceInstance = player
-	wire.TargetInstance = target
-	wire.Parent = holder
+	local last: Instance = player
+	local tail = 0 -- how long effects keep sounding after the recording ends
+	for _, effect in effectsOf(source) do
+		local copy = effect:Clone()
+		copy.Parent = holder
+		connect(last, copy, holder)
+		last = copy
+		if copy:IsA("AudioReverb") then
+			tail = math.max(tail, copy.DecayTime)
+		elseif copy:IsA("AudioEcho") then
+			tail = math.max(tail, copy.DelayTime * 4)
+		end
+	end
+	connect(last, target, holder)
 	player.Ended:Once(function()
-		holder:Destroy()
+		Debris:AddItem(holder, tail)
 	end)
-	Debris:AddItem(holder, MAX_LIFETIME)
+	Debris:AddItem(holder, MAX_LIFETIME + tail)
 	player:Play()
 end
 
@@ -125,8 +189,9 @@ function Sounds.play(weapon: string, cue: string): boolean
 	return true
 end
 
--- Plays a cue at a point in the world. Returns whether there was a sound to play.
-function Sounds.at(weapon: string, cue: string, position: Vector3): boolean
+-- Plays a cue at a point in the world, `gain` times as loud as its Sound says.
+-- Returns whether there was a sound to play.
+function Sounds.at(weapon: string, cue: string, position: Vector3, gain: number?): boolean
 	local source = pick(weapon, cue)
 	if not source then
 		return false
@@ -138,7 +203,62 @@ function Sounds.at(weapon: string, cue: string, position: Vector3): boolean
 	emitter:SetDistanceAttenuation(falloff(source))
 	emitter.Parent = attachment
 	attachment.Parent = workspace.Terrain
-	start(source, emitter, attachment)
+	start(source, emitter, attachment, gain)
+	return true
+end
+
+-- Things that don't count as walls when judging how enclosed a spot is: the
+-- player's own view model, other players, effects.
+function Sounds.ignore(instances: { Instance })
+	for _, instance in instances do
+		table.insert(ignored, instance)
+	end
+	probe.FilterDescendantsInstances = ignored
+end
+
+-- Straight up, up at 45 degrees all around, and level all around.
+local UP = { Vector3.yAxis }
+local AROUND = {}
+for index = 0, 7 do
+	local angle = index * math.pi / 4
+	local level = Vector3.new(math.cos(angle), 0, math.sin(angle))
+	table.insert(AROUND, level)
+	if index % 2 == 0 then
+		table.insert(UP, (level + Vector3.yAxis).Unit)
+	end
+end
+
+-- How enclosed a spot is, from 0 (in the open) to 1 (in a room): half from
+-- how much roof is over it, half from how many walls are around it.
+local function enclosure(position: Vector3): number
+	local function blocked(directions: { Vector3 }): number
+		local count = 0
+		for _, direction in directions do
+			if workspace:Raycast(position, direction * ENCLOSURE_RANGE, probe) then
+				count += 1
+			end
+		end
+		return count / #directions
+	end
+	return (blocked(UP) + blocked(AROUND)) / 2
+end
+
+-- A gunshot at `position`: the blast, then the tail a room or the open air
+-- gives it, mixed by how enclosed the spot is. (Acoustic simulation adds the
+-- actual map's echoes on top of either.) Weapons without tails just play Fire.
+-- Returns whether there was a sound to play.
+function Sounds.shot(weapon: string, position: Vector3): boolean
+	if not Sounds.at(weapon, Sounds.Cues.Fire, position) then
+		return false
+	end
+	local inside = enclosure(position)
+	-- Equal power, so a half-enclosed spot isn't quieter than either extreme.
+	if inside > 0 then
+		Sounds.at(weapon, Sounds.Cues.FireTailIndoor, position, math.sqrt(inside))
+	end
+	if inside < 1 then
+		Sounds.at(weapon, Sounds.Cues.FireTailOutdoor, position, math.sqrt(1 - inside))
+	end
 	return true
 end
 

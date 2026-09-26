@@ -11,7 +11,7 @@ See the [main README](../README.md#crediting-the-models-and-sounds) for how to c
   - `Weapons/X16/FirstPerson` — the X16 pistol as seen in the player's own hands (about 51k triangles).
   - `Weapons/X16/ThirdPerson` — the X16 as seen on other players (about 5.5k triangles).
   - `Weapons/X16/Casing` — the spent case thrown out on every shot: Astra's 284-triangle mesh with its PBR textures, at 2.5 times true size so it reads in play.
-  - `Weapons/X16/Sounds` — the X16's sounds as Roblox audio, one per cue (see [DESIGN.md](../docs/DESIGN.md#weapons)), with volumes and ranges set. `Fire` is a folder of three takes. The audio is uploaded under the Soclets Software group; the source WAVs are in `weapons/X16/sounds/`.
+  - `Weapons/X16/Sounds` — the X16's sounds as Roblox audio, one per cue (see [DESIGN.md](../docs/DESIGN.md#weapons)), with volumes and ranges set. `Fire` is a folder of three blasts, and `FireTailIndoor` and `FireTailOutdoor` hold the tails that follow them. The audio is uploaded under the Soclets Software group; the source WAVs are in `weapons/X16/sounds/`.
 
 Each weapon model's pivot is the grip, it faces -Z, and it has `Muzzle`, `EjectionPort`, `RearSight` and `Grip`
 attachments. Moving parts are named `Slide`, `Barrel`, `Trigger` and `Magazine`.
@@ -26,7 +26,7 @@ attachments. Moving parts are named `Slide`, `Barrel`, `Trigger` and `Magazine`.
 - `validation.json` and `X16-comparison.png` — triangle counts, checks, and a render comparing both versions to the original.
 - `ASTRA-NOTES.txt` — import notes from the model's author.
 - `Casing/` — the X16's spent case: `X16-Spent-Casing.fbx` (284 triangles, 0.099 × 0.051 studs, long axis X, mouth toward +X) with its four PBR textures, and Astra's README and checks.
-- `sounds/` — the X16's sounds: 20 WAVs (48 kHz mono) edited from public-domain recordings, mostly a real Walther PPQ 9mm. `SOURCES.md` lists the original of each file and how it was edited.
+- `sounds/` — the X16's sounds: 24 WAVs (48 kHz mono) edited from public-domain recordings: the gunshot from a real indoor 9mm range, most handling sounds from a real Walther PPQ 9mm. `SOURCES.md` lists the original of each file and how it was edited.
 
 To use your own copy of the meshes and textures, import the FBX with Studio's 3D Importer, then scale it to 1.2 studs and turn it to face -Z.
 
