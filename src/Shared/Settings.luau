@@ -145,6 +145,9 @@ function Settings.apply(resolved: Resolved)
 	Config.bulletHoleTime = number(gameValues, "BulletHoleTime")
 	Config.maxBulletHoles = math.round(number(gameValues, "MaxBulletHoles"))
 	Config.teammateHighlights = gameValues.TeammateHighlights == true
+	local controls = resolved.sections.Controls
+	Config.aimToggle = controls.AimToggle == true
+	Config.leanToggle = controls.LeanToggle == true
 
 	local M = Config.movement
 	M.slowWalkSpeed = number(movement, "SlowWalkSpeed")

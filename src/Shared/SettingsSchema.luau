@@ -70,6 +70,23 @@ local game: Section = {
 	},
 }
 
+local controls: Section = {
+	name = "Controls",
+	fields = {
+		{
+			name = "AimToggle",
+			default = false,
+			description = "Right click toggles aiming down sights instead of aiming only while held. "
+				.. "Starting a sprint stops aiming.",
+		},
+		{
+			name = "LeanToggle",
+			default = true,
+			description = "Q and E toggle leaning left and right instead of leaning only while held.",
+		},
+	},
+}
+
 local movement: Section = {
 	name = "Movement",
 	fields = {
@@ -268,7 +285,7 @@ local weapons: { WeaponEntry } = {
 
 local SettingsSchema = {}
 
-SettingsSchema.sections = { game, movement }
+SettingsSchema.sections = { game, controls, movement }
 SettingsSchema.weaponFields = weaponFields
 SettingsSchema.weapons = weapons
 

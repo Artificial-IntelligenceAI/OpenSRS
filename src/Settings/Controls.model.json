@@ -1,0 +1,7 @@
+{
+	"className": "Configuration",
+	"attributes": {
+		"AimToggle": false,
+		"LeanToggle": true
+	}
+}

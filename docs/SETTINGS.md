@@ -31,6 +31,13 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `MaxBulletHoles` | 60 | 0 to 1000 | Most bullet holes shown at once; the oldest disappear first. |
 | `TeammateHighlights` | false | true or false | Outlines teammates, even through walls. Teams come from Roblox's Teams service. While on, players are also sent where their teammates are behind walls (never their enemies), so a cheat could show teammates too. |
 
+## Controls
+
+| Setting | Default | Allowed | What it does |
+| --- | --- | --- | --- |
+| `AimToggle` | false | true or false | Right click toggles aiming down sights instead of aiming only while held. Starting a sprint stops aiming. |
+| `LeanToggle` | true | true or false | Q and E toggle leaning left and right instead of leaning only while held. |
+
 ## Movement
 
 | Setting | Default | Allowed | What it does |

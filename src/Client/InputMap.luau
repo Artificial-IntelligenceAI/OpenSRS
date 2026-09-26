@@ -4,8 +4,9 @@
 -- Turns keyboard and mouse into inputs.
 --
 -- WASD move, mouse looks, Space jumps, Left Shift sprints, Left Alt slow-walks,
--- C toggles crouch, Z toggles prone, Q and E toggle leaning left and right.
--- Left click fires, right click aims, R reloads.
+-- C toggles crouch, Z toggles prone, Q and E lean left and right. Left click
+-- fires, right click aims, R reloads. Whether aiming and leaning are held or
+-- toggled are the AimToggle and LeanToggle settings.
 
 local UserInputService = game:GetService("UserInputService")
 
@@ -24,7 +25,8 @@ local InputMap = {}
 local yaw = 0
 local pitch = 0
 local stance: number = Stance.Stand
-local lean = 0 -- -1 left, 0 upright, 1 right
+local lean = 0 -- -1 left, 0 upright, 1 right, while leaning is toggled
+local aimToggled = false -- aiming, while aiming is toggled
 -- Presses shorter than a tick still count.
 local firePressed = false
 local reloadPressed = false
@@ -41,6 +43,9 @@ function InputMap.start()
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			firePressed = true
 			return
+		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+			aimToggled = Config.aimToggle and not aimToggled
+			return
 		end
 		local key = input.KeyCode
 		if key == Enum.KeyCode.R then
@@ -55,9 +60,10 @@ function InputMap.start()
 		elseif key == Enum.KeyCode.LeftShift then
 			stance = Stance.Stand
 			lean = 0
-		elseif key == Enum.KeyCode.Q then
+			aimToggled = false
+		elseif key == Enum.KeyCode.Q and Config.leanToggle then
 			lean = if lean == -1 then 0 else -1
-		elseif key == Enum.KeyCode.E then
+		elseif key == Enum.KeyCode.E and Config.leanToggle then
 			lean = if lean == 1 then 0 else 1
 		end
 	end)
@@ -115,15 +121,21 @@ function InputMap.sample(seq: number, viewTick: number): Input
 	if down(Enum.KeyCode.LeftAlt) then
 		buttons += Buttons.SlowWalk
 	end
-	if lean == -1 then
+	local leaning = if Config.leanToggle
+		then lean
+		else (if down(Enum.KeyCode.E) then 1 else 0) - (if down(Enum.KeyCode.Q) then 1 else 0)
+	if leaning == -1 then
 		buttons += Buttons.LeanLeft
-	elseif lean == 1 then
+	elseif leaning == 1 then
 		buttons += Buttons.LeanRight
 	end
 	if fire or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
 		buttons += Buttons.Fire
 	end
-	if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+	local aiming = if Config.aimToggle
+		then aimToggled
+		else UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+	if aiming then
 		buttons += Buttons.Aim
 	end
 	if reload then
