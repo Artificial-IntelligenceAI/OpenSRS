@@ -125,6 +125,7 @@ function Controller.start()
 		end
 		if predicted == nil or message.epoch ~= epoch then
 			-- Spawned or moved by the server: start over from its state.
+			Sounds.jumped()
 			epoch = message.epoch
 			history = {}
 			server.yaw, server.pitch = InputMap.look()

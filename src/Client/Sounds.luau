@@ -34,6 +34,7 @@ local PITCH_VARIATION = 0.03 -- each play is up to this much higher or lower, so
 local MAX_LIFETIME = 10 -- seconds a played sound is kept, in case it never reports finishing
 local FALLOFF_STEP = 1.5 -- distance ratio between points on a sound's volume-over-distance curve
 local ENCLOSURE_RANGE = 60 -- studs: walls and roofs further away than this don't count as being indoors
+local SETTLE_TIME = 1 -- seconds after the player jumps (see Sounds.jumped) before acoustic simulation is trusted again
 local REMIX_EVERY = 0.1 -- seconds between re-judging a moving shot's surroundings
 local REMIX_SPEED = 12 -- how quickly a moving shot's tails cross-fade to fit where it is now
 
@@ -73,6 +74,7 @@ probe.IgnoreWater = true
 local ignored: { Instance } = {}
 -- Sounds that move with something (your own gun, your view) while they play.
 local following: { { attachment: Attachment, follow: () -> Vector3 } } = {}
+local settledAt = 0 -- os.clock() when acoustic simulation has caught up with the last jump
 -- Moving shots whose indoor and outdoor tails are re-mixed as they go.
 type Mix = {
 	indoor: AudioPlayer?,
@@ -228,8 +230,11 @@ local function playAt(
 	emitter:SetDistanceAttenuation(falloff(source))
 	emitter.Parent = attachment
 	attachment.Parent = workspace.Terrain
-	local player = start(source, emitter, attachment, gain)
-	if follow then
+	-- The player's own sounds skip acoustic simulation until it has caught up
+	-- with a jump (see Sounds.jumped).
+	local settling = follow ~= nil and os.clock() < settledAt
+	local player = start(source, if settling then output else emitter, attachment, gain)
+	if follow and not settling then
 		table.insert(following, { attachment = attachment, follow = follow })
 	end
 	return player
@@ -318,6 +323,28 @@ function Sounds.shot(weapon: string, position: Vector3, follow: (() -> Vector3)?
 		Sounds.at(weapon, Sounds.Cues.FireTailOutdoor, position, math.sqrt(1 - inside))
 	end
 	return true
+end
+
+-- Call when the player has just been moved in an instant (a teleport or a
+-- respawn). Acoustic simulation takes a moment to catch up with the listener
+-- jumping: their own sounds playing or started meanwhile can come out
+-- muffled, and a shot's weak blast lets the echo in its tail sound like a
+-- second shot. So until it has caught up, their own sounds go straight to
+-- their ears instead, as they'd sound right next to them, just without the
+-- room.
+function Sounds.jumped()
+	settledAt = os.clock() + SETTLE_TIME
+	for _, sound in following do
+		local attachment = sound.attachment
+		if attachment.Parent then
+			for _, wire in attachment:GetChildren() do
+				if wire:IsA("Wire") and wire.TargetInstance and wire.TargetInstance:IsA("AudioEmitter") then
+					wire.TargetInstance = output
+				end
+			end
+		end
+	end
+	table.clear(following)
 end
 
 -- Moves the sounds that follow something, and re-mixes moving shots' tails
