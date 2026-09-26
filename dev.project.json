@@ -6,6 +6,14 @@
 		"ServerScriptService": {
 			"OpenSRS": {
 				"$path": "default.project.json"
+			},
+			"OpenSRSDev": {
+				"$path": "dev/Server"
+			}
+		},
+		"ReplicatedStorage": {
+			"OpenSRSDev": {
+				"$path": "dev/Client"
 			}
 		}
 	}

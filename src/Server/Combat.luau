@@ -7,12 +7,18 @@
 -- inputs). The server rewinds every other player to what the shooter was
 -- seeing, casts the bullet itself with spread only the server knows, and
 -- decides the damage. Nothing about a hit is ever taken from the client.
+--
+-- Bullets also hurt anything else alive: anything a game gives a Humanoid
+-- (see Living). Those are hit where the server has them now (they're the
+-- server's own, so there's nothing to rewind), and take damage through their
+-- Humanoid, head shots included, so a game handles their death itself.
 
 local Shared = script.Parent.Parent.Shared
 local Body = require(Shared.Body)
 local Config = require(Shared.Config)
 local Eye = require(Shared.Eye)
 local Firearm = require(Shared.Firearm)
+local Living = require(Shared.Living)
 local Movement = require(Shared.Movement)
 local Protocol = require(Shared.Protocol)
 local Simulation = require(Shared.Simulation)
@@ -194,6 +200,20 @@ local function applyDamage(victimSlot: number, epoch: number, attackerSlot: numb
 	end
 end
 
+-- Damage to a player from something other than a bullet (see API.damage).
+function Combat.hurt(victimSlot: number, amount: number)
+	local victim = lookup(victimSlot)
+	if victim and amount > 0 then
+		applyDamage(victimSlot, victim.epoch, 0, amount, TORSO)
+	end
+end
+
+local function hurtLiving(humanoid: Humanoid, amount: number)
+	if humanoid.Parent and humanoid.Health > 0 then
+		humanoid:TakeDamage(amount)
+	end
+end
+
 local function latestPosition(slot: number): Vector3?
 	local entries = history[slot]
 	local last = entries and entries[#entries]
@@ -245,6 +265,16 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 		end
 	end
 
+	-- Nobody was in the way, but the bullet may have hit something else alive.
+	local living: Humanoid? = nil
+	if not victimSlot and worldHit then
+		living = Living.humanoidOf(worldHit.Instance)
+		if living then
+			victimPart = worldHit.Instance.Name
+			kind = if victimPart == HEAD then Protocol.HitKind.Head else Protocol.HitKind.Body
+		end
+	end
+
 	local hitPoint = origin + direction * distance
 	local effect = Protocol.encodeShot({ slot = shooterSlot, origin = origin, hit = hitPoint, kind = kind })
 	remotes.shotResult:FireClient(shooter.player, effect)
@@ -256,7 +286,14 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 		end
 	end
 
-	if victimSlot then
+	if living then
+		local amount = damageFor(weapon, distance, victimPart)
+		if weapon.instantDamage then
+			hurtLiving(living, amount)
+		else
+			task.delay(distance / weapon.bulletSpeed, hurtLiving, living, amount)
+		end
+	elseif victimSlot then
 		local victim = lookup(victimSlot)
 		if victim then
 			local amount = damageFor(weapon, distance, victimPart)

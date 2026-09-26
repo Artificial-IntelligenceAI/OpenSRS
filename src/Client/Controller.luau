@@ -116,6 +116,12 @@ function Controller.start()
 		local server = message.state
 		local predicted = state
 
+		if message.epoch == epoch and predicted == nil then
+			-- Dead. A state sent just before dying can arrive after the news
+			-- of it (it's sent unreliably, the news reliably); only a new
+			-- epoch means we're back.
+			return
+		end
 		if predicted == nil or message.epoch ~= epoch then
 			-- Spawned or moved by the server: start over from its state.
 			epoch = message.epoch

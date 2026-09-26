@@ -10,9 +10,10 @@ if [ ! -f "$defs" ]; then
 		https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.69.0/scripts/globalTypes.d.luau
 fi
 
-stylua --check src
+stylua --check src dev
 lune run scripts/generate-settings --check
-selene src
-rojo sourcemap default.project.json -o sourcemap.json
-luau-lsp analyze --platform=roblox --sourcemap=sourcemap.json --definitions=@roblox="$defs" src
+selene src dev
+# The dev project is OpenSRS plus the test-place tools in dev/, so this checks both.
+rojo sourcemap dev.project.json -o sourcemap.json
+luau-lsp analyze --platform=roblox --sourcemap=sourcemap.json --definitions=@roblox="$defs" src dev
 echo "All checks passed."

@@ -30,6 +30,7 @@
 local Debris = game:GetService("Debris")
 
 local Config = require(script.Parent.Parent.Shared.Config)
+local Living = require(script.Parent.Parent.Shared.Living)
 local Assets = require(script.Parent.Assets)
 local Casings = require(script.Parent.Casings)
 local Effects = require(script.Parent.Effects)
@@ -358,19 +359,6 @@ local function hole(from: Instance, point: Vector3, normal: Vector3, stuckTo: Ba
 	Debris:AddItem(part, Config.bulletHoleTime)
 end
 
--- The Humanoid of whatever `part` belongs to, if it's something alive.
-local function aliveOwner(part: Instance): Humanoid?
-	local model = part:FindFirstAncestorOfClass("Model")
-	while model do
-		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			return humanoid
-		end
-		model = model:FindFirstAncestorOfClass("Model")
-	end
-	return nil
-end
-
 local function ignoring(): { Instance }
 	return { workspace.CurrentCamera, Puppets.folder, Effects.folder, Casings.folder, holes }
 end
@@ -389,7 +377,7 @@ function Impacts.world(origin: Vector3, hit: Vector3): boolean
 		return false
 	end
 	local instance = result.Instance
-	if instance:IsA("BasePart") and aliveOwner(instance) then
+	if instance:IsA("BasePart") and Living.humanoidOf(instance) then
 		local from = templateFor("Body")
 		burst(from, result.Position, result.Normal, Color3.new(1, 1, 1), line.Unit)
 		hole(from, result.Position, result.Normal, instance)
@@ -467,11 +455,12 @@ local function nearestOnBox(part: BasePart, point: Vector3): (Vector3, Vector3)
 	return part.CFrame:PointToWorldSpace(clamped), part.CFrame:VectorToWorldSpace(normal)
 end
 
--- A bullet from `origin` hit a player at `hit`. The players shown are where
--- the server says the bullet hit, give or take a little, so the line is
--- traced against their parts to find which one and where; if it passes them
--- all by, the part closest to `hit` is used. (Their parts are left out of
--- raycasts, so this is worked out here.)
+-- A bullet from `origin` hit something alive at `hit`: a player, or anything
+-- a game gave a Humanoid. The players shown are where the server says the
+-- bullet hit, give or take a little, so the line is traced against their parts
+-- to find which one and where (their parts are left out of raycasts, so this
+-- is worked out here); failing that, it's cast against the world for anything
+-- alive; failing that, the player part closest to `hit` is used.
 function Impacts.body(origin: Vector3, hit: Vector3)
 	local line = hit - origin
 	if line.Magnitude < 1e-3 then
@@ -490,6 +479,14 @@ function Impacts.body(origin: Vector3, hit: Vector3)
 				struck = part
 				point, normal = origin + direction * distance, face
 			end
+		end
+	end
+	if not struck then
+		world.FilterDescendantsInstances = ignoring()
+		local result = workspace:Raycast(origin, line + direction * REACH, world)
+		if result and result.Instance:IsA("BasePart") and Living.humanoidOf(result.Instance) then
+			struck = result.Instance
+			point, normal = result.Position, result.Normal
 		end
 	end
 	if not struck then

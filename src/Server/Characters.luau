@@ -51,6 +51,7 @@ local PACKET_BUDGET_PER_TICK = 2 -- 120 input packets a second
 local MAX_PACKET_BUDGET = 30
 local FLOOD_THRESHOLD = 600 -- dropped packets before a flag is raised
 local STREAM_REFRESH_TICKS = 60 -- streaming requests expire, so they're renewed every second
+local TELEPORT_STREAM_WAIT = 0.3 -- seconds a teleport waits for the map there to load before going anyway
 local RESEND_TICKS = 10 -- how often to repeat the spawn until the client starts sending inputs
 local FALL_LIMIT = -500
 local VISIBILITY_GROUPS = 4 -- each player's visibility is checked every 4 ticks (15 a second)
@@ -344,6 +345,53 @@ local function onDied(victim: Player)
 			spawn(record)
 		end
 	end)
+end
+
+-- Where a player's character stands, if they're alive.
+function Characters.position(player: Player): Vector3?
+	local record = records[player]
+	local state = record and record.state
+	return if state then state.position else nil
+end
+
+-- The slot a player's character uses, if they have one.
+function Characters.slotOf(player: Player): number?
+	local record = records[player]
+	return if record then record.slot else nil
+end
+
+-- Moves a living player's character to `position` (where their feet go),
+-- stopping them. Their client starts over from there rather than sliding.
+-- Returns whether they were moved.
+function Characters.teleport(player: Player, position: Vector3): boolean
+	local record = records[player]
+	if not record or not record.state then
+		return false
+	end
+	-- Give the map there a moment to reach the client, but don't hold the
+	-- teleport up for it: loading can take over a second even for places the
+	-- player has just been.
+	local loaded = false
+	task.spawn(function()
+		streamAround(record, position)
+		loaded = true
+	end)
+	local waited = 0
+	while not loaded and waited < TELEPORT_STREAM_WAIT do
+		waited += task.wait()
+	end
+	local state = record.state
+	if records[player] ~= record or not state then
+		return false
+	end
+	local moved = table.clone(state)
+	moved.position = position
+	moved.velocity = Vector3.zero
+	record.state = moved
+	record.epoch = (record.epoch + 1) % 256 -- the client sees a new epoch and starts over from the server's state
+	record.dirty = true
+	record.pending = {}
+	return true
 end
 
 function Characters.start(created: Remotes.Remotes)
