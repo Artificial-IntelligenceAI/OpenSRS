@@ -4,12 +4,16 @@
 -- Draws other players. The server only sends the players this client is
 -- allowed to know about, so anyone missing from the latest update is hidden.
 -- Positions are shown slightly in the past and blended between updates so
--- movement looks smooth.
+-- movement looks smooth. With the TeammateHighlights setting on, teammates are
+-- outlined in their team's color, even through walls.
+
+local Players = game:GetService("Players")
 
 local Shared = script.Parent.Parent.Shared
 local Body = require(Shared.Body)
 local Config = require(Shared.Config)
 local Protocol = require(Shared.Protocol)
+local Teammates = require(Shared.Teammates)
 local Avatar = require(script.Parent.Avatar)
 local GunModel = require(script.Parent.GunModel)
 
@@ -19,6 +23,8 @@ type Remote = Protocol.Remote
 local INTERPOLATION_TICKS = Config.snapshotInterval * 2 + 1
 local MAX_SNAPSHOTS = 30
 local CLOCK_SMOOTHING = 0.02
+local HIGHLIGHT = "OpenSRSTeammate"
+local HIGHLIGHT_FILL = 0.75 -- how see-through the fill is; the outline is solid
 
 local Puppets = {}
 
@@ -88,6 +94,44 @@ function Puppets.ejectionPort(slot: number): CFrame?
 	return if port then port.WorldCFrame else nil
 end
 
+-- The player in each slot, from the attribute the server sets on them.
+local function playersBySlot(): { [number]: Player }
+	local found = {}
+	for _, player in Players:GetPlayers() do
+		local slot = player:GetAttribute(Teammates.SLOT_ATTRIBUTE)
+		if typeof(slot) == "number" then
+			found[slot] = player
+		end
+	end
+	return found
+end
+
+-- Outlines a teammate in their team's color, through walls; anyone else has
+-- no outline.
+local function outline(avatar: Avatar.Avatar, player: Player?)
+	local existing = avatar.model:FindFirstChild(HIGHLIGHT)
+	if not (player and Teammates.are(Players.LocalPlayer, player)) then
+		if existing then
+			existing:Destroy()
+		end
+		return
+	end
+	local highlight: Highlight
+	if existing and existing:IsA("Highlight") then
+		highlight = existing
+	else
+		highlight = Instance.new("Highlight")
+		highlight.Name = HIGHLIGHT
+		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		highlight.FillTransparency = HIGHLIGHT_FILL
+		highlight.OutlineTransparency = 0
+		highlight.Parent = avatar.model
+	end
+	local color = player.TeamColor.Color
+	highlight.FillColor = color
+	highlight.OutlineColor = color
+end
+
 function Puppets.renderTick(): number
 	local offset = clockOffset
 	if offset == nil then
@@ -127,6 +171,7 @@ function Puppets.render()
 		end
 	end
 
+	local owners = if Config.teammateHighlights then playersBySlot() else nil
 	for slot, remote in shown do
 		local avatar = avatars[slot]
 		if not avatar then
@@ -134,6 +179,9 @@ function Puppets.render()
 			avatars[slot] = avatar
 		end
 		Avatar.apply(avatar, Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset))
+		if owners then
+			outline(avatar, owners[slot])
+		end
 		avatar.model.Parent = folder
 	end
 	for slot, avatar in avatars do

@@ -6,6 +6,7 @@
 		"RespawnTime": 3,
 		"MaxHealth": 100,
 		"BulletHoleTime": 30,
-		"MaxBulletHoles": 60
+		"MaxBulletHoles": 60,
+		"TeammateHighlights": false
 	}
 }

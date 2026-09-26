@@ -144,6 +144,7 @@ function Settings.apply(resolved: Resolved)
 	Config.maxHealth = number(gameValues, "MaxHealth")
 	Config.bulletHoleTime = number(gameValues, "BulletHoleTime")
 	Config.maxBulletHoles = math.round(number(gameValues, "MaxBulletHoles"))
+	Config.teammateHighlights = gameValues.TeammateHighlights == true
 
 	local M = Config.movement
 	M.slowWalkSpeed = number(movement, "SlowWalkSpeed")

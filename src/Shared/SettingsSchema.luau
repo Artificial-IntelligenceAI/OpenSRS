@@ -60,6 +60,13 @@ local game: Section = {
 			max = 1000,
 			description = "Most bullet holes shown at once; the oldest disappear first.",
 		},
+		{
+			name = "TeammateHighlights",
+			default = false,
+			description = "Outlines teammates, even through walls. Teams come from Roblox's Teams service. "
+				.. "While on, players are also sent where their teammates are behind walls (never their enemies), "
+				.. "so a cheat could show teammates too.",
+		},
 	},
 }
 

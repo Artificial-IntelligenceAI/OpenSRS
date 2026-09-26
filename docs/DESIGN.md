@@ -57,7 +57,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Visibility (anti-wallhack)
 
-- Each player only receives the characters they can see from their first-person eye position. This applies to **teammates too**.
+- Each player only receives the characters they can see from their first-person eye position. This applies to **teammates too**, unless a game turns on the `TeammateHighlights` setting (off by default): then teammates are outlined in their team's color, even through walls, and so are sent to each other wherever they are. Enemies are never sent through walls. Teams come from Roblox's Teams service.
 - A target counts as visible if a clear line runs from any of the viewer's possible eye positions to any of the target's body parts (head, torso, arms, legs).
 - **No pop-in.** Eyes and bodies are pushed 0.25 s ahead along their velocity, and the viewer's possible eyes include both full leans. Once seen, a target stays known for 0.4 s.
 - **Nothing is pushed through walls.** Looking ahead stops at the first wall, so running at a wall never reveals what's behind it.

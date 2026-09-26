@@ -27,6 +27,7 @@ local Config = {
 	maxHealth = 100,
 	bulletHoleTime = 30, -- seconds; cosmetic, on each client
 	maxBulletHoles = 60,
+	teammateHighlights = false, -- teammates are outlined, and sent even behind walls
 
 	movement = {
 		width = 2,

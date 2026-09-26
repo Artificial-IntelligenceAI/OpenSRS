@@ -17,6 +17,7 @@ local Eye = require(Shared.Eye)
 local Movement = require(Shared.Movement)
 local Protocol = require(Shared.Protocol)
 local Simulation = require(Shared.Simulation)
+local Teammates = require(Shared.Teammates)
 local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
 local Combat = require(script.Parent.Combat)
@@ -256,7 +257,9 @@ local function sendSnapshots()
 		local players: { [number]: Protocol.Remote } = {}
 		for other, entry in remote do
 			local slot = records[other].slot
-			if other ~= viewer and Visibility.canSee(viewerRecord.slot, slot, now) then
+			local shown = Visibility.canSee(viewerRecord.slot, slot, now)
+				or (Config.teammateHighlights and Teammates.are(viewer, other))
+			if other ~= viewer and shown then
 				players[slot] = entry
 			end
 		end
@@ -282,6 +285,7 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	slots[slot] = player
+	player:SetAttribute(Teammates.SLOT_ATTRIBUTE, slot)
 
 	-- OpenSRS runs its own characters; Roblox's are never used.
 	if player.Character then
