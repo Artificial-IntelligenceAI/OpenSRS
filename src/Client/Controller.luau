@@ -272,7 +272,7 @@ function Controller.start()
 					Viewmodel.fired()
 					Sounds.shot(weapon.name, muzzle)
 					Casings.eject(weapon.name, Viewmodel.ejectionPort(), current.velocity)
-					Effects.muzzleFlash(weapon.name, Viewmodel.muzzle())
+					Effects.muzzleFlash(weapon.name, Viewmodel.muzzle(), Viewmodel.muzzle)
 					Effects.tracer(muzzle, target, weapon.bulletSpeed)
 				end
 			end
