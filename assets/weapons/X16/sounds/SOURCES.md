@@ -57,7 +57,13 @@ Sound effects by Kenney ([kenney.nl](https://kenney.nl)), CC0.
 | `X16_ImpactWorld1.wav`, `2`, `3` | [Impact Sounds](https://kenney.nl/assets/impact-sounds), `impactMining_000` to `002.ogg` (rock, standing in for concrete) |
 | `X16_ImpactBody1.wav`, `2`, `3` | [Impact Sounds](https://kenney.nl/assets/impact-sounds), `impactPunch_medium_000` to `002.ogg` |
 
-## Not covered yet
+## Handling and near misses from Freesound
 
-There are no sounds yet for the draw, the magazine hitting the floor, or a bullet passing close by.
-Those cues stay silent until a sound is added.
+| File | Original | License | Edit |
+| --- | --- | --- | --- |
+| `X16_Draw.wav` | ["Pistol Draw Unholster"](https://freesound.org/people/nioczkus/sounds/377145/) by nioczkus (`377145__nioczkus__pistol-draw-unholster.aiff`) | CC0 | 0.55 s from its first sound (the holster's click), resampled from 96 kHz |
+| `X16_MagazineFloor.wav` | ["Pistol Reload"](https://freesound.org/people/Bunny_Clark/sounds/377549/) by Bunny_Clark (`377549__bunny_clark__pistol-reload.wav`): an empty S&W M&P9 magazine dropped on the floor, then a reload | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 0.35 s from the magazine landing (1.39 s in), with its bounce |
+| `X16_NearMiss.wav` | ["Fly-by whiz SFX (subsonic)"](https://freesound.org/people/modusmogulus/sounds/789222/) by modusmogulus (`789222__modusmogulus__fly-by-whiz-sfx-subsonic.wav`): a whip swung past the microphone | CC0 | 0.75 s from its start |
+
+No properly licensed recording of a real bullet passing by could be found, so the near miss is a
+whip, the way film sound often fakes one.

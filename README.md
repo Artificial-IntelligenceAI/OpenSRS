@@ -32,6 +32,12 @@ CC BY 4.0 requires attribution. If you use OpenSRS models or sounds in your game
 
 > Weapon models and sounds from OpenSRS (https://github.com/Artificial-IntelligenceAI/OpenSRS), licensed under CC BY 4.0.
 
+The X16's magazine-drop sound is edited from "Pistol Reload" by Bunny_Clark (https://freesound.org/people/Bunny_Clark/sounds/377549/), also CC BY 4.0, so if your game uses it, add:
+
+> Magazine drop sound edited from "Pistol Reload" by Bunny_Clark, licensed under CC BY 4.0.
+
+Every other source recording is public domain (CC0); [SOURCES.md](assets/weapons/X16/sounds/SOURCES.md) lists them all.
+
 ## Developing OpenSRS
 
 You only need this if you're working on OpenSRS itself.
