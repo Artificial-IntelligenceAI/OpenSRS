@@ -78,6 +78,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 - **No backtracking.** A shot may only rewind about as far as that player normally sees others behind (within 3 ticks, and never more than 0.4 s). Claiming to see further back, to hit someone who was exposed a moment ago, gets clamped.
 - **Recoil is server-side.** The kick is added to the aim on the server, and the client shows the same kick on the camera. Skipping it on the client ("no recoil") changes nothing.
 - **Spread is secret.** Where a bullet lands inside the spread cone is decided by a random generator only the server has, so "no spread" cheats can't predict and cancel it.
+- **Anything alive can be shot.** Besides players, bullets hurt anything a game gives a Humanoid (NPCs, zombies, animals), head shots included, and the hit bleeds and shows the hit marker. Those are hit where the server has them now, since they're the server's own, and take damage through their Humanoid, so the game handles their death.
 - **Bullet speed.** Set per weapon. By default the hit is decided the instant the gun fires, but damage lands when the bullet would arrive, based on distance and speed. Games can switch any weapon to instant damage instead.
 - **Accuracy.** Spread depends on movement state (standing, walking, sprinting, jumping, crouching, prone, aiming down sights). The defaults are forgiving, not Valorant-harsh. Every value is configurable per weapon and per state.
 - **Damage.** Per weapon, with falloff over distance, a headshot multiplier and a limb multiplier. Players have 100 health and respawn 3 seconds after dying.
@@ -119,3 +120,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 ## Cheat flags
 
 OpenSRS never punishes players on its own. When it spots something it can't block outright, like inhuman aim snaps, it reports the player and the reason to the game through a hook. Each game decides whether to log, kick or ban.
+
+## Server API for games
+
+Characters are run entirely by OpenSRS, which is what makes them hard to cheat with, so a game's own server scripts reach them through `OpenSRS.Server.API`: `teleport(player, position)` (the player's client starts over from the new spot rather than sliding there), `damage(player, amount)`, `position(player)` and `health(player)`, plus the `Damaged`, `Died` and `Flagged` events. The test place's zombie arena (in `dev/`, which isn't part of OpenSRS) is built entirely on it.
