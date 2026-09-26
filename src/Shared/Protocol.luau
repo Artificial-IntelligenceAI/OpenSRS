@@ -34,7 +34,7 @@ export type StateMessage = {
 
 -- What a shot hit. Shooters get their own; nearby players get everyone's.
 export type ShotEffect = {
-	slot: number, -- who fired
+	slot: number, -- who fired, or 0 when the listener can't see them
 	origin: Vector3,
 	hit: Vector3,
 	kind: number, -- see Protocol.HitKind

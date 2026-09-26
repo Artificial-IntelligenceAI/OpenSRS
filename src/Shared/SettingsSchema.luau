@@ -69,6 +69,15 @@ local game: Section = {
 				.. "0 turns it off; above 1 flags on less evidence, and risks flagging very good players.",
 		},
 		{
+			name = "UnseenShotPrecision",
+			default = 5,
+			min = 0,
+			max = 50,
+			description = "How exactly players hear shots from someone they can't see, in studs. The sound comes from "
+				.. "the middle of the grid square of this size the shooter is in, and they aren't told who fired or "
+				.. "where an unseen victim was hit. Smaller is easier to locate by ear, and by wallhacks; 0 is exact.",
+		},
+		{
 			name = "TeammateHighlights",
 			default = false,
 			description = "Outlines teammates, even through walls. Teams come from Roblox's Teams service. "

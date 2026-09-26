@@ -22,9 +22,11 @@ local Living = require(Shared.Living)
 local Movement = require(Shared.Movement)
 local Protocol = require(Shared.Protocol)
 local Simulation = require(Shared.Simulation)
+local Teammates = require(Shared.Teammates)
 local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
 local Remotes = require(script.Parent.Remotes)
+local Visibility = require(script.Parent.Visibility)
 
 type Input = Types.Input
 type Pose = Protocol.Remote
@@ -246,6 +248,52 @@ local function latestPosition(slot: number): Vector3?
 end
 
 -- Resolves a shot fired during `serverTick`.
+-- Whether the player in `viewerSlot` is being shown the player in `slot`: the
+-- same rule as who's in their snapshots. Shots from and at anyone else must
+-- not give away where they are.
+local function shows(viewerSlot: number, slot: number, now: number): boolean
+	if Visibility.canSee(viewerSlot, slot, now) then
+		return true
+	end
+	if not Config.teammateHighlights then
+		return false
+	end
+	local viewer, other = lookup(viewerSlot), lookup(slot)
+	return viewer ~= nil and other ~= nil and Teammates.are(viewer.player, other.player)
+end
+
+-- A shot as heard by someone who can't see the shooter: enough to hear where
+-- it came from, not to find them. It comes from the middle of the grid square
+-- (UnseenShotPrecision studs across) the shooter is in, without who fired.
+local function unseenShot(effect: Protocol.ShotEffect): Protocol.ShotEffect
+	local grid = Config.unseenShotPrecision
+	local origin = effect.origin
+	if grid > 0 then
+		origin = (
+			Vector3.new(math.floor(origin.X / grid), math.floor(origin.Y / grid), math.floor(origin.Z / grid))
+			+ Vector3.new(0.5, 0.5, 0.5)
+		) * grid
+	end
+	return { slot = 0, origin = origin, hit = effect.hit, kind = effect.kind }
+end
+
+-- A shot as heard by someone who can't see who it hit: where it went would
+-- give the victim away, so it stops just past the muzzle (too short for a
+-- tracer) and hits nothing. If they can see the shooter it still points the
+-- way the gun does; if not, straight down, so it doesn't point at the victim.
+local function hideVictim(effect: Protocol.ShotEffect, shooterShown: boolean): Protocol.ShotEffect
+	local direction = if shooterShown then (effect.hit - effect.origin).Unit else -Vector3.yAxis
+	if direction ~= direction then -- NaN: a zero-length shot
+		direction = -Vector3.yAxis
+	end
+	return {
+		slot = effect.slot,
+		origin = effect.origin,
+		hit = effect.origin + direction * 0.5,
+		kind = Protocol.HitKind.Nothing,
+	}
+end
+
 function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: number)
 	local shooter = lookup(shooterSlot)
 	if not shooter or not shooter.alive then
@@ -297,13 +345,20 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 	end
 
 	local hitPoint = origin + direction * distance
-	local effect = Protocol.encodeShot({ slot = shooterSlot, origin = origin, hit = hitPoint, kind = kind })
+	local full: Protocol.ShotEffect = { slot = shooterSlot, origin = origin, hit = hitPoint, kind = kind }
+	local effect = Protocol.encodeShot(full)
 	remotes.shotResult:FireClient(shooter.player, effect)
+	local now = os.clock()
 	for slot in health do
 		local listener = if slot ~= shooterSlot then lookup(slot) else nil
 		local position = latestPosition(slot)
 		if listener and position and (position - origin).Magnitude <= HEARING_RANGE then
-			remotes.shots:FireClient(listener.player, effect)
+			local shooterShown = shows(slot, shooterSlot, now)
+			local heard = if shooterShown then full else unseenShot(full)
+			if victimSlot and victimSlot ~= slot and not shows(slot, victimSlot, now) then
+				heard = hideVictim(heard, shooterShown)
+			end
+			remotes.shots:FireClient(listener.player, if heard == full then effect else Protocol.encodeShot(heard))
 		end
 	end
 

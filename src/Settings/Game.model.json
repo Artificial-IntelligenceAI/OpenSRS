@@ -8,6 +8,7 @@
 		"BulletHoleTime": 30,
 		"MaxBulletHoles": 60,
 		"AimFlagSensitivity": 1,
+		"UnseenShotPrecision": 5,
 		"TeammateHighlights": false
 	}
 }
