@@ -42,8 +42,8 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `ProneSpeed` | 2.5 | 0 to 100 | Studs a second when prone. |
 | `AimSpeedMultiplier` | 0.6 | 0 to 1 | Movement speed while aiming down sights, as a fraction. |
 | `BackwardSpeedMultiplier` | 0.8 | 0 to 1 | Movement speed when walking backwards, as a fraction. |
-| `Acceleration` | 60 | 1 to 1000 | How quickly players speed up on the ground (studs a second, per second). |
-| `Deceleration` | 80 | 1 to 1000 | How quickly players stop on the ground (studs a second, per second). |
+| `Acceleration` | 1000 | 1 to 1000 | How quickly players speed up on the ground (studs a second, per second). The default is near-instant, like a standard Roblox character; lower it for a sense of weight. |
+| `Deceleration` | 1000 | 1 to 1000 | How quickly players stop on the ground (studs a second, per second). The default is near-instant; lower it and players slide a little before stopping. |
 | `AirAcceleration` | 6 | 0 to 1000 | How much players can steer in the air. Low stops bunny-hopping and air strafing. |
 | `JumpHeight` | 3.7 | 0 to 50 | Studs a jump reaches. |
 | `JumpCooldown` | 0.4 | 0 to 2 | Seconds before a player can jump again. |

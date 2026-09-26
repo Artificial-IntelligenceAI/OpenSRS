@@ -94,17 +94,19 @@ local movement: Section = {
 		},
 		{
 			name = "Acceleration",
-			default = 60,
+			default = 1000,
 			min = 1,
 			max = 1000,
-			description = "How quickly players speed up on the ground (studs a second, per second).",
+			description = "How quickly players speed up on the ground (studs a second, per second). "
+				.. "The default is near-instant, like a standard Roblox character; lower it for a sense of weight.",
 		},
 		{
 			name = "Deceleration",
-			default = 80,
+			default = 1000,
 			min = 1,
 			max = 1000,
-			description = "How quickly players stop on the ground (studs a second, per second).",
+			description = "How quickly players stop on the ground (studs a second, per second). "
+				.. "The default is near-instant; lower it and players slide a little before stopping.",
 		},
 		{
 			name = "AirAcceleration",
