@@ -239,6 +239,12 @@ function Viewmodel.ejectionPort(): CFrame
 	return lastOrigin * EJECTION
 end
 
+-- Where the muzzle is, facing the way the gun points.
+function Viewmodel.muzzle(): CFrame
+	local at = (lastOrigin * MUZZLE).Position
+	return CFrame.lookAt(at, at + lastOrigin.LookVector)
+end
+
 function Viewmodel.fired()
 	kick = animation.slideCycle
 	-- The shot knocks the gun through the same springs the reload uses, so it

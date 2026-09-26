@@ -189,7 +189,7 @@ function Controller.start()
 		if not shot then
 			return
 		end
-		Effects.muzzleFlash(shot.origin)
+		Effects.muzzleFlash(weapon.name, CFrame.lookAt(shot.origin, shot.hit))
 		Effects.tracer(shot.origin, shot.hit, weapon.bulletSpeed)
 		local port = Puppets.ejectionPort(shot.slot)
 		if port then
@@ -272,7 +272,7 @@ function Controller.start()
 					Viewmodel.fired()
 					Sounds.shot(weapon.name, muzzle)
 					Casings.eject(weapon.name, Viewmodel.ejectionPort(), current.velocity)
-					Effects.muzzleFlash(muzzle)
+					Effects.muzzleFlash(weapon.name, Viewmodel.muzzle())
 					Effects.tracer(muzzle, target, weapon.bulletSpeed)
 				end
 			end
