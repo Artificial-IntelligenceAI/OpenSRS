@@ -61,6 +61,14 @@ local game: Section = {
 			description = "Most bullet holes shown at once; the oldest disappear first.",
 		},
 		{
+			name = "AimFlagSensitivity",
+			default = 1,
+			min = 0,
+			max = 3,
+			description = "How readily aim that looks like an aimbot is flagged (see Flags). "
+				.. "0 turns it off; above 1 flags on less evidence, and risks flagging very good players.",
+		},
+		{
 			name = "TeammateHighlights",
 			default = false,
 			description = "Outlines teammates, even through walls. Teams come from Roblox's Teams service. "

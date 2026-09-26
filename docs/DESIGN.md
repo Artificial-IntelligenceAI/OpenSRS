@@ -121,6 +121,20 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 OpenSRS never punishes players on its own. When it spots something it can't block outright, like inhuman aim snaps, it reports the player and the reason to the game through a hook. Each game decides whether to log, kick or ban.
 
+### Aimbot flags
+
+The server watches every player's aim, tick by tick, against where the enemies they could see really were (rewound to what that player was seeing). Three detectors look for what no hand does:
+
+- **SnapAim**: flicks of 15° or more that fire landing dead on an enemy (within 0.35°) without overshooting. People's flicks overshoot or fall short, then correct.
+- **Reaction**: aim reaching an enemy within 120 ms of them appearing on the player's screen, from at least 10° away. People take roughly 150 to 250 ms. The clock starts at the earliest moment the enemy could have been drawn, so a real reaction can only measure a little slow, never fast.
+- **LockOn**: half-second stretches following an enemy who moves across the view, where the aim's offset from their head barely moves (under 0.1°). How far off the aim is isn't judged, because what a player sees always trails the server a little, and that's the same for a bot. What gives a bot away is that its offset is frozen, while a hand's drifts back and forth.
+
+One suspicious moment never flags anyone. Each detector keeps the last 20 chances it scored and raises a flag (`Flagged`, reason `SnapAim`, `Reaction` or `LockOn`, with the numbers in the details) when at least 6 were suspicious and they're at least half. The record then starts over, so another flag needs fresh evidence. The `AimFlagSensitivity` setting scales how much evidence it takes, and 0 turns it off.
+
+The test place has a fake aimbot (B cycles off, lock-on and snap) that steers and fires the way a cheat program does. It gets flagged by all three detectors, and normal play hasn't been flagged by any of them. The fake aimbot's measurements: about 0.04° of wobble while locked on, flicks landing 0.02° off, and reactions of about 25 ms. A person tracking a strafing target trailed it by about 3° and reacted in over a second.
+
+Aimbots that add human-looking noise and delay will get through. Anything that plays like a person is, as far as the server can know, a person. The aim is to catch the lazy majority and make the rest aim like humans.
+
 ## Server API for games
 
 Characters are run entirely by OpenSRS, which is what makes them hard to cheat with, so a game's own server scripts reach them through `OpenSRS.Server.API`: `teleport(player, position)` (the player's client starts over from the new spot rather than sliding there), `damage(player, amount)`, `setCanShoot(player, allowed)` (for lobbies, safe zones and countdowns: it's part of the rules both sides simulate, so a stopped player's client never shows shots that won't happen, their HUD says they can't shoot, and it lasts through respawns), `position(player)` and `health(player)`, plus the `Damaged`, `Died` and `Flagged` events. The test place's zombie arena (in `dev/`, which isn't part of OpenSRS) is built entirely on it.

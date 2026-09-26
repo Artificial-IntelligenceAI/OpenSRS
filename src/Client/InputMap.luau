@@ -83,6 +83,18 @@ function InputMap.look(): (number, number)
 	return yaw, pitch
 end
 
+-- Points the view (and so the aim) straight at `newYaw`/`newPitch`, and pulls
+-- the trigger once. For tools and tests, like the test place's fake aimbot:
+-- a client can always steer itself, which is why the server judges its aim.
+function InputMap.setLook(newYaw: number, newPitch: number)
+	yaw = (newYaw + math.pi) % (2 * math.pi) - math.pi
+	pitch = math.clamp(newPitch, -Config.movement.maxPitch, Config.movement.maxPitch)
+end
+
+function InputMap.pullTrigger()
+	firePressed = true
+end
+
 -- How far the mouse moved this frame, in pixels.
 function InputMap.mouseDelta(): Vector2
 	return lastDelta

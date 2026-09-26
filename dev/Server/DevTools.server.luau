@@ -63,6 +63,17 @@ Players.PlayerRemoving:Connect(function(player)
 	shootingOff[player] = nil
 end)
 
+-- Aimbot flags (and any other cheat flags) show in the output and on every
+-- player's screen here; a real game would log, kick or ban instead.
+local flagShown = Instance.new("RemoteEvent")
+flagShown.Name = "OpenSRSDevFlag"
+flagShown.Parent = ReplicatedStorage
+OpenSRS.Flagged:Connect(function(player: Player, reason: string, details: string)
+	local text = `FLAG {player.Name}: {reason}: {details}`
+	warn(text)
+	flagShown:FireAllClients(text)
+end)
+
 -- The arena ---------------------------------------------------------------------
 
 local arena = Instance.new("Model")

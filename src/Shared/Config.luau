@@ -28,6 +28,7 @@ local Config = {
 	bulletHoleTime = 30, -- seconds; cosmetic, on each client
 	maxBulletHoles = 60,
 	teammateHighlights = false, -- teammates are outlined, and sent even behind walls
+	aimFlagSensitivity = 1, -- 0 turns aimbot flags off; higher flags on less evidence
 	aimToggle = false, -- right click toggles aiming rather than holding it
 	leanToggle = true, -- Q and E toggle leaning rather than holding it
 

@@ -14,12 +14,14 @@ local RunService = game:GetService("RunService")
 local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
 local Eye = require(Shared.Eye)
+local Firearm = require(Shared.Firearm)
 local Movement = require(Shared.Movement)
 local Protocol = require(Shared.Protocol)
 local Simulation = require(Shared.Simulation)
 local Teammates = require(Shared.Teammates)
 local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
+local AimWatch = require(script.Parent.AimWatch)
 local Combat = require(script.Parent.Combat)
 local Flags = require(script.Parent.Flags)
 local Remotes = require(script.Parent.Remotes)
@@ -115,6 +117,7 @@ local function spawn(record: Record)
 	record.dirty = true
 	record.pending = {}
 	Combat.spawned(record.slot)
+	AimWatch.reset(record.slot)
 	remotes.life:FireClient(record.player, true)
 end
 
@@ -161,6 +164,40 @@ local function onInput(player: Player, data: unknown)
 	end
 end
 
+-- Feeds one real input to AimWatch: where the player aimed, against the
+-- other players and whether each was in their view.
+local function watchAim(record: Record, state: State, input: Input, shot: Simulation.Shot?)
+	if Config.aimFlagSensitivity <= 0 then
+		return
+	end
+	local targets: { AimWatch.Target } = {}
+	local now = os.clock()
+	for _, other in records do
+		if other ~= record and other.state then
+			table.insert(targets, { slot = other.slot, visible = Visibility.canSee(record.slot, other.slot, now) })
+		end
+	end
+	if #targets == 0 then
+		return
+	end
+	local eye = Eye.position(state, Eye.leanOffset(state, world))
+	-- Where the bullets go: a shot's aim is from before its own recoil kick.
+	local aim = if shot
+		then Firearm.direction(shot.yaw, shot.pitch)
+		else Firearm.direction(input.yaw + state.recoilYaw, input.pitch + state.recoilPitch)
+	AimWatch.observe(
+		record.player,
+		record.slot,
+		eye,
+		aim,
+		Combat.viewedTick(record.slot, input, tickCount),
+		tickCount,
+		shot ~= nil,
+		targets,
+		Combat.poseAt
+	)
+end
+
 local function simulate(record: Record)
 	local state = record.state
 	if not state then
@@ -200,6 +237,9 @@ local function simulate(record: Record)
 			if shot then
 				record.state = state
 				Combat.fire(record.slot, shot, input, tickCount)
+			end
+			if queued then
+				watchAim(record, state, input, shot)
 			end
 		end
 	end
@@ -325,6 +365,7 @@ local function onPlayerRemoving(player: Player)
 		slots[record.slot] = nil
 		Visibility.forget(record.slot)
 		Combat.forget(record.slot)
+		AimWatch.forget(record.slot)
 	end
 end
 
@@ -410,6 +451,7 @@ function Characters.teleport(player: Player, position: Vector3): boolean
 	moved.velocity = Vector3.zero
 	record.state = moved
 	record.epoch = (record.epoch + 1) % 256 -- the client sees a new epoch and starts over from the server's state
+	AimWatch.reset(record.slot)
 	record.dirty = true
 	record.pending = {}
 	return true

@@ -143,6 +143,22 @@ local function poseAt(slot: number, tick: number): Pose?
 	return entries[#entries].pose
 end
 
+-- Where the player in `slot` was at `tick`, as others saw them (for AimWatch).
+function Combat.poseAt(slot: number, tick: number): Pose?
+	return poseAt(slot, tick)
+end
+
+-- The server tick the player in `slot` was seeing others at when sending
+-- `input`, kept close to their usual delay (so it can't be used to backtrack).
+local function viewedTick(slot: number, input: Input, serverTick: number): number
+	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, MAX_REWIND_TICKS)
+	local usual = usualRewind[slot] or rewind
+	rewind =
+		math.clamp(rewind, math.max(usual - REWIND_TOLERANCE, 0), math.min(usual + REWIND_TOLERANCE, MAX_REWIND_TICKS))
+	return serverTick - rewind
+end
+Combat.viewedTick = viewedTick
+
 -- Distance along a ray (with a unit direction) to an oriented box, if it hits.
 local function rayBox(origin: Vector3, direction: Vector3, cframe: CFrame, size: Vector3): number?
 	local o = cframe:PointToObjectSpace(origin)
@@ -238,11 +254,7 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 	local weapon = Weapons.default
 
 	-- How far to rewind: what the shooter was seeing, kept close to their usual delay.
-	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, MAX_REWIND_TICKS)
-	local usual = usualRewind[shooterSlot] or rewind
-	rewind =
-		math.clamp(rewind, math.max(usual - REWIND_TOLERANCE, 0), math.min(usual + REWIND_TOLERANCE, MAX_REWIND_TICKS))
-	local rewoundTick = serverTick - rewind
+	local rewoundTick = viewedTick(shooterSlot, input, serverTick)
 
 	local origin = Eye.position(shot.state, Eye.leanOffset(shot.state, world))
 	local direction = Firearm.scatter(Firearm.direction(shot.yaw, shot.pitch), shot.spread, random)

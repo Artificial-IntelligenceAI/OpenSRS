@@ -29,6 +29,7 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `MaxHealth` | 100 | 1 to 10000 | Health each player spawns with. |
 | `BulletHoleTime` | 30 | 0 to 600 | Seconds bullet holes stay on walls and players. 0 turns them off. |
 | `MaxBulletHoles` | 60 | 0 to 1000 | Most bullet holes shown at once; the oldest disappear first. |
+| `AimFlagSensitivity` | 1 | 0 to 3 | How readily aim that looks like an aimbot is flagged (see Flags). 0 turns it off; above 1 flags on less evidence, and risks flagging very good players. |
 | `TeammateHighlights` | false | true or false | Outlines teammates, even through walls. Teams come from Roblox's Teams service. While on, players are also sent where their teammates are behind walls (never their enemies), so a cheat could show teammates too. |
 
 ## Controls
