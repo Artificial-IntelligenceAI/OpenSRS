@@ -185,8 +185,15 @@ end
 
 local MUZZLE = localPoint("Muzzle", Vector3.new(0, 0.44, -1))
 local SIGHT = localPoint("RearSight", Vector3.new(0, 0.53, 0.05))
+-- With a FrontSight too, the eye goes level with the front post's top (and the
+-- notch's top, which a well-made sight matches): the real sight picture.
+-- Without one, it goes level with RearSight.
+local frontSight = GunModel.point(model, "FrontSight")
+local SIGHT_LINE = if frontSight
+	then Vector3.new(SIGHT.Position.X, pivot:PointToObjectSpace(frontSight.WorldPosition).Y, SIGHT.Position.Z)
+	else SIGHT.Position
 local EJECTION = localPoint("EjectionPort", Vector3.new(0.06, 0.5, -0.41))
-local AIM = CFrame.new(0, 0, -AIM_REACH) * CFrame.new(-SIGHT.Position)
+local AIM = CFrame.new(0, 0, -AIM_REACH) * CFrame.new(-SIGHT_LINE)
 
 local fill = limb("FillLight", Vector3.one * 0.05, Color3.new(1, 1, 1))
 fill.Transparency = 1
@@ -455,7 +462,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	for _, sound in animation.reloadSounds do
 		if lastProgress < sound.t and progress >= sound.t then
 			local low = sound.cue == Sounds.Cues.MagazineFloor
-			Sounds.near(weapon.name, sound.cue, if low then FLOOR_SOUND else HANDS_SOUND)
+			Sounds.near(weapon.name, sound.cue, if low then FLOOR_SOUND else HANDS_SOUND, low)
 		end
 	end
 	lastProgress = progress

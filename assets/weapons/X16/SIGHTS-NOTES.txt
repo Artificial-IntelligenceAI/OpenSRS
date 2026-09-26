@@ -1,0 +1,44 @@
+X16 — first-person sight revision
+
+Replaced only the four original sight islands inside FP_Slide_Mesh with a
+wider open U-notch, white rear outline, and a taller dark front post carrying
+a warm-white dot and white top index. The existing part names and transforms,
+grip origin, gun length, other attachments, and all non-sight surfaces remain
+unchanged. TP, casing and sound files are unchanged copies.
+
+The rear opening is 0.037 studs wide; the front post is 0.040 studs wide.
+From the requested eye distance, perspective makes the post about half as
+wide as the opening: approximately 15 versus 31 pixels at 960 x 540.
+Post top and notch top align at model-local Roblox Y = 0.575.
+
+ATTACHMENTS (Roblox model-local coordinates; both parent to Slide)
+RearSight:  (0, 0.554, 0.04014945) — geometric center of the opening.
+FrontSight: (0, 0.575, -0.91270)   — top-center of the front post.
+Test eye:   (0, 0.575, 0.88014945), looking along -Z, up +Y.
+This is 0.84 studs (70% of the gun length) behind RearSight.
+RearSight is the opening center, not the aiming height: use the eye/post-top
+height above for level tops. X16-attachments.json includes this FP aim pose.
+
+TEXTURES
+Small paint patches occupy unused space in the existing 2048-square slide
+atlas. The retained slide's sampled pixels are unchanged.
+For dark-room visibility, assign FP/FP_Slide_Emissive.png to the slide's
+SurfaceAppearance.EmissiveMaskContent, set EmissiveStrength = 0.35 and
+EmissiveTint = white. The mask affects only the sight markings. Keep the
+other four PBR map assignments. Check this mask after FBX import; it is
+required for the demonstrated dark-room visibility.
+Roblox reference: https://create.roblox.com/docs/art/modeling/surface-appearance
+
+VALIDATION
+Six meshes, 50,710 triangles total. Slide: 12,912. Largest mesh: 15,775.
+FBX re-import, original names/transforms, length, attachment positions,
+unobstructed front dot, and left/right notch clearances passed checks.
+The two X16-SightPicture-*.png files are shooter-eye renders of the actual
+re-imported FBX at 960 x 540, 70-degree horizontal FOV. Both lighting tests
+passed visual review. Detailed results are in sights-validation.json.
+
+STUDIO CHECK STILL PENDING
+Studio loads the textured FBX preview, but shows a warning for FP_Slide_Mesh.
+The UI controller returns noWindowsAvailable on its custom controls, so the
+warning text and completed Studio import are not yet verified. No clean
+Studio-import pass is claimed. The original game/ folder is untouched.

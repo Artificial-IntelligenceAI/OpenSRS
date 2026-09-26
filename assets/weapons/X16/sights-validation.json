@@ -1,0 +1,101 @@
+{
+  "non_sight_meshes_unchanged": {
+    "FP_Barrel_Mesh": "ad94a5a902f6fe8142c63e39833c6bc831dbfb7f42ed9d50cd7353feb791eb11",
+    "FP_Frame_A": "47cc74edfa92d377788569ce56ff6aa56a3158900f1e9fc734170da3f5e56d44",
+    "FP_Frame_B": "b3f1378d7a6c8501883f34354a88f72a16f77252084a743ff09630c79b7fba87",
+    "FP_Magazine_Mesh": "f2d4b92c18de9cbed380848f57f4e0d7fd0d9b55d0ea6294b42dd5b04c206c92",
+    "FP_Trigger_Mesh": "573931a815902eeefe1e5f9e6e44462fa8331dc5c24adb661a4ae55db3c99ae9",
+    "TP_Barrel_Mesh": "163c6f2b30273f0ed4aba406312b7a819e00798e49127e238a2c885829386343",
+    "TP_Frame_Mesh": "bc80c667c9220fd774a75ed86df91d4539f09fa892e07e5eef0fd0e3919e5f38",
+    "TP_Magazine_Mesh": "7cbcae70c767f9db2b17ce66e35cf60ce4c8049257af65d833af990eb8971e0a",
+    "TP_Slide_Mesh": "114dff4078f072b3c0c260307b59fc28d2059db31c2cf8dbb0400b192d6bbb90",
+    "TP_Trigger_Mesh": "e6f6338a32230a429033380b1eaab31e581c9b888b595e81559a0c23f59b09d9"
+  },
+  "retained_slide_corners_identical": 36750,
+  "part_names_preserved": true,
+  "original_part_transforms_preserved": true,
+  "grip_origin_unchanged": true,
+  "unmodified_attachments": [
+    "Muzzle",
+    "EjectionPort",
+    "Grip"
+  ],
+  "slide_triangles": 12912,
+  "eye_blender": [
+    0,
+    -0.880149450302124,
+    0.575
+  ],
+  "target_blender": [
+    0,
+    0.9127,
+    0.575
+  ],
+  "rear_notch_center_blender": [
+    0,
+    -0.04014945030212402,
+    0.554
+  ],
+  "front_sight_blender": [
+    0,
+    0.9127,
+    0.575
+  ],
+  "studio_import": "preview loaded; slide warning and final import pending because native custom controls reject UI input",
+  "fbx_reimport_passed": true,
+  "mesh_triangles": {
+    "FP_Barrel_Mesh": 1350,
+    "FP_Frame_A": 15775,
+    "FP_Frame_B": 15774,
+    "FP_Magazine_Mesh": 3500,
+    "FP_Slide_Mesh": 12912,
+    "FP_Trigger_Mesh": 1399
+  },
+  "total_triangles": 50710,
+  "maximum_mesh_triangles": 15775,
+  "horizontal_alignment_error_pixels": 0,
+  "top_alignment_error_pixels": 0,
+  "rear_notch_projected_width_pixels_960": 31.197919556875718,
+  "front_post_projected_width_pixels_960": 15.406045813876586,
+  "eye_distance_behind_rear_sight": 0.84,
+  "light_and_dark_visual_review_passed": true,
+  "emissive_mask_required_for_dark_room": true,
+  "emissive_strength": 0.35,
+  "front_dot_unobstructed_ray_test_passed": true,
+  "both_notch_clearance_ray_tests_passed": true,
+  "actual_post_top_height": 0.5749998688697815,
+  "actual_rear_top_height": 0.574999988079071,
+  "actual_height_alignment_error_studs": 1.1920928955078125e-07,
+  "reimport_dimensions_blender": [
+    0.15719491988420486,
+    1.2000001519918442,
+    0.8426485657691956
+  ],
+  "all_original_fbx_part_names_and_non_rear_attachment_positions_preserved": true,
+  "fbx_external_texture_paths_passed": true,
+  "changed_existing_files": [
+    "X16-attachments.json",
+    "X16-2027-Edition-game.blend",
+    "validation.json",
+    "README.txt",
+    "X16-texture-manifest.json",
+    "X16-comparison.png",
+    "FP/FP_Slide_Color.png",
+    "FP/X16-2027-Edition_FP.fbx",
+    "FP/FP_Slide_Metalness.png",
+    "FP/FP_Slide_Normal.png",
+    "FP/FP_Slide_Roughness.png",
+    "comparison/FP_ThreeQuarter.png",
+    "comparison/X16-comparison-Side.png",
+    "comparison/X16-comparison-ThreeQuarter.png",
+    "comparison/X16-comparison-Reverse.png",
+    "comparison/FP_Reverse.png",
+    "comparison/FP_Side.png"
+  ],
+  "untouched_asset_directories_verified": {
+    "TP": true,
+    "Casing": true,
+    "sounds": true
+  },
+  "original_game_checksums_intact": true
+}

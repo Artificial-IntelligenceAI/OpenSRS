@@ -20,8 +20,9 @@ attachments. Moving parts are named `Slide`, `Barrel`, `Trigger` and `Magazine`.
 
 `weapons/X16/` holds the game-ready source the Roblox models were imported from:
 
-- `FP/X16-2027-Edition_FP.fbx` and `TP/X16-2027-Edition_TP.fbx`, each with its four PBR texture maps per part (color, normal, roughness, metalness).
-- `X16-attachments.json` — attachment points and animation pivots, in studs, relative to the grip.
+- `FP/X16-2027-Edition_FP.fbx` and `TP/X16-2027-Edition_TP.fbx`, each with its four PBR texture maps per part (color, normal, roughness, metalness). The first-person slide also has `FP_Slide_Emissive.png`, an emissive mask for its sights (set as the slide's `EmissiveMaskContent`, strength 0.35, white).
+- `X16-attachments.json` — attachment points and animation pivots, in studs, relative to the grip. `RearSight` is the centre of the rear notch and `FrontSight` the top of the front post; the game levels the eye with the post's top when aiming.
+- `SIGHTS-NOTES.txt`, `sights-validation.json` and `X16-SightPicture.png` — the first-person sight revision (a white-outlined rear U-notch and a front post with a white dot) and its checks, with shooter's-eye renders.
 - `X16-texture-manifest.json` — which textures go on which mesh.
 - `validation.json` and `X16-comparison.png` — triangle counts, checks, and a render comparing both versions to the original.
 - `ASTRA-NOTES.txt` — import notes from the model's author.

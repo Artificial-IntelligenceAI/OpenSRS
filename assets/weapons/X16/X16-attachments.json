@@ -41,9 +41,9 @@
     },
     "RearSight": {
       "position": [
-        0.0,
-        0.52818888,
-        0.04014952
+        0,
+        0.554,
+        0.04014945030212402
       ],
       "forward": [
         0,
@@ -74,6 +74,24 @@
         0
       ],
       "parent": "Frame"
+    },
+    "FrontSight": {
+      "position": [
+        0,
+        0.575,
+        -0.9127
+      ],
+      "forward": [
+        0,
+        0,
+        -1
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "parent": "Slide"
     }
   },
   "pivots": {
@@ -102,5 +120,29 @@
       0.44075218,
       -0.41041702
     ]
+  },
+  "aiming_reference": {
+    "applies_to": "FP",
+    "eye_position": [
+      0,
+      0.575,
+      0.880149450302124
+    ],
+    "forward": [
+      0,
+      0,
+      -1
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "distance_behind_rear_sight_studs": 0.84,
+    "horizontal_fov_degrees": 70,
+    "rear_notch_width_studs": 0.037,
+    "rear_notch_bottom_height_studs": 0.533,
+    "post_and_notch_top_height_studs": 0.575,
+    "note": "RearSight marks the geometric notch center. Raise the aiming eye to FrontSight height for level post-top alignment."
   }
 }
