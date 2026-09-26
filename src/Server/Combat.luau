@@ -200,6 +200,15 @@ local function applyDamage(victimSlot: number, epoch: number, attackerSlot: numb
 	end
 end
 
+-- Kills a player outright, as if by no one (a reset).
+function Combat.kill(victimSlot: number)
+	local victim = lookup(victimSlot)
+	local current = health[victimSlot]
+	if victim and current and current > 0 then
+		applyDamage(victimSlot, victim.epoch, 0, current, TORSO)
+	end
+end
+
 -- Damage to a player from something other than a bullet (see API.damage).
 function Combat.hurt(victimSlot: number, amount: number)
 	local victim = lookup(victimSlot)

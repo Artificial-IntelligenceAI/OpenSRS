@@ -10,6 +10,7 @@ export type Remotes = {
 	shotResult: RemoteEvent,
 	shots: UnreliableRemoteEvent,
 	life: RemoteEvent,
+	reset: RemoteEvent,
 }
 
 local Remotes = {}
@@ -39,6 +40,7 @@ function Remotes.create(parent: Instance): Remotes
 		shotResult = reliable(Protocol.Remotes.ShotResult),
 		shots = unreliable(Protocol.Remotes.Shots),
 		life = reliable(Protocol.Remotes.Life),
+		reset = reliable(Protocol.Remotes.Reset),
 	}
 	folder.Parent = parent
 	return remotes

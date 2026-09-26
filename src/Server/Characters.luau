@@ -421,6 +421,14 @@ function Characters.start(created: Remotes.Remotes)
 	Combat.Died:Connect(onDied)
 	Players.CharacterAutoLoads = false
 	remotes.input.OnServerEvent:Connect(onInput)
+	-- Roblox's menu Reset button: the player dies and respawns as usual. Only a
+	-- living player can, so it can't be used to skip a respawn wait.
+	remotes.reset.OnServerEvent:Connect(function(player: Player)
+		local record = records[player]
+		if record and record.state then
+			Combat.kill(record.slot)
+		end
+	end)
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
 	for _, player in Players:GetPlayers() do

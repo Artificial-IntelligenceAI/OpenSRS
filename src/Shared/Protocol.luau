@@ -51,6 +51,7 @@ Protocol.Remotes = table.freeze({
 	ShotResult = "ShotResult",
 	Shots = "Shots",
 	Life = "Life",
+	Reset = "Reset", -- the client asks to be killed and respawned (Roblox's menu Reset button)
 })
 
 Protocol.HitKind = table.freeze({

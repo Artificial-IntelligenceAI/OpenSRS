@@ -8,6 +8,7 @@
 -- server; the client just shows them.
 
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 
 local Shared = script.Parent.Parent.Shared
@@ -91,6 +92,7 @@ function Controller.start()
 	local shotResultRemote = remotes:WaitForChild(Protocol.Remotes.ShotResult) :: RemoteEvent
 	local shotsRemote = remotes:WaitForChild(Protocol.Remotes.Shots) :: UnreliableRemoteEvent
 	local lifeRemote = remotes:WaitForChild(Protocol.Remotes.Life) :: RemoteEvent
+	local resetRemote = remotes:WaitForChild(Protocol.Remotes.Reset) :: RemoteEvent
 
 	local world = Movement.newWorld({ Puppets.folder, Effects.folder })
 	local camera = workspace.CurrentCamera
@@ -226,6 +228,22 @@ function Controller.start()
 	Sounds.ignore({ camera, Puppets.folder, Effects.folder, Casings.folder })
 	InputMap.start()
 	Hud.start()
+
+	-- Roblox's menu Reset button would kill the Roblox character, which OpenSRS
+	-- doesn't use, so it's pointed at OpenSRS's own: the server kills and
+	-- respawns this player. The menu may not be ready yet, so keep trying.
+	local reset = Instance.new("BindableEvent")
+	reset.Event:Connect(function()
+		resetRemote:FireServer()
+	end)
+	task.spawn(function()
+		for _ = 1, 20 do
+			if pcall(StarterGui.SetCore, StarterGui, "ResetButtonCallback", reset) then
+				return
+			end
+			task.wait(0.5)
+		end
+	end)
 
 	task.delay(5, function()
 		if state == nil and epoch == -1 then
