@@ -82,7 +82,7 @@ local function at(x: number, y: number, z: number): CFrame
 	return CFrame.new(x, y, z)
 end
 
-local LEFT_HAND = CFrame.new(-0.1, 0.1, 0.02) -- wrapped around the right hand, from the left
+local LEFT_HAND = CFrame.new(-0.17, -0.02, -0.18) -- beside the right hand, under the gun
 local IDENTITY = CFrame.identity
 
 -- The X16's: drop the old magazine, bring in the new one and slap it home,
@@ -90,10 +90,10 @@ local IDENTITY = CFrame.identity
 -- up ready.
 local DEFAULT: Animation = {
 	leftHand = LEFT_HAND,
-	reloadPose = CFrame.new(0.05, -0.32, -1.15) * CFrame.Angles(0.75, 0.25, -0.35), -- muzzle up, the magazine well showing
+	reloadPose = CFrame.new(0.04, -0.3, -0.85) * CFrame.Angles(0.75, 0.25, -0.35), -- muzzle up, the magazine well showing
 	-- Level and fully on its side, the top of the slide facing left, so the
 	-- left hand can come over the top.
-	rackPose = CFrame.new(0.2, -0.38, -1.35) * CFrame.Angles(0, 0.45, math.pi / 2),
+	rackPose = CFrame.new(0.15, -0.38, -1) * CFrame.Angles(0, 0.45, math.pi / 2),
 	rackStart = 0.6,
 	rackPull = 0.75,
 	rackRelease = 0.85,
@@ -161,7 +161,7 @@ local DEFAULT: Animation = {
 	walkSway = 0.022,
 	walkBounce = 0.014,
 	walkRoll = 0.03,
-	sprintPose = CFrame.new(0.35, -0.85, -0.9) * CFrame.Angles(-0.45, 0.85, 0.3), -- low and turned in, across the body
+	sprintPose = CFrame.new(0.28, -0.78, -0.7) * CFrame.Angles(-0.45, 0.85, 0.3), -- low and turned in, across the body
 	sprintSteps = 2.9,
 	sprintSway = 0.04,
 	sprintBounce = 0.03,

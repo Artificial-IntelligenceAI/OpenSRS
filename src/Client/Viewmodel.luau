@@ -4,9 +4,9 @@
 -- The gun and arms in the player's own view. It only exists on this client and
 -- never affects gameplay.
 --
--- From the hip the gun comes in from the lower right. Aiming holds it out at
--- arm's length with both arms reaching up from the bottom of the screen and
--- the sights lined up on the center. It sways against mouse movement, bobs
+-- From the hip the gun comes in from the lower right. Aiming brings it up in
+-- front of the eye with the sights lined up on the center. Either way it sits
+-- on top of both hands, the grip swallowed by the right one. It sways against mouse movement, bobs
 -- while walking, and kicks back and up on each shot as the slide cycles. The slide locks
 -- back on the last round. Reloading drops the old magazine, fetches a new one
 -- with the left hand and seats it, then rolls the gun onto its side and racks
@@ -28,8 +28,8 @@ local WeaponAnimation = require(script.Parent.WeaponAnimation)
 type State = Types.State
 
 -- Where the gun's grip sits relative to the camera in each pose.
-local AIM_REACH = 1.2 -- how far in front of the eye the rear sight sits when aiming: arms outstretched
-local HIP = CFrame.new(0.4, -0.7, -1.3) -- straight and level
+local AIM_REACH = 0.85 -- how far in front of the eye the rear sight sits when aiming
+local HIP = CFrame.new(0.3, -0.72, -0.9) -- straight and level
 local POSE_SPEED = 16
 -- The gun is only drawn, not solid, so up against a wall it would poke through.
 -- It's pulled in low and close instead, by as much as a wall is in the way.
@@ -39,19 +39,21 @@ local TUCK_RANGE = 1 -- how much further in a wall must be for the gun to tuck f
 local TUCK_SPEED = 20 -- how quickly it tucks; it comes back out at half that
 
 -- Arms: shoulders are fixed to the camera, hands follow the gun.
--- Two-handed pistol grip. Aiming: the right arm runs straight out to the
--- grip and the left arm comes across from the left to wrap around the right
--- hand. From the hip the gun sits lower right, so the arms come in at an
--- angle from the lower right and lower middle instead.
-local AIM_RIGHT_SHOULDER = Vector3.new(0.2, -1.45, 0.5)
-local AIM_LEFT_SHOULDER = Vector3.new(-1.2, -1.4, 0.15)
-local HIP_RIGHT_SHOULDER = Vector3.new(1.1, -1.6, 0.1)
-local HIP_LEFT_SHOULDER = Vector3.new(-0.5, -1.7, 0.1)
+-- Two-handed pistol grip, with the gun sitting on top of both hands: the
+-- forearms run in nearly level from below the view, side by side under the
+-- gun, and the whole grip is swallowed by the right hand, so only the slide,
+-- frame and trigger guard show above and in front of it. From the hip the gun sits lower right, so the arms
+-- come in from the lower right and lower middle instead.
+local AIM_RIGHT_SHOULDER = Vector3.new(0.3, -0.6, 0.2)
+local AIM_LEFT_SHOULDER = Vector3.new(-0.35, -0.6, 0.2)
+local HIP_RIGHT_SHOULDER = Vector3.new(0.55, -0.95, 0.15)
+local HIP_LEFT_SHOULDER = Vector3.new(-0.1, -1, 0.15)
 -- While reloading the left forearm comes in from the lower left, in front of the
 -- eye rather than from behind it, so it never covers the view.
 local RELOAD_LEFT_SHOULDER = Vector3.new(-2, -1.9, -0.6)
-local RIGHT_HAND = Vector3.new(0.02, 0.2, 0.06) -- in the gun's space, around the grip
+local RIGHT_HAND = Vector3.new(0.07, 0, -0.2) -- in the gun's space: the end of the arm, just in front of the grip
 local ARM_WIDTH = 0.38
+local ARM_HEIGHT = 0.66 -- deeper than the grip is tall, so the hand swallows it whole
 local ARM_LENGTH = 1.3 -- forearms only: long enough to run off screen, never near the eye
 
 local SLIDE_TRAVEL = 0.19
@@ -173,8 +175,8 @@ local function limb(name: string, size: Vector3, color: Color3): Part
 end
 
 -- Plain R6 arms, ending at the hands, in the avatar's arm color.
-local rightArm = limb("RightArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), Avatar.armColor)
-local leftArm = limb("LeftArm", Vector3.new(ARM_WIDTH, ARM_WIDTH, ARM_LENGTH), Avatar.armColor)
+local rightArm = limb("RightArm", Vector3.new(ARM_WIDTH, ARM_HEIGHT, ARM_LENGTH), Avatar.armColor)
+local leftArm = limb("LeftArm", Vector3.new(ARM_WIDTH, ARM_HEIGHT, ARM_LENGTH), Avatar.armColor)
 
 local function localPoint(name: string, fallback: Vector3): CFrame
 	local attachment = GunModel.point(model, name)
@@ -317,10 +319,11 @@ local function rotationOf(frame: CFrame): Vector3
 	return axis * angle
 end
 
--- An arm reaching from a shoulder to a hand; only the hand end is usually on screen.
-local function arm(shoulder: Vector3, hand: Vector3): CFrame
+-- An arm reaching from a shoulder to a hand; only the hand end is usually on
+-- screen. Its top faces `up` (the gun's up), so the gun sits flat on it.
+local function arm(shoulder: Vector3, hand: Vector3, up: Vector3): CFrame
 	local direction = (shoulder - hand).Unit
-	return CFrame.lookAt(hand + direction * (ARM_LENGTH / 2), hand)
+	return CFrame.lookAt(hand + direction * (ARM_LENGTH / 2), hand, up)
 end
 
 local function lerp(from: number, to: number, alpha: number): number
@@ -514,8 +517,8 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local count = #gunParts
 	local rightShoulder = HIP_RIGHT_SHOULDER:Lerp(AIM_RIGHT_SHOULDER, aimBlend)
 	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend):Lerp(RELOAD_LEFT_SHOULDER, reloadBlend)
-	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint)
-	cframes[count + 2] = arm((camera * CFrame.new(leftShoulder)).Position, leftHandPoint)
+	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint, origin.UpVector)
+	cframes[count + 2] = arm((camera * CFrame.new(leftShoulder)).Position, leftHandPoint, origin.UpVector)
 	local fillAt = origin * FILL_OFFSET
 	cframes[count + 3] = fillAt
 	local nearest = FILL_CLEAR
