@@ -372,8 +372,7 @@ local weapons: { WeaponEntry } = {
 			SpreadAirborne = 2,
 			RecoilUp = 0.3,
 			RecoilSide = 0.15,
-			BloomPerShot = 0.2,
-			BloomMax = 2,
+			BloomPerShot = 0, -- holding the trigger doesn't widen the spread
 		},
 	},
 	{ name = "X16", defaults = {} }, -- the field defaults above are the X16's

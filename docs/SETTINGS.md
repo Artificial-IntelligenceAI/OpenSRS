@@ -105,8 +105,8 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `SpreadMoving` | 0.3 | 0 to 45 | Degrees added at full walking speed. |
 | `SpreadAirborne` | 2 | 0 to 45 | Degrees added while in the air. |
 | `AimSpreadMultiplier` | 0 | 0 to 1 | All spread is multiplied by this while aiming down sights. 0 (the default) makes aiming perfectly accurate: every bullet goes exactly where the sights point. |
-| `BloomPerShot` | 0.2 | 0 to 45 | Degrees of spread each shot adds. |
-| `BloomMax` | 2 | 0 to 45 | Most spread shots can add. |
+| `BloomPerShot` | 0 | 0 to 45 | Degrees of spread each shot adds. |
+| `BloomMax` | 3 | 0 to 45 | Most spread shots can add. |
 | `BloomRecovery` | 3 | 0 to 1000 | Degrees of added spread that fade a second. |
 | `RecoilUp` | 0.3 | -45 to 45 | Degrees each shot kicks the aim up. Negative kicks it down. |
 | `RecoilSide` | 0.15 | 0 to 45 | Degrees each shot kicks the aim sideways. |
