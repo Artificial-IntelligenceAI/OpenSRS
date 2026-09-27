@@ -63,7 +63,13 @@ function Puppets.receive(data: unknown)
 		return
 	end
 	local latest = snapshots[#snapshots]
-	if latest and snapshot.tick <= latest.tick then
+	if latest and snapshot.tick == latest.tick then
+		-- Another packet of the same snapshot (big ones are split).
+		for slot, remote in snapshot.players do
+			latest.players[slot] = remote
+		end
+		return
+	elseif latest and snapshot.tick < latest.tick then
 		return -- arrived out of order
 	end
 	table.insert(snapshots, snapshot)

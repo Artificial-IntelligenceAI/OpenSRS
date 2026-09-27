@@ -67,7 +67,9 @@ function Simulation.newState(position: Vector3, yaw: number): State
 end
 
 -- Puts the weapon in hand away (keeping its ammo) and takes out the one at
--- `index`, which then has to be drawn. A reload in progress is lost.
+-- `index`, which then has to be drawn. A reload in progress is lost. The time
+-- until the next shot and the bloom carry on as they were, so switching back
+-- and forth can't be used to fire faster or more accurately.
 local function switch(state: State, index: number)
 	local stowed = table.clone(state.stowed)
 	stowed[state.weapon * 2 - 1] = state.ammo
@@ -79,8 +81,6 @@ local function switch(state: State, index: number)
 	state.stowed = table.freeze(stowed)
 	state.drawTicks = weapon.drawTicks
 	state.reloadTicks = 0
-	state.fireCooldown = 0
-	state.bloom = 0
 	state.triggerHeld = true -- a held trigger doesn't carry over into the new gun
 end
 

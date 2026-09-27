@@ -77,6 +77,9 @@ local STATE_SIZE = STATE_FIXED_SIZE + #Weapons.loadout * 3
 local SHOT_SIZE = 27
 local SNAPSHOT_HEADER_SIZE = 5
 local SNAPSHOT_ENTRY_SIZE = 20
+-- Unreliable events are dropped above about 900 bytes, so a snapshot of more
+-- players than this is split across several packets for the same tick.
+local SNAPSHOT_MAX_ENTRIES = 36
 local ANGLE_SCALE = 32767 / math.pi
 local UNIT_SCALE = 127
 local TWO_PI = 2 * math.pi
@@ -292,16 +295,22 @@ function Protocol.decodeShot(data: unknown): ShotEffect?
 	}
 end
 
-function Protocol.encodeSnapshot(tick: number, players: { [number]: Remote }): buffer
-	local count = 0
-	for _ in players do
-		count += 1
-	end
+-- One packet of a snapshot: the players in `slots` from `first` to `last`.
+local function encodeSnapshotPart(
+	tick: number,
+	players: { [number]: Remote },
+	slots: { number },
+	first: number,
+	last: number
+): buffer
+	local count = math.max(last - first + 1, 0)
 	local data = buffer.create(SNAPSHOT_HEADER_SIZE + count * SNAPSHOT_ENTRY_SIZE)
 	buffer.writeu32(data, 0, tick)
 	buffer.writeu8(data, 4, count)
 	local offset = SNAPSHOT_HEADER_SIZE
-	for slot, remote in players do
+	for index = first, last do
+		local slot = slots[index]
+		local remote = players[slot]
 		buffer.writeu8(data, offset, slot)
 		writeVector(data, offset + 1, remote.position)
 		buffer.writei16(data, offset + 13, packYaw(remote.yaw))
@@ -316,6 +325,23 @@ function Protocol.encodeSnapshot(tick: number, players: { [number]: Remote }): b
 		offset += SNAPSHOT_ENTRY_SIZE
 	end
 	return data
+end
+
+-- Other players for one tick, as one or more packets (see SNAPSHOT_MAX_ENTRIES).
+-- There's always at least one, even with nobody to show.
+function Protocol.encodeSnapshots(tick: number, players: { [number]: Remote }): { buffer }
+	local slots = {}
+	for slot in players do
+		table.insert(slots, slot)
+	end
+	local packets = {}
+	local first = 1
+	repeat
+		local last = math.min(first + SNAPSHOT_MAX_ENTRIES - 1, #slots)
+		table.insert(packets, encodeSnapshotPart(tick, players, slots, first, last))
+		first = last + 1
+	until first > #slots
+	return packets
 end
 
 function Protocol.decodeSnapshot(data: unknown): Snapshot?

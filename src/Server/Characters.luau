@@ -246,6 +246,13 @@ local function simulate(record: Record)
 			if shot then
 				record.state = state
 				Combat.fire(record.slot, shot, input, tickCount)
+				if record.state ~= state then
+					-- Something the shot set off changed this player (a game's
+					-- Damaged or Died handler hurt, killed or stopped them). That
+					-- change is newer than this step, so it stands.
+					record.dirty = true
+					return
+				end
 			end
 			if queued then
 				watchAim(record, state, input, shot)
@@ -253,13 +260,13 @@ local function simulate(record: Record)
 		end
 	end
 
+	record.state = state
 	if state.position.Y < FALL_LIMIT then
-		-- Fell out of the map. Stop simulating until the respawn is done.
-		record.state = nil
-		task.spawn(spawn, record)
+		-- Fell out of the map: a death like any other, so no free heal or
+		-- skipping the respawn wait.
+		Combat.kill(record.slot)
 		return
 	end
-	record.state = state
 
 	-- The spawn message can be lost (it's unreliable, and the client may still be
 	-- loading), so keep repeating it until the client starts sending inputs.
@@ -317,7 +324,9 @@ local function sendSnapshots()
 				players[slot] = entry
 			end
 		end
-		remotes.snapshot:FireClient(viewer, Protocol.encodeSnapshot(tickCount, players))
+		for _, packet in Protocol.encodeSnapshots(tickCount, players) do
+			remotes.snapshot:FireClient(viewer, packet)
+		end
 	end
 end
 
