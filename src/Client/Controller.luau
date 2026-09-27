@@ -287,9 +287,11 @@ function Controller.start()
 	reset.Event:Connect(function()
 		resetRemote:FireServer()
 	end)
+	-- With AllowReset off, the button is greyed out instead.
+	local resetCallback: BindableEvent | boolean = if Config.allowReset then reset else false
 	task.spawn(function()
 		for _ = 1, 20 do
-			if pcall(StarterGui.SetCore, StarterGui, "ResetButtonCallback", reset) then
+			if pcall(StarterGui.SetCore, StarterGui, "ResetButtonCallback", resetCallback) then
 				return
 			end
 			task.wait(0.5)

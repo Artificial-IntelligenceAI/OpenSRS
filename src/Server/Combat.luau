@@ -70,6 +70,8 @@ Combat.Died = died.Event
 local history: { [number]: { Entry } } = {}
 local health: { [number]: number } = {}
 local usualRewind: { [number]: number } = {}
+-- Who last hurt each player, and when: a reset or fall soon after credits them.
+local lastHurtBy: { [number]: { player: Player, at: number } } = {}
 local world = Movement.newWorld({})
 local bullets = RaycastParams.new()
 bullets.FilterType = Enum.RaycastFilterType.Exclude
@@ -85,6 +87,7 @@ function Combat.start(created: Remotes.Remotes, find: (slot: number) -> Target?)
 end
 
 function Combat.spawned(slot: number)
+	lastHurtBy[slot] = nil
 	health[slot] = Config.maxHealth
 	history[slot] = {}
 end
@@ -98,6 +101,7 @@ function Combat.jumped(slot: number)
 end
 
 function Combat.forget(slot: number)
+	lastHurtBy[slot] = nil
 	health[slot] = nil
 	history[slot] = nil
 	usualRewind[slot] = nil
@@ -235,28 +239,95 @@ local function damageFor(weapon: Weapons.Weapon, distance: number, part: string)
 	return damage
 end
 
+export type DamageFilter = (victim: Player, attacker: Player?, amount: number, part: string) -> number?
+
+local damageFilter: DamageFilter? = nil
+
+-- Lets a game change or block damage before it lands (see API.setDamageFilter).
+function Combat.setDamageFilter(filter: DamageFilter?)
+	damageFilter = filter
+end
+
+-- Runs the game's damage filter, if any, and returns the amount to apply. It
+-- runs in the middle of the server's tick, so it mustn't stall it: a filter
+-- that errors or waits is ignored (the damage goes ahead as it was) with a
+-- warning.
+local function filtered(victim: Player, attacker: Player?, amount: number, part: string): number
+	local filter = damageFilter
+	if not filter then
+		return amount
+	end
+	local result: unknown = amount
+	local thread = coroutine.create(function()
+		result = filter(victim, attacker, amount, part)
+	end)
+	local ok, problem = coroutine.resume(thread)
+	if not ok then
+		warn(`OpenSRS: the damage filter failed ({problem}); applying the damage unchanged.`)
+		return amount
+	elseif coroutine.status(thread) ~= "dead" then
+		warn("OpenSRS: the damage filter mustn't wait or yield; applying the damage unchanged.")
+		return amount
+	elseif result == nil then
+		return amount
+	elseif type(result) ~= "number" or result ~= result then
+		warn("OpenSRS: the damage filter should return a number or nil; applying the damage unchanged.")
+		return amount
+	end
+	return math.max(result :: number, 0)
+end
+
 -- `attacker` is who fired, decided when they fired: by the time a bullet
--- lands they may have left, and someone else may have their slot.
-local function applyDamage(victimSlot: number, life: number, attackerPlayer: Player?, amount: number, part: string)
+-- lands they may have left, and someone else may have their slot. Unless
+-- `final` (resets and falls), friendly fire and the game's damage filter apply.
+local function applyDamage(
+	victimSlot: number,
+	life: number,
+	attackerPlayer: Player?,
+	amount: number,
+	part: string,
+	final: boolean?
+)
 	local victim = lookup(victimSlot)
 	local current = health[victimSlot]
 	if not victim or not victim.alive or victim.life ~= life or not current or current <= 0 then
 		return -- respawned, left, or already dead while the bullet was in flight
 	end
+	if not final then
+		if attackerPlayer and not Config.friendlyFire and Teammates.are(attackerPlayer, victim.player) then
+			return
+		end
+		amount = filtered(victim.player, attackerPlayer, amount, part)
+		-- The filter is the game's code: the victim may have died or left meanwhile.
+		current = health[victimSlot]
+		if amount <= 0 or not current or current <= 0 then
+			return
+		end
+	end
 	local remaining = math.max(current - amount, 0)
 	health[victimSlot] = remaining
+	if attackerPlayer and attackerPlayer ~= victim.player then
+		lastHurtBy[victimSlot] = { player = attackerPlayer, at = os.clock() }
+	end
 	damaged:Fire(victim.player, attackerPlayer, current - remaining, part)
 	if remaining <= 0 then
 		died:Fire(victim.player, attackerPlayer)
 	end
 end
 
--- Kills a player outright, as if by no one (a reset).
+-- Kills a player outright (a reset, or a fall out of the map). If someone hurt
+-- them within KillCreditTime, that someone gets the kill; otherwise no one.
 function Combat.kill(victimSlot: number)
 	local victim = lookup(victimSlot)
 	local current = health[victimSlot]
 	if victim and current and current > 0 then
-		applyDamage(victimSlot, victim.life, nil, current, TORSO)
+		local hurt = lastHurtBy[victimSlot]
+		local credited = if hurt
+				and os.clock() - hurt.at <= Config.killCreditTime
+				and hurt.player.Parent
+			then hurt.player
+			else nil
+		applyDamage(victimSlot, victim.life, credited, current, TORSO, true)
 	end
 end
 

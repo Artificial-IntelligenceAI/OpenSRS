@@ -78,6 +78,24 @@ local game: Section = {
 				.. "where an unseen victim was hit. Smaller is easier to locate by ear, and by wallhacks; 0 is exact.",
 		},
 		{
+			name = "FriendlyFire",
+			default = true,
+			description = "Whether players' bullets hurt their own teammates. Teams come from Roblox's Teams service.",
+		},
+		{
+			name = "AllowReset",
+			default = true,
+			description = "Whether Roblox's menu Reset button works. Off, the button is greyed out.",
+		},
+		{
+			name = "KillCreditTime",
+			default = 10,
+			min = 0,
+			max = 60,
+			description = "If a player resets or falls out of the map within this many seconds of being hurt "
+				.. "by someone, that someone gets the kill. 0 never gives credit.",
+		},
+		{
 			name = "TeammateHighlights",
 			default = false,
 			description = "Outlines teammates, even through walls. Teams come from Roblox's Teams service. "

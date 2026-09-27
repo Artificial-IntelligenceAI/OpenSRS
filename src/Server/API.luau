@@ -16,6 +16,14 @@
 --         print(victim.Name, "was killed by", if killer then killer.Name else "the world")
 --     end)
 --
+--     -- Spawn protection: nobody can hurt a player for 3 seconds after spawning.
+--     OpenSRS.setDamageFilter(function(victim, attacker, amount, part)
+--         if os.clock() - (spawnedAt[victim] or 0) < 3 then
+--             return 0
+--         end
+--         return amount
+--     end)
+--
 -- Anything else alive in the game, like NPCs or zombies, needs nothing from
 -- here: give it a Humanoid and bullets hurt it and it bleeds.
 
@@ -48,6 +56,16 @@ function API.damage(player: Player, amount: number)
 	if slot then
 		Combat.hurt(slot, amount)
 	end
+end
+
+-- Sets a function that decides how much damage lands, called with (victim,
+-- attacker or nil, amount, part) before anything is taken off. Return a new
+-- amount (0 blocks it) or nil to leave it as it is. It covers bullets and
+-- API.damage, not resets or falls. It runs in the middle of the server's
+-- update, so it must return straight away: one that errors, waits or yields
+-- is ignored, with a warning. Pass nil to remove it.
+function API.setDamageFilter(filter: Combat.DamageFilter?)
+	Combat.setDamageFilter(filter)
 end
 
 -- Stops a player shooting (false) or lets them again (true). It lasts until

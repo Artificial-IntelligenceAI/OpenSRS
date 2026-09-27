@@ -9,6 +9,9 @@
 		"MaxBulletHoles": 60,
 		"AimFlagSensitivity": 1,
 		"UnseenShotPrecision": 5,
+		"FriendlyFire": true,
+		"AllowReset": true,
+		"KillCreditTime": 10,
 		"TeammateHighlights": false
 	}
 }

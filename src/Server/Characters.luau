@@ -534,7 +534,7 @@ function Characters.start(created: Remotes.Remotes)
 	-- living player can, so it can't be used to skip a respawn wait.
 	remotes.reset.OnServerEvent:Connect(function(player: Player)
 		local record = records[player]
-		if record and record.state then
+		if Config.allowReset and record and record.state then
 			Combat.kill(record.slot)
 		end
 	end)

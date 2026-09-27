@@ -146,6 +146,9 @@ function Settings.apply(resolved: Resolved)
 	Config.maxBulletHoles = math.round(number(gameValues, "MaxBulletHoles"))
 	Config.teammateHighlights = gameValues.TeammateHighlights == true
 	Config.unseenShotPrecision = number(gameValues, "UnseenShotPrecision")
+	Config.friendlyFire = gameValues.FriendlyFire == true
+	Config.allowReset = gameValues.AllowReset == true
+	Config.killCreditTime = number(gameValues, "KillCreditTime")
 	Config.aimFlagSensitivity = number(gameValues, "AimFlagSensitivity")
 	local controls = resolved.sections.Controls
 	Config.aimToggle = controls.AimToggle == true
