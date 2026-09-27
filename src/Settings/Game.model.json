@@ -10,6 +10,7 @@
 		"MaxBulletHoles": 60,
 		"AimFlagSensitivity": 1,
 		"UnseenShotPrecision": 5,
+		"DamageNumbers": true,
 		"FriendlyFire": false,
 		"AllowReset": true,
 		"KillCreditTime": 0,

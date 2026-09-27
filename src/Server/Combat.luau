@@ -294,16 +294,31 @@ local function filtered(victim: Player, attacker: Player?, amount: number, part:
 	return math.max(result :: number, 0)
 end
 
+-- Tells `attacker` their shot did `amount` damage at `at`, for the damage
+-- numbers they see. Only what was really taken, after friendly fire and any
+-- damage filter, so a blocked hit shows nothing.
+local function tellDealt(attacker: Player?, at: Vector3?, amount: number, head: boolean, killed: boolean)
+	if not (Config.damageNumbers and attacker and attacker.Parent and at and amount > 0) then
+		return
+	end
+	remotes.dealt:FireClient(
+		attacker,
+		Protocol.encodeDealt({ position = at, amount = amount, head = head, killed = killed })
+	)
+end
+
 -- `attacker` is who fired, decided when they fired: by the time a bullet
 -- lands they may have left, and someone else may have their slot. Unless
 -- `final` (resets and falls), friendly fire and the game's damage filter apply.
+-- `at` is where a bullet hit, for the attacker's damage number.
 local function applyDamage(
 	victimSlot: number,
 	life: number,
 	attackerPlayer: Player?,
 	amount: number,
 	part: string,
-	final: boolean?
+	final: boolean?,
+	at: Vector3?
 )
 	local victim = lookup(victimSlot)
 	local current = health[victimSlot]
@@ -327,6 +342,9 @@ local function applyDamage(
 		lastHurtBy[victimSlot] = { player = attackerPlayer, at = os.clock() }
 	end
 	damaged:Fire(victim.player, attackerPlayer, current - remaining, part)
+	if attackerPlayer ~= victim.player then
+		tellDealt(attackerPlayer, at, current - remaining, part == HEAD, remaining <= 0)
+	end
 	if remaining <= 0 then
 		died:Fire(victim.player, attackerPlayer)
 	end
@@ -355,9 +373,11 @@ function Combat.hurt(victimSlot: number, amount: number)
 	end
 end
 
-local function hurtLiving(humanoid: Humanoid, amount: number)
+local function hurtLiving(humanoid: Humanoid, amount: number, attacker: Player, at: Vector3, head: boolean)
 	if humanoid.Parent and humanoid.Health > 0 then
-		humanoid:TakeDamage(amount)
+		local before = humanoid.Health
+		humanoid:TakeDamage(amount) -- a ForceField can stop it
+		tellDealt(attacker, at, before - humanoid.Health, head, humanoid.Health <= 0)
 	end
 end
 
@@ -515,10 +535,11 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 
 	if living then
 		local amount = damageFor(weapon, distance, victimPart)
+		local head = victimPart == HEAD
 		if weapon.instantDamage then
-			hurtLiving(living, amount)
+			hurtLiving(living, amount, shooter.player, hitPoint, head)
 		else
-			task.delay(distance / weapon.bulletSpeed, hurtLiving, living, amount)
+			task.delay(distance / weapon.bulletSpeed, hurtLiving, living, amount, shooter.player, hitPoint, head)
 		end
 	elseif victimSlot then
 		local victim = lookup(victimSlot)
@@ -526,10 +547,20 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 			local amount = damageFor(weapon, distance, victimPart)
 			local slot, life, part = victimSlot, victim.life, victimPart
 			if weapon.instantDamage then
-				applyDamage(slot, life, shooter.player, amount, part)
+				applyDamage(slot, life, shooter.player, amount, part, false, hitPoint)
 			else
 				-- The hit is decided now; the damage lands when the bullet would arrive.
-				task.delay(distance / weapon.bulletSpeed, applyDamage, slot, life, shooter.player, amount, part)
+				task.delay(
+					distance / weapon.bulletSpeed,
+					applyDamage,
+					slot,
+					life,
+					shooter.player,
+					amount,
+					part,
+					false,
+					hitPoint
+				)
 			end
 		end
 	end

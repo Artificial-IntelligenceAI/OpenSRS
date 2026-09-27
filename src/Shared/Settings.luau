@@ -148,6 +148,7 @@ function Settings.apply(resolved: Resolved)
 	Config.teammateHighlights = gameValues.TeammateHighlights == true
 	Config.unseenShotPrecision = number(gameValues, "UnseenShotPrecision")
 	Config.friendlyFire = gameValues.FriendlyFire == true
+	Config.damageNumbers = gameValues.DamageNumbers == true
 	Config.allowReset = gameValues.AllowReset == true
 	Config.killCreditTime = number(gameValues, "KillCreditTime")
 	Config.aimFlagSensitivity = number(gameValues, "AimFlagSensitivity")

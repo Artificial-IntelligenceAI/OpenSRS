@@ -21,6 +21,7 @@ local Simulation = require(Shared.Simulation)
 local Types = require(Shared.Types)
 local Weapons = require(Shared.Weapons)
 local Casings = require(script.Parent.Casings)
+local DamageNumbers = require(script.Parent.DamageNumbers)
 local Effects = require(script.Parent.Effects)
 local Hud = require(script.Parent.Hud)
 local Impacts = require(script.Parent.Impacts)
@@ -118,6 +119,7 @@ function Controller.start()
 	local shotsRemote = remotes:WaitForChild(Protocol.Remotes.Shots) :: UnreliableRemoteEvent
 	local lifeRemote = remotes:WaitForChild(Protocol.Remotes.Life) :: RemoteEvent
 	local resetRemote = remotes:WaitForChild(Protocol.Remotes.Reset) :: RemoteEvent
+	local dealtRemote = remotes:WaitForChild(Protocol.Remotes.Dealt) :: RemoteEvent
 
 	local world = Movement.newWorld({ Puppets.folder, Effects.folder })
 	local camera = workspace.CurrentCamera
@@ -201,6 +203,14 @@ function Controller.start()
 		end
 		correction += predicted.position - replayed.position
 		state = replayed
+	end)
+
+	-- Damage our shots did, as it landed.
+	dealtRemote.OnClientEvent:Connect(function(data: unknown)
+		local dealt = Protocol.decodeDealt(data)
+		if dealt then
+			DamageNumbers.show(dealt.position, dealt.amount, dealt.head, dealt.killed)
+		end
 	end)
 
 	lifeRemote.OnClientEvent:Connect(function(alive: unknown)

@@ -87,6 +87,11 @@ local game: Section = {
 				.. "where an unseen victim was hit. Smaller is easier to locate by ear, and by wallhacks; 0 is exact.",
 		},
 		{
+			name = "DamageNumbers",
+			default = true,
+			description = "Shows each hit's damage popping off the spot hit, to the player who fired it.",
+		},
+		{
 			name = "FriendlyFire",
 			default = false,
 			description = "Whether players' bullets hurt their own teammates. Teams come from Roblox's Teams service.",

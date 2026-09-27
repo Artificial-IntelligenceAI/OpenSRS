@@ -49,6 +49,7 @@ local Config = {
 	teammateHighlights = false, -- teammates are outlined, and sent even behind walls
 	unseenShotPrecision = 5, -- studs: how exactly shots from someone out of sight are placed
 	friendlyFire = false, -- bullets hurt teammates
+	damageNumbers = true, -- shooters see the damage of each hit
 	allowReset = true, -- Roblox's menu Reset button works
 	killCreditTime = 0, -- seconds: a reset or fall credits whoever last hurt them if within this; 0 is no limit
 	aimFlagSensitivity = 1, -- 0 turns aimbot flags off; higher flags on less evidence

@@ -44,6 +44,14 @@ export type ShotEffect = {
 	kind: number, -- see Protocol.HitKind
 }
 
+-- Damage a player's shot did, as it landed: where, how much, and how.
+export type Dealt = {
+	position: Vector3,
+	amount: number,
+	head: boolean,
+	killed: boolean,
+}
+
 local M = Config.movement
 
 local Protocol = {}
@@ -56,6 +64,7 @@ Protocol.Remotes = table.freeze({
 	Shots = "Shots",
 	Life = "Life",
 	Reset = "Reset", -- the client asks to be killed and respawned (Roblox's menu Reset button)
+	Dealt = "Dealt", -- the server tells a shooter damage of theirs landed, for the damage numbers
 })
 
 Protocol.HitKind = table.freeze({
@@ -76,6 +85,7 @@ local INPUT_SIZE = 17
 local STATE_FIXED_SIZE = 75
 local STATE_SIZE = STATE_FIXED_SIZE + #Weapons.loadout * 3
 local SHOT_SIZE = 27
+local DEALT_SIZE = 17
 local SNAPSHOT_HEADER_SIZE = 5
 local SNAPSHOT_ENTRY_SIZE = 21
 -- Unreliable events are dropped above about 900 bytes, so a snapshot of more
@@ -334,6 +344,27 @@ end
 
 -- Other players for one tick, as one or more packets (see SNAPSHOT_MAX_ENTRIES).
 -- There's always at least one, even with nobody to show.
+function Protocol.encodeDealt(dealt: Dealt): buffer
+	local data = buffer.create(DEALT_SIZE)
+	writeVector(data, 0, dealt.position)
+	buffer.writef32(data, 12, dealt.amount)
+	buffer.writeu8(data, 16, (if dealt.head then 1 else 0) + (if dealt.killed then 2 else 0))
+	return data
+end
+
+function Protocol.decodeDealt(data: unknown): Dealt?
+	if typeof(data) ~= "buffer" or buffer.len(data) ~= DEALT_SIZE then
+		return nil
+	end
+	local flags = buffer.readu8(data, 16)
+	return {
+		position = readVector(data, 0),
+		amount = buffer.readf32(data, 12),
+		head = bit32.btest(flags, 1),
+		killed = bit32.btest(flags, 2),
+	}
+end
+
 function Protocol.encodeSnapshots(tick: number, players: { [number]: Remote }): { buffer }
 	local slots = {}
 	for slot in players do
