@@ -228,9 +228,8 @@ local function rigFor(index: number): Rig
 		muzzle = localPoint("Muzzle", Vector3.new(0, 0.44, -1)),
 		ejection = localPoint("EjectionPort", Vector3.new(0.06, 0.5, -0.41)),
 		aim = CFrame.new(0, 0, -animation.aimReach) * CFrame.new(-sightLine),
-		leftHand = if leftHand
-			then CFrame.new(pivot:PointToObjectSpace(leftHand.WorldPosition))
-			else animation.leftHand,
+		leftHand = CFrame.new(animation.leftHandOffset)
+			* if leftHand then CFrame.new(pivot:PointToObjectSpace(leftHand.WorldPosition)) else animation.leftHand,
 		parts = parts,
 		cframes = table.create(#parts),
 	}

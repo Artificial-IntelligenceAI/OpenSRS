@@ -30,6 +30,7 @@ export type Animation = {
 	hipPose: CFrame, -- the grip relative to the camera from the hip
 	aimReach: number, -- studs in front of the eye the rear sight sits while aiming (arm's length for a pistol, closer for a shouldered gun)
 	leftHand: CFrame, -- where the left hand holds the gun outside of reloads (a LeftHand attachment on the model wins)
+	leftHandOffset: Vector3, -- moves that hold, in the gun's space (down is -Y), attachment or not
 	rightHand: Vector3, -- where the right arm ends, in the gun's space (just in front of the grip)
 	-- Where the shoulders are, relative to the camera: the forearms run from
 	-- these to the hands, so they set the angle the arms come into view at.
@@ -105,6 +106,7 @@ local DEFAULT: Animation = {
 	hipPose = CFrame.new(0.3, -0.72, -0.9), -- straight and level
 	aimReach = 0.85,
 	leftHand = LEFT_HAND,
+	leftHandOffset = Vector3.zero,
 	-- Two-handed pistol grip, with the gun sitting on top of both hands: the
 	-- forearms run in nearly level from below the view, side by side under the
 	-- gun, and the whole grip is swallowed by the right hand. From the hip the
