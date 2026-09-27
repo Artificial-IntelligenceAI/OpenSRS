@@ -321,14 +321,22 @@ local function sendSnapshots()
 	end
 end
 
+-- Runs `step`, reporting rather than passing on an error: a bug that one
+-- player's situation sets off must not stop the tick for everyone else.
+local function contained(what: string, step: (...any) -> (), ...: any)
+	xpcall(step, function(problem: unknown)
+		warn(`OpenSRS: {what} failed: {debug.traceback(tostring(problem), 2)}`)
+	end, ...)
+end
+
 local function tick()
 	tickCount += 1
 	for _, record in records do
-		simulate(record)
+		contained(`simulating {record.player.Name}`, simulate, record)
 	end
-	updateVisibility()
+	contained("updating visibility", updateVisibility)
 	if tickCount % Config.snapshotInterval == 0 then
-		sendSnapshots()
+		contained("sending snapshots", sendSnapshots)
 	end
 end
 

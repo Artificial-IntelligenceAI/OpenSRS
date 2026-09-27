@@ -196,6 +196,7 @@ function Movement.step(state: State, input: Input, world: World): State
 		vertical = math.max(vertical - M.gravity * DT, -M.terminalVelocity)
 	end
 
+	local beforeSlide = position
 	position, horizontal = slide(position, horizontal, horizontal * DT, stanceConfig, world)
 
 	local cframe, size = hull(position, stanceConfig)
@@ -213,8 +214,20 @@ function Movement.step(state: State, input: Input, world: World): State
 		local probe = stanceConfig.stepUp + fall + (if grounded then M.groundSnap else 0)
 		local result = workspace:Blockcast(cframe, size, Vector3.new(0, -probe, 0), world.raycast)
 		local hullBottom = position.Y + stanceConfig.stepUp
-		if result and result.Normal.Y >= M.minGroundNormal then
-			position = Vector3.new(position.X, hullBottom - result.Distance, position.Z)
+		local ground = if result then hullBottom - result.Distance else 0
+		local rise = ground - position.Y
+		-- Stepping up raises the head as much as the feet. Casts ignore anything
+		-- they start inside, so a head pushed into a low ceiling could then see
+		-- and jump through it: with no room above, the step is a wall instead.
+		local blocked = result ~= nil
+			and rise > 0
+			and workspace:Blockcast(cframe, size, Vector3.new(0, rise + M.skin, 0), world.raycast) ~= nil
+		if blocked then
+			position = Vector3.new(beforeSlide.X, position.Y, beforeSlide.Z)
+			horizontal = Vector3.zero
+			vertical = if grounded then 0 else vertical
+		elseif result and result.Normal.Y >= M.minGroundNormal then
+			position = Vector3.new(position.X, ground, position.Z)
 			vertical = 0
 			grounded = true
 		else

@@ -177,7 +177,9 @@ end
 local function viewedTick(slot: number, input: Input, serverTick: number): number
 	local limit = rewindLimit(slot)
 	local rewind = math.clamp(serverTick - input.viewTick / Protocol.VIEW_TICK_SCALE, 0, limit)
-	local usual = usualRewind[slot] or rewind
+	-- The limit follows ping, which can drop faster than the usual delay
+	-- catches up, so the usual is held under it too.
+	local usual = math.min(usualRewind[slot] or rewind, limit)
 	rewind = math.clamp(rewind, math.max(usual - REWIND_TOLERANCE, 0), math.min(usual + REWIND_TOLERANCE, limit))
 	return serverTick - rewind
 end
