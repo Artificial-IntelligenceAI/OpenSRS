@@ -1,7 +1,7 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Finds art assets shipped with OpenSRS. The "systems only" download has none,
+-- Finds art assets shipped with SecureRGS. The "systems only" download has none,
 -- so every lookup can come back empty and callers fall back to stand-ins.
 
 local Assets = {}

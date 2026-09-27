@@ -37,7 +37,7 @@ local Effects = require(script.Parent.Effects)
 local HoleImages = require(script.Parent.HoleImages)
 local Puppets = require(script.Parent.Puppets)
 
-local HOLE_ATTRIBUTE = "OpenSRSHole" -- Puppets clears parts with this when it hides a player
+local HOLE_ATTRIBUTE = "SecureRGSHole" -- Puppets clears parts with this when it hides a player
 local REACH = 0.5 -- studs past the reported hit point the line is cast, in case of rounding
 
 local Impacts = {}
@@ -82,7 +82,7 @@ end
 HoleImages.prepare()
 
 local holes = Instance.new("Folder")
-holes.Name = "OpenSRSHoles"
+holes.Name = "SecureRGSHoles"
 holes.Parent = workspace
 Impacts.folder = holes
 

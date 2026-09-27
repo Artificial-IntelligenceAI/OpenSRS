@@ -17,7 +17,7 @@ local CANT_SHOOT_TEXT = "Can't shoot"
 local Hud = {}
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "OpenSRSHud"
+gui.Name = "SecureRGSHud"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 

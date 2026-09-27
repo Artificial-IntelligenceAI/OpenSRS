@@ -1,6 +1,6 @@
-# OpenSRS Design
+# SecureRGS Design
 
-This is the single source of truth for how OpenSRS works and why. Anything not written here is still undecided.
+This is the single source of truth for how SecureRGS works and why. Anything not written here is still undecided.
 
 ## Goals
 
@@ -11,7 +11,7 @@ This is the single source of truth for how OpenSRS works and why. Anything not w
 
 ## Non-goals
 
-OpenSRS deliberately does **not** support the following. Anyone who wants them can fork and modify it.
+SecureRGS deliberately does **not** support the following. Anyone who wants them can fork and modify it.
 
 - Arcade movement (bunny-hopping, air strafing, run-and-gun accuracy)
 - Third-person camera
@@ -33,13 +33,13 @@ A cheater fully controls their own client. Anything the client says can be a lie
 | Remote spam ("kill all") | Every message is validated and rate-limited. |
 | Wallhacks / ESP | Clients only receive characters they can actually see (see [Visibility](#visibility-anti-wallhack)). |
 
-**Can't be fully blocked.** Aimbots and triggerbots only automate the player's own aim input. OpenSRS can make them harder and flag suspicious patterns (see [Cheat flags](#cheat-flags)), but no system can fully stop them.
+**Can't be fully blocked.** Aimbots and triggerbots only automate the player's own aim input. SecureRGS can make them harder and flag suspicious patterns (see [Cheat flags](#cheat-flags)), but no system can fully stop them.
 
-**The code itself.** OpenSRS never uses `require()` by asset ID, `loadstring`, or HTTP requests, the usual ways backdoors hide in Toolbox models.
+**The code itself.** SecureRGS never uses `require()` by asset ID, `loadstring`, or HTTP requests, the usual ways backdoors hide in Toolbox models.
 
 ## Characters
 
-Roblox's default characters are not used. OpenSRS runs its own server-authoritative characters.
+Roblox's default characters are not used. SecureRGS runs its own server-authoritative characters.
 
 - **Server-authoritative movement.** Clients send inputs only. The server simulates movement and is the ground truth. The local client predicts its own movement so it feels instant, then corrects itself to match the server.
 - **Rig.** R6.
@@ -51,8 +51,8 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ### Avatars
 
-- Only OpenSRS avatars are used, never players' Roblox avatars.
-- Games can add their own avatars in the OpenSRS avatar format, which will be documented with part names, sizes and attachment points.
+- Only SecureRGS avatars are used, never players' Roblox avatars.
+- Games can add their own avatars in the SecureRGS avatar format, which will be documented with part names, sizes and attachment points.
 - Without a custom avatar, everyone is a plain R6 figure: the classic R6 shapes (including the rounded head) in one neutral grey, with no face or clothing. It's built in code, so the "systems only" download has it too.
 - A game's own avatar goes in `Assets/Avatars/Default` as a Model with R6 parts named `Head`, `Torso`, `Left Arm`, `Right Arm`, `Left Leg` and `Right Leg`. The arms in the first-person view take the avatar's arm color.
 
@@ -62,7 +62,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 - A target counts as visible if a clear line runs from any of the viewer's possible eye positions to any of the target's body parts (head, torso, arms, legs).
 - **No pop-in.** Eyes and bodies are pushed 0.25 s ahead along their velocity, and the viewer's possible eyes include both full leans. Once seen, a target stays known for 0.4 s, except when they spawn or teleport: who could see them before says nothing about where they are now.
 - **Nothing is pushed through walls.** Looking ahead stops at the first wall, so running at a wall never reveals what's behind it.
-- **What blocks sight.** Any part that is less than 25% transparent blocks sight, even if it can be walked through (like bushes). Glass and other see-through parts don't. A part that looks solid while being see-through (say, clear glass under a decal) can be given the attribute `OpenSRSBlocksSight = true`. Parts with CanQuery off are invisible to the checks, so they never block sight: keep CanQuery on for anything players hide behind.
+- **What blocks sight.** Any part that is less than 25% transparent blocks sight, even if it can be walked through (like bushes). Glass and other see-through parts don't. A part that looks solid while being see-through (say, clear glass under a decal) can be given the attribute `SecureRGSBlocksSight = true`. Parts with CanQuery off are invisible to the checks, so they never block sight: keep CanQuery on for anything players hide behind.
 - **Cost.** Each player's view is checked 15 times a second, with players split into four groups so the work is spread over ticks. In a worst-case test (32 players in a dense maze where only 3% of pairs can see each other), this took about 3 ms per server tick. Moving it onto several CPU cores with Parallel Luau is planned if real games need it.
 - Gunshot effects and sounds (tracers, muzzle flashes) are only sent to players close enough to see or hear them.
 - Each player only receives their own ammo and weapon state.
@@ -94,13 +94,13 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Networking
 
-- OpenSRS uses its own networking layer with no third-party libraries.
+- SecureRGS uses its own networking layer with no third-party libraries.
 - There are only a few message types: movement input, fire requests, and visibility snapshots.
 - Every incoming message is strictly type- and range-checked, and rate-limited.
 
 ## Configuration
 
-- **No code needed.** Every gameplay number lives in the `Settings` folder inside OpenSRS (Game, Movement, and one Configuration per weapon), editable as attributes in Studio's Properties panel. [SETTINGS.md](SETTINGS.md) lists them all.
+- **No code needed.** Every gameplay number lives in the `Settings` folder inside SecureRGS (Game, Movement, and one Configuration per weapon), editable as attributes in Studio's Properties panel. [SETTINGS.md](SETTINGS.md) lists them all.
 - **Optional code file.** A ModuleScript named `Overrides` in that folder can change any value in code, and it wins over the attributes.
 - **Checked.** Values of the wrong type fall back to the default, and out-of-range values are clamped, with a warning in Output.
 - **The server's copy is the only one that counts.** The server resolves the settings, then publishes the final values so clients predict with exactly the same numbers. Changing them on a client does nothing.
@@ -121,7 +121,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Cheat flags
 
-OpenSRS never punishes players on its own. When it spots something it can't block outright, like inhuman aim snaps, it reports the player and the reason to the game through a hook. Each game decides whether to log, kick or ban.
+SecureRGS never punishes players on its own. When it spots something it can't block outright, like inhuman aim snaps, it reports the player and the reason to the game through a hook. Each game decides whether to log, kick or ban.
 
 ### Aimbot flags
 
@@ -139,4 +139,4 @@ Aimbots that add human-looking noise and delay will get through. Anything that p
 
 ## Server API for games
 
-Characters are run entirely by OpenSRS, which is what makes them hard to cheat with, so a game's own server scripts reach them through `OpenSRS.Server.API`: `teleport(player, position)` (the player's client starts over from the new spot rather than sliding there), `damage(player, amount)`, `setCanShoot(player, allowed)` (for lobbies, safe zones and countdowns: it's part of the rules both sides simulate, so a stopped player's client never shows shots that won't happen, their HUD says they can't shoot, and it lasts through respawns), `position(player)` and `health(player)`, `setDamageFilter(filter)` (change or block any damage before it lands, for things like spawn protection; it runs mid-update, so one that errors or waits is ignored with a warning), plus the `Damaged`, `Died` and `Flagged` events. Settings cover friendly fire (`FriendlyFire`, off by default), whether Roblox's Reset button works (`AllowReset`), and `KillCreditTime`: resetting or falling out of the map gives the kill to whoever last hurt you in that life (with no time limit by default), so neither can be used to deny a kill. The test place's zombie arena (in `dev/`, which isn't part of OpenSRS) is built entirely on it.
+Characters are run entirely by SecureRGS, which is what makes them hard to cheat with, so a game's own server scripts reach them through `SecureRGS.Server.API`: `teleport(player, position)` (the player's client starts over from the new spot rather than sliding there), `damage(player, amount)`, `setCanShoot(player, allowed)` (for lobbies, safe zones and countdowns: it's part of the rules both sides simulate, so a stopped player's client never shows shots that won't happen, their HUD says they can't shoot, and it lasts through respawns), `position(player)` and `health(player)`, `setDamageFilter(filter)` (change or block any damage before it lands, for things like spawn protection; it runs mid-update, so one that errors or waits is ignored with a warning), plus the `Damaged`, `Died` and `Flagged` events. Settings cover friendly fire (`FriendlyFire`, off by default), whether Roblox's Reset button works (`AllowReset`), and `KillCreditTime`: resetting or falling out of the map gives the kill to whoever last hurt you in that life (with no time limit by default), so neither can be used to deny a kill. The test place's zombie arena (in `dev/`, which isn't part of SecureRGS) is built entirely on it.

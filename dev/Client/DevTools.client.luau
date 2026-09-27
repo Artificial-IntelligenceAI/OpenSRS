@@ -1,7 +1,7 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- The OpenSRS test place's keys (see DevTools.server): J goes inside the spawn
+-- The SecureRGS test place's keys (see DevTools.server): J goes inside the spawn
 -- box, K outside it, L to the zombie arena, and N switches your shooting off
 -- and on. Only dev.project.json syncs this.
 
@@ -16,7 +16,7 @@ local KEYS: { [Enum.KeyCode]: string } = {
 	[Enum.KeyCode.N] = "ToggleShooting",
 }
 
-local teleport = ReplicatedStorage:WaitForChild("OpenSRSDevTeleport") :: RemoteEvent
+local teleport = ReplicatedStorage:WaitForChild("SecureRGSDevTeleport") :: RemoteEvent
 
 UserInputService.InputBegan:Connect(function(input, processed)
 	local where = KEYS[input.KeyCode]
@@ -26,7 +26,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "OpenSRSDev"
+gui.Name = "SecureRGSDev"
 gui.ResetOnSpawn = false
 local hint = Instance.new("TextLabel")
 hint.AnchorPoint = Vector2.new(0, 1)

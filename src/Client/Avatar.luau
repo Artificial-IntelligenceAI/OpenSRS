@@ -3,7 +3,7 @@
 
 -- How other players look. Games can ship their own avatar as a Model in
 -- Assets/Avatars/Default with R6 parts named Head, Torso, Left Arm, Right Arm,
--- Left Leg and Right Leg; OpenSRS moves those parts to match each player's
+-- Left Leg and Right Leg; SecureRGS moves those parts to match each player's
 -- pose. Without one, everyone is a plain R6 figure: the classic shapes in one
 -- neutral grey, with no face or clothing.
 --
@@ -64,7 +64,7 @@ local function template(): Model
 	if custom then
 		for _, name in Body.PART_NAMES do
 			if not custom:FindFirstChild(name) then
-				warn(`OpenSRS: the custom avatar has no part named "{name}"; using the plain avatar instead.`)
+				warn(`SecureRGS: the custom avatar has no part named "{name}"; using the plain avatar instead.`)
 				return plain()
 			end
 		end

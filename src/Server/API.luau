@@ -1,23 +1,23 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- What a game's own server scripts can do with OpenSRS players. Characters
--- are run entirely by OpenSRS (that's what makes them hard to cheat with), so
+-- What a game's own server scripts can do with SecureRGS players. Characters
+-- are run entirely by SecureRGS (that's what makes them hard to cheat with), so
 -- this is the way in: move them, hurt them, and hear about it.
 --
---     local OpenSRS = require(game.ServerScriptService.OpenSRS.Server.API)
+--     local SecureRGS = require(game.ServerScriptService.SecureRGS.Server.API)
 --
---     OpenSRS.teleport(player, Vector3.new(0, 5, 0)) -- where their feet go
---     OpenSRS.damage(player, 25)
---     OpenSRS.setCanShoot(player, false) -- lobbies, safe zones, round countdowns
---     print(OpenSRS.position(player), OpenSRS.health(player))
+--     SecureRGS.teleport(player, Vector3.new(0, 5, 0)) -- where their feet go
+--     SecureRGS.damage(player, 25)
+--     SecureRGS.setCanShoot(player, false) -- lobbies, safe zones, round countdowns
+--     print(SecureRGS.position(player), SecureRGS.health(player))
 --
---     OpenSRS.Died:Connect(function(victim: Player, killer: Player?)
+--     SecureRGS.Died:Connect(function(victim: Player, killer: Player?)
 --         print(victim.Name, "was killed by", if killer then killer.Name else "the world")
 --     end)
 --
 --     -- Spawn protection: nobody can hurt a player for 3 seconds after spawning.
---     OpenSRS.setDamageFilter(function(victim, attacker, amount, part)
+--     SecureRGS.setDamageFilter(function(victim, attacker, amount, part)
 --         if os.clock() - (spawnedAt[victim] or 0) < 3 then
 --             return 0
 --         end

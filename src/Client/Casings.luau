@@ -41,7 +41,7 @@ local MAX_STEP = 1 / 30 -- longer frames are simulated in steps no longer than t
 local Casings = {}
 
 local folder = Instance.new("Folder")
-folder.Name = "OpenSRSCasings"
+folder.Name = "SecureRGSCasings"
 folder.Parent = workspace
 Casings.folder = folder
 

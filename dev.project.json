@@ -1,18 +1,18 @@
 {
-	"name": "OpenSRS Dev",
+	"name": "SecureRGS Dev",
 	"emitLegacyScripts": false,
 	"tree": {
 		"$className": "DataModel",
 		"ServerScriptService": {
-			"OpenSRS": {
+			"SecureRGS": {
 				"$path": "default.project.json"
 			},
-			"OpenSRSDev": {
+			"SecureRGSDev": {
 				"$path": "dev/Server"
 			}
 		},
 		"ReplicatedStorage": {
-			"OpenSRSDev": {
+			"SecureRGSDev": {
 				"$path": "dev/Client"
 			}
 		}

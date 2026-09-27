@@ -1,4 +1,4 @@
-X16 — Spent 9mm casing for OpenSRS
+X16 — Spent 9mm casing for SecureRGS
 
 X16-Spent-Casing.fbx
   One mesh, one material, 284 triangles, 144 geometric vertices.
@@ -60,7 +60,7 @@ two directories above this Casing folder. It retains the source model;
 this low-poly spent casing is a separate asset, not a replacement inside it.
 Brand-specific names and text are replaced with neutral X16 names, and the
 two unlicensed reference photos and their packed data are removed.
-The release contains a CC BY 4.0 note for the OpenSRS publication.
+The release contains a CC BY 4.0 note for the SecureRGS publication.
 
 Final release audit: all 47 evaluated mesh instances and all 20 material
 graphs retain their original geometry, settings and bindings (with neutral

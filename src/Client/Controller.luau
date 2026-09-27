@@ -276,12 +276,12 @@ function Controller.start()
 	InputMap.start()
 	Hud.start()
 
-	-- OpenSRS characters can't hold Roblox tools, and the tools bar takes the
+	-- SecureRGS characters can't hold Roblox tools, and the tools bar takes the
 	-- number keys that pick weapons.
 	pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.Backpack, false)
 
-	-- Roblox's menu Reset button would kill the Roblox character, which OpenSRS
-	-- doesn't use, so it's pointed at OpenSRS's own: the server kills and
+	-- Roblox's menu Reset button would kill the Roblox character, which SecureRGS
+	-- doesn't use, so it's pointed at SecureRGS's own: the server kills and
 	-- respawns this player. The menu may not be ready yet, so keep trying.
 	local reset = Instance.new("BindableEvent")
 	reset.Event:Connect(function()
@@ -300,11 +300,11 @@ function Controller.start()
 
 	task.delay(5, function()
 		if state == nil and epoch == -1 then
-			warn("OpenSRS: still waiting for the server to spawn this player after 5 seconds.")
+			warn("SecureRGS: still waiting for the server to spawn this player after 5 seconds.")
 		end
 	end)
 
-	RunService:BindToRenderStep("OpenSRS", Enum.RenderPriority.Camera.Value + 1, function(frameTime: number)
+	RunService:BindToRenderStep("SecureRGS", Enum.RenderPriority.Camera.Value + 1, function(frameTime: number)
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 		UserInputService.MouseIconEnabled = false
 		camera.CameraType = Enum.CameraType.Scriptable

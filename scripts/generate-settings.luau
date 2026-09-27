@@ -1,7 +1,7 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Generates the Settings folder shipped with OpenSRS (src/Settings) and
+-- Generates the Settings folder shipped with SecureRGS (src/Settings) and
 -- docs/SETTINGS.md from src/Shared/SettingsSchema.luau.
 --
 --     lune run scripts/generate-settings          write the files
@@ -76,11 +76,11 @@ end
 
 -- Docs
 local doc = {
-	"# OpenSRS Settings",
+	"# SecureRGS Settings",
 	"",
 	"<!-- Generated from src/Shared/SettingsSchema.luau by scripts/generate-settings.luau. Don't edit by hand. -->",
 	"",
-	"Every value here can be changed in Roblox Studio without code: select a Configuration inside `ServerScriptService > OpenSRS > Settings` and edit its attributes in the Properties panel.",
+	"Every value here can be changed in Roblox Studio without code: select a Configuration inside `ServerScriptService > SecureRGS > Settings` and edit its attributes in the Properties panel.",
 	"",
 	"Values of the wrong type fall back to the default, and values outside the allowed range are clamped. Both print a warning in the Output window.",
 	"",

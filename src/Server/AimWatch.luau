@@ -18,7 +18,7 @@
 -- recent chances and raises a flag only when enough of them look inhuman.
 -- After a flag the record starts over, so another needs fresh evidence. The
 -- AimFlagSensitivity setting scales how much evidence it takes; 0 turns this
--- off. OpenSRS never punishes anyone itself: the game decides what a flag means.
+-- off. SecureRGS never punishes anyone itself: the game decides what a flag means.
 
 local Shared = script.Parent.Parent.Shared
 local Body = require(Shared.Body)

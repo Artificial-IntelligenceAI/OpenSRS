@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -- Every setting a game can change, with its default, allowed range and a short
--- description. The Settings folder shipped with OpenSRS, and docs/SETTINGS.md,
+-- description. The Settings folder shipped with SecureRGS, and docs/SETTINGS.md,
 -- are generated from this file (scripts/generate-settings.luau), so it is the
 -- one place defaults live.
 --
@@ -307,7 +307,7 @@ local weaponFields: { Field } = {
 	},
 }
 
--- Weapons shipped with OpenSRS, in order: every player carries all of them,
+-- Weapons shipped with SecureRGS, in order: every player carries all of them,
 -- in this order (the first is what they spawn holding, on key 1). Each gets a
 -- Weapons/<name> section with the fields above; `defaults` replaces field
 -- defaults for that weapon.

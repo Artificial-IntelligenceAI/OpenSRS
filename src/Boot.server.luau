@@ -1,7 +1,7 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Installs OpenSRS. Drop the OpenSRS folder into ServerScriptService and this
+-- Installs SecureRGS. Drop the SecureRGS folder into ServerScriptService and this
 -- script does the rest: server code stays here, where clients can't see it,
 -- and a copy of the shared and client code goes to ReplicatedStorage.
 
@@ -9,10 +9,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local root = script.Parent
-assert(root.Parent == ServerScriptService, "OpenSRS must be placed directly in ServerScriptService.")
+assert(root.Parent == ServerScriptService, "SecureRGS must be placed directly in ServerScriptService.")
 assert(
-	ReplicatedStorage:FindFirstChild("OpenSRS") == nil,
-	"ReplicatedStorage already has something named OpenSRS. Remove it and try again."
+	ReplicatedStorage:FindFirstChild("SecureRGS") == nil,
+	"ReplicatedStorage already has something named SecureRGS. Remove it and try again."
 )
 
 -- Settings first: everything else reads them when it loads.
@@ -26,7 +26,7 @@ local settings = Settings.resolve(settingsFolder, overrides)
 Settings.apply(settings)
 
 local replicated = Instance.new("Folder")
-replicated.Name = "OpenSRS"
+replicated.Name = "SecureRGS"
 root.Shared:Clone().Parent = replicated
 local assets = root:FindFirstChild("Assets") -- only in the "with models" download
 if assets then

@@ -28,13 +28,13 @@ local MAX_SNAPSHOTS = 30
 local SNAP_MARGIN = 2
 local FORGET_AFTER = 60 -- seconds a player's model is kept while they're not shown
 local CLOCK_SMOOTHING = 0.02
-local HIGHLIGHT = "OpenSRSTeammate"
+local HIGHLIGHT = "SecureRGSTeammate"
 local HIGHLIGHT_FILL = 0.75 -- how see-through the fill is; the outline is solid
 
 local Puppets = {}
 
 local folder = Instance.new("Folder")
-folder.Name = "OpenSRSPuppets"
+folder.Name = "SecureRGSPuppets"
 folder.Parent = workspace
 Puppets.folder = folder
 
@@ -218,7 +218,7 @@ function Puppets.render()
 			-- Holes from Impacts don't outlast a player being shown: they'd
 			-- still be there after a respawn.
 			for _, descendant in avatar.model:GetDescendants() do
-				if descendant:GetAttribute("OpenSRSHole") then
+				if descendant:GetAttribute("SecureRGSHole") then
 					descendant:Destroy()
 				end
 			end

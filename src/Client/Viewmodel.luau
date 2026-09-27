@@ -146,7 +146,7 @@ local Viewmodel = {}
 -- Everything in the view: the gun in hand (each weapon has its own model,
 -- swapped in and out), the arms and the fill light.
 local root = Instance.new("Model")
-root.Name = "OpenSRSViewmodel"
+root.Name = "SecureRGSViewmodel"
 
 local function limb(name: string, size: Vector3, color: Color3): Part
 	local part = Instance.new("Part")

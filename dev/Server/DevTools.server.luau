@@ -1,12 +1,12 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Tools for the OpenSRS test place. Only dev.project.json syncs this; it's
--- never part of OpenSRS itself. It also shows a game using OpenSRS's API.
+-- Tools for the SecureRGS test place. Only dev.project.json syncs this; it's
+-- never part of SecureRGS itself. It also shows a game using SecureRGS's API.
 --
 -- Teleports: players ask (see DevTools.client) to go inside the spawn box,
 -- outside it, or to the zombie arena. They can also switch their own shooting
--- off and on, to try OpenSRS.setCanShoot.
+-- off and on, to try SecureRGS.setCanShoot.
 --
 -- The zombie arena: a walled yard away from the spawn with some cover. While
 -- anyone is in it, zombies keep coming: plain R6 figures with a Humanoid, so
@@ -20,7 +20,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local OpenSRS = require(ServerScriptService:WaitForChild("OpenSRS"):WaitForChild("Server"):WaitForChild("API")) :: any
+local SecureRGS =
+	require(ServerScriptService:WaitForChild("SecureRGS"):WaitForChild("Server"):WaitForChild("API")) :: any
 
 local ARENA_CENTER = Vector3.new(0, 0, 250)
 local ARENA_SIZE = 100 -- studs across
@@ -45,7 +46,7 @@ local THINK_EVERY = 0.2 -- seconds between zombies picking where to go
 -- Teleports -------------------------------------------------------------------
 
 local teleport = Instance.new("RemoteEvent")
-teleport.Name = "OpenSRSDevTeleport"
+teleport.Name = "SecureRGSDevTeleport"
 teleport.Parent = ReplicatedStorage
 local shootingOff: { [Player]: boolean } = {}
 local lastAsked: { [Player]: number } = {}
@@ -58,12 +59,12 @@ teleport.OnServerEvent:Connect(function(player: Player, where: unknown)
 	lastAsked[player] = now
 	if where == "ToggleShooting" then
 		shootingOff[player] = not shootingOff[player]
-		OpenSRS.setCanShoot(player, not shootingOff[player])
+		SecureRGS.setCanShoot(player, not shootingOff[player])
 		return
 	end
 	local place = if typeof(where) == "string" then PLACES[where] else nil
 	if place then
-		OpenSRS.teleport(player, place)
+		SecureRGS.teleport(player, place)
 	end
 end)
 Players.PlayerRemoving:Connect(function(player)
@@ -74,15 +75,15 @@ end)
 -- Aimbot flags (and any other cheat flags) show in the output and on every
 -- player's screen here; a real game would log, kick or ban instead.
 local flagShown = Instance.new("RemoteEvent")
-flagShown.Name = "OpenSRSDevFlag"
+flagShown.Name = "SecureRGSDevFlag"
 flagShown.Parent = ReplicatedStorage
 -- Deaths too, with who got the kill, for testing kill credit.
-OpenSRS.Died:Connect(function(victim: Player, killer: Player?)
+SecureRGS.Died:Connect(function(victim: Player, killer: Player?)
 	local text = `{victim.Name} died, killed by {if killer then killer.Name else "no one"}`
 	print(text)
 	flagShown:FireAllClients(text)
 end)
-OpenSRS.Flagged:Connect(function(player: Player, reason: string, details: string)
+SecureRGS.Flagged:Connect(function(player: Player, reason: string, details: string)
 	local text = `FLAG {player.Name}: {reason}: {details}`
 	warn(text)
 	flagShown:FireAllClients(text)
@@ -191,7 +192,7 @@ end
 local function nearestPlayer(position: Vector3): (Player?, Vector3?)
 	local best, bestPosition, bestDistance = nil, nil, math.huge
 	for _, player in Players:GetPlayers() do
-		local at = OpenSRS.position(player)
+		local at = SecureRGS.position(player)
 		if at and inArena(at) then
 			local distance = (at - position).Magnitude
 			if distance < bestDistance then
@@ -213,7 +214,7 @@ RunService.Heartbeat:Connect(function(frameTime)
 
 	local anyoneInArena = false
 	for _, player in Players:GetPlayers() do
-		local at = OpenSRS.position(player)
+		local at = SecureRGS.position(player)
 		if at and inArena(at) then
 			anyoneInArena = true
 		end
@@ -244,7 +245,7 @@ RunService.Heartbeat:Connect(function(frameTime)
 			local flat = Vector3.new(offset.X, 0, offset.Z).Magnitude
 			if flat <= ZOMBIE_REACH and math.abs(offset.Y + 3) < 4 and now - zombie.lastHit >= ZOMBIE_HIT_EVERY then
 				zombie.lastHit = now
-				OpenSRS.damage(target, ZOMBIE_DAMAGE)
+				SecureRGS.damage(target, ZOMBIE_DAMAGE)
 			end
 		else
 			zombie.humanoid:MoveTo(zombie.root.Position)

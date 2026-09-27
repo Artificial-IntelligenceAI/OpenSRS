@@ -212,12 +212,12 @@ function WeaponAnimation.get(name: string): Animation
 		return animation
 	end
 	if not module:IsA("ModuleScript") then
-		warn(`OpenSRS: Assets/Weapons/{name}/Animation should be a ModuleScript; using the default animation.`)
+		warn(`SecureRGS: Assets/Weapons/{name}/Animation should be a ModuleScript; using the default animation.`)
 		return animation
 	end
 	local ok, changes = pcall(require, module)
 	if not ok or type(changes) ~= "table" then
-		warn(`OpenSRS: Assets/Weapons/{name}/Animation should return a table; using the default animation.`)
+		warn(`SecureRGS: Assets/Weapons/{name}/Animation should return a table; using the default animation.`)
 		return animation
 	end
 
@@ -225,9 +225,11 @@ function WeaponAnimation.get(name: string): Animation
 	for field, value in changes :: { [any]: unknown } do
 		local default = target[field]
 		if default == nil then
-			warn(`OpenSRS: Assets/Weapons/{name}/Animation has an unknown field, {field}; ignoring it.`)
+			warn(`SecureRGS: Assets/Weapons/{name}/Animation has an unknown field, {field}; ignoring it.`)
 		elseif typeof(value) ~= typeof(default) then
-			warn(`OpenSRS: Assets/Weapons/{name}/Animation's {field} should be a {typeof(default)}; using the default.`)
+			warn(
+				`SecureRGS: Assets/Weapons/{name}/Animation's {field} should be a {typeof(default)}; using the default.`
+			)
 		else
 			target[field] = value
 		end

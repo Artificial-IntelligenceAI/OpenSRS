@@ -1,4 +1,4 @@
-# Tools used to develop OpenSRS, pinned to exact versions.
+# Tools used to develop SecureRGS, pinned to exact versions.
 # Run `rokit install` to get them. Players and game developers never need these.
 
 [tools]

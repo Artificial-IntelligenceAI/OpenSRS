@@ -263,15 +263,15 @@ local function filtered(victim: Player, attacker: Player?, amount: number, part:
 	end)
 	local ok, problem = coroutine.resume(thread)
 	if not ok then
-		warn(`OpenSRS: the damage filter failed ({problem}); applying the damage unchanged.`)
+		warn(`SecureRGS: the damage filter failed ({problem}); applying the damage unchanged.`)
 		return amount
 	elseif coroutine.status(thread) ~= "dead" then
-		warn("OpenSRS: the damage filter mustn't wait or yield; applying the damage unchanged.")
+		warn("SecureRGS: the damage filter mustn't wait or yield; applying the damage unchanged.")
 		return amount
 	elseif result == nil then
 		return amount
 	elseif type(result) ~= "number" or result ~= result then
-		warn("OpenSRS: the damage filter should return a number or nil; applying the damage unchanged.")
+		warn("SecureRGS: the damage filter should return a number or nil; applying the damage unchanged.")
 		return amount
 	end
 	return math.max(result :: number, 0)

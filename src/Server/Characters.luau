@@ -363,7 +363,7 @@ end
 -- player's situation sets off must not stop the tick for everyone else.
 local function contained(what: string, step: (...any) -> (), ...: any)
 	xpcall(step, function(problem: unknown)
-		warn(`OpenSRS: {what} failed: {debug.traceback(tostring(problem), 2)}`)
+		warn(`SecureRGS: {what} failed: {debug.traceback(tostring(problem), 2)}`)
 	end, ...)
 end
 
@@ -387,7 +387,7 @@ local function onPlayerAdded(player: Player)
 	slots[slot] = player
 	player:SetAttribute(Teammates.SLOT_ATTRIBUTE, slot)
 
-	-- OpenSRS runs its own characters; Roblox's are never used.
+	-- SecureRGS runs its own characters; Roblox's are never used.
 	if player.Character then
 		player.Character:Destroy()
 	end

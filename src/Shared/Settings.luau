@@ -3,7 +3,7 @@
 
 -- Reads a game's settings and applies them before anything else runs.
 --
--- On the server, settings come from the Settings folder inside OpenSRS
+-- On the server, settings come from the Settings folder inside SecureRGS
 -- (attributes, editable in Studio's Properties panel), then from an optional
 -- ModuleScript named Overrides in that folder. Anything missing, of the wrong
 -- type or out of range falls back to the default or is clamped, with a warning.
@@ -44,18 +44,18 @@ local function read(
 	end
 
 	if typeof(value) ~= typeof(default) then
-		warn(`OpenSRS: setting {path}.{field.name} should be a {typeof(default)}; using the default, {default}.`)
+		warn(`SecureRGS: setting {path}.{field.name} should be a {typeof(default)}; using the default, {default}.`)
 		return default
 	end
 	if type(value) == "number" then
 		if value ~= value or value == math.huge or value == -math.huge then
-			warn(`OpenSRS: setting {path}.{field.name} isn't a real number; using the default, {default}.`)
+			warn(`SecureRGS: setting {path}.{field.name} isn't a real number; using the default, {default}.`)
 			return default
 		end
 		local clamped = math.clamp(value, field.min or -math.huge, field.max or math.huge)
 		if clamped ~= value then
 			warn(
-				`OpenSRS: setting {path}.{field.name} is {value}, outside {field.min} to {field.max}; using {clamped}.`
+				`SecureRGS: setting {path}.{field.name} is {value}, outside {field.min} to {field.max}; using {clamped}.`
 			)
 		end
 		return clamped

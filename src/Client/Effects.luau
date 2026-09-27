@@ -45,7 +45,7 @@ local FLASH_TIME = 0.06 -- seconds a muzzle light stays on, and a billboard last
 local Effects = {}
 
 local folder = Instance.new("Folder")
-folder.Name = "OpenSRSEffects"
+folder.Name = "SecureRGSEffects"
 folder.Parent = workspace
 Effects.folder = folder
 

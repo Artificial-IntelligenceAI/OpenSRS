@@ -67,7 +67,7 @@ SoundService.AcousticSimulationEnabled = true
 
 -- Interface sounds skip the world and go straight to the speakers.
 local output = Instance.new("AudioDeviceOutput")
-output.Name = "OpenSRS"
+output.Name = "SecureRGS"
 output.Parent = SoundService
 
 local random = Random.new()

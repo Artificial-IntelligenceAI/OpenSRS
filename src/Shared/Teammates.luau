@@ -8,7 +8,7 @@ local Teammates = {}
 
 -- Set on each Player by the server to their character's slot, so clients can
 -- tell whose character is whose.
-Teammates.SLOT_ATTRIBUTE = "OpenSRSSlot"
+Teammates.SLOT_ATTRIBUTE = "SecureRGSSlot"
 
 function Teammates.are(a: Player, b: Player): boolean
 	local team: Team? = a.Team

@@ -1,10 +1,10 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Cheat flags. OpenSRS never punishes anyone by itself: it reports suspicious
+-- Cheat flags. SecureRGS never punishes anyone by itself: it reports suspicious
 -- behavior here and the game decides what to do.
 --
---     local Flags = require(game.ServerScriptService.OpenSRS.Server.Flags)
+--     local Flags = require(game.ServerScriptService.SecureRGS.Server.Flags)
 --     Flags.Flagged:Connect(function(player: Player, reason: string, details: string)
 --         warn(player.Name, "flagged:", reason, details)
 --     end)

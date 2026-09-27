@@ -1,7 +1,7 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- A fake aimbot, for testing OpenSRS's aimbot flags in the test place. Only
+-- A fake aimbot, for testing SecureRGS's aimbot flags in the test place. Only
 -- dev.project.json syncs this. B cycles it: off, lock-on (the view stays glued
 -- to the nearest shown player's head, and looks away when they go out of view,
 -- so it has to turn to react when they're back), snap (every 1.5 s it looks
@@ -13,11 +13,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local OpenSRS = ReplicatedStorage:WaitForChild("OpenSRS")
+local SecureRGS = ReplicatedStorage:WaitForChild("SecureRGS")
 repeat
 	task.wait()
-until OpenSRS:GetAttribute("Ready")
-local InputMap = require(OpenSRS:WaitForChild("Client"):WaitForChild("InputMap")) :: any
+until SecureRGS:GetAttribute("Ready")
+local InputMap = require(SecureRGS:WaitForChild("Client"):WaitForChild("InputMap")) :: any
 
 local MODES = { "off", "lock-on", "snap" }
 local SNAP_EVERY = 1.5
@@ -27,7 +27,7 @@ local mode = 1
 local camera = workspace.CurrentCamera
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "OpenSRSFakeAimbot"
+gui.Name = "SecureRGSFakeAimbot"
 gui.ResetOnSpawn = false
 local status = Instance.new("TextLabel")
 status.AnchorPoint = Vector2.new(0, 1)
@@ -61,7 +61,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 end)
 
-local flagged = ReplicatedStorage:WaitForChild("OpenSRSDevFlag") :: RemoteEvent
+local flagged = ReplicatedStorage:WaitForChild("SecureRGSDevFlag") :: RemoteEvent
 flagged.OnClientEvent:Connect(function(text: string)
 	flag.Text = text
 	flag.Visible = true
@@ -74,7 +74,7 @@ end)
 
 -- The head of the nearest player being shown.
 local function target(): Vector3?
-	local puppets = workspace:FindFirstChild("OpenSRSPuppets")
+	local puppets = workspace:FindFirstChild("SecureRGSPuppets")
 	local eye = camera.CFrame.Position
 	local best, bestDistance = nil, math.huge
 	for _, puppet in (if puppets then puppets:GetChildren() else {}) do
@@ -97,8 +97,8 @@ end
 local sinceSnap = 0
 local lookedAway = false
 local hadTarget = false
--- Before OpenSRS's own frame, so the view it draws and sends is the aimbot's.
-RunService:BindToRenderStep("OpenSRSFakeAimbot", Enum.RenderPriority.Camera.Value, function(frameTime)
+-- Before SecureRGS's own frame, so the view it draws and sends is the aimbot's.
+RunService:BindToRenderStep("SecureRGSFakeAimbot", Enum.RenderPriority.Camera.Value, function(frameTime)
 	local head = target()
 	if MODES[mode] == "off" then
 		return
