@@ -56,12 +56,6 @@ local ARM_WIDTH = 0.38
 local ARM_HEIGHT = 0.66 -- deeper than the grip is tall, so the hand swallows it whole
 local ARM_LENGTH = 1.3 -- forearms only: long enough to run off screen, never near the eye
 
-local SLIDE_TRAVEL = 0.19
--- The X16 model's barrel is only its visible pieces (the top of the chamber and
--- the muzzle ring); with no tube between them, it has to move with the slide or
--- the ring floats in front of the gun when the slide is back.
-local BARREL_TRAVEL = SLIDE_TRAVEL
-
 -- The reload's choreography, as a fraction of the reload (see WeaponAnimation;
 -- a game can change it per weapon).
 type Key = WeaponAnimation.Key
@@ -575,8 +569,15 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	else
 		slideBack = if empty then 1 else 0
 	end
-	local slide = CFrame.new(0, 0, SLIDE_TRAVEL * slideBack)
-	local barrel = CFrame.new(0, 0, BARREL_TRAVEL * slideBack)
+	local slide = CFrame.new(0, 0, animation.slideTravel * slideBack)
+	local barrel = CFrame.new(0, 0, animation.barrelTravel * slideBack)
+	-- A charging handle doesn't move when firing or lock back when empty; the
+	-- rack just pulls it back and lets it go.
+	local racking = reloading and progress >= animation.rackPull and progress < animation.rackRelease
+	local pull = if racking
+		then math.min((progress - animation.rackPull) / (animation.rackRelease - animation.rackPull - 0.01), 1)
+		else 0
+	local chargingHandle = CFrame.new(0, 0, animation.chargingHandleTravel * pull)
 	local leftHand = if reloading
 		then CFrame.new(sampleArc(animation.leftHandTrack, progress, animation.arc))
 		elseif drawing then CFrame.new(sampleArc(animation.drawLeftHandTrack, drawProgress, animation.arc))
@@ -585,8 +586,10 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local cframes = rig.cframes
 	for index, part in rig.gunParts do
 		local offset = rig.rest[index]
-		if part.Name == "Slide" then
+		if part.Name == "Slide" or part.Name == "Bolt" then
 			offset = slide * offset
+		elseif part.Name == "ChargingHandle" then
+			offset = chargingHandle * offset
 		elseif part.Name == "Barrel" then
 			offset = barrel * offset
 		elseif part.Name == "Magazine" then
