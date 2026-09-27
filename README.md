@@ -1,4 +1,4 @@
-# SecureRGS
+# SecureRGS (Secure Roblox Guns System)
 
 Cheat-resistant, server-authoritative characters and weapons for Roblox, from **Open-sourced Secure Roblox Systems**.
 
