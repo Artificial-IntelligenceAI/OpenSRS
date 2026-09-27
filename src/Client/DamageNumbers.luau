@@ -1,40 +1,41 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Damage numbers: each hit's damage pops up just to the right of the spot it
--- hit (so it doesn't cover the target), drifts up and further right, and fades. White for body hits, yellow for headshots,
--- red for the hit that kills. Only the shooter sees them, and only for damage
--- that really landed (the server sends it; see Combat). Purely cosmetic.
+-- Damage numbers: each hit's damage pops up beside the spot it hit (so it
+-- doesn't cover the target), drifts up and further away, and fades. Only the
+-- shooter sees them, and only for damage that really landed (the server sends
+-- it; see Combat). Purely cosmetic. Everything about how they look is the
+-- DamageNumbers settings (see Config.damageNumbers).
 
 local Debris = game:GetService("Debris")
 local TweenService = game:GetService("TweenService")
 
-local LIFETIME = 0.8 -- seconds a number stays up
-local RISE = 2.2 -- studs it drifts up
-local DRIFT = 0.9 -- studs it may drift further right
-local BESIDE = 0.6 -- how far right of the hit it starts, as a fraction of its width (so the same on screen at any distance)
-local SIZE = 26
-local WHITE = Color3.new(1, 1, 1)
-local YELLOW = Color3.fromRGB(255, 214, 64)
-local RED = Color3.fromRGB(255, 70, 70)
+local Config = require(script.Parent.Parent.Shared.Config)
+
+local POP_TIME = 0.09 -- seconds to pop in
+local SETTLE_TIME = 0.12 -- seconds to settle after overshooting
 
 local DamageNumbers = {}
 
 local random = Random.new()
 
 function DamageNumbers.show(at: Vector3, amount: number, head: boolean, killed: boolean)
+	local settings = Config.damageNumbers
 	local anchor = Instance.new("Attachment")
 	anchor.Name = "SecureRGSDamageNumber"
 	anchor.WorldPosition = at -- attachments on Terrain are in world space
 	anchor.Parent = workspace.Terrain
 
+	local size = if killed or head then settings.size * 1.15 else settings.size
+	local width = size * 5
 	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(120, 48)
+	gui.Size = UDim2.fromOffset(width, size * 1.9)
+	-- The offset is in pixels, so it's the same on screen at any distance.
+	gui.SizeOffset = Vector2.new(settings.offset / width, 0)
 	gui.AlwaysOnTop = true
 	gui.LightInfluence = 0
 	gui.MaxDistance = 1000
 	gui.Adornee = anchor
-	gui.SizeOffset = Vector2.new(BESIDE, 0)
 	gui.Parent = anchor
 
 	local label = Instance.new("TextLabel")
@@ -42,8 +43,8 @@ function DamageNumbers.show(at: Vector3, amount: number, head: boolean, killed: 
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBlack
 	label.Text = tostring(math.max(math.round(amount), 1))
-	label.TextSize = if killed or head then SIZE + 4 else SIZE
-	label.TextColor3 = if killed then RED elseif head then YELLOW else WHITE
+	label.TextSize = size
+	label.TextColor3 = if killed then settings.killColor elseif head then settings.headshotColor else settings.bodyColor
 	label.TextStrokeTransparency = 0.35
 	label.Parent = gui
 	local scale = Instance.new("UIScale")
@@ -51,22 +52,24 @@ function DamageNumbers.show(at: Vector3, amount: number, head: boolean, killed: 
 	scale.Parent = label
 
 	-- Pop in, overshooting a little, then settle.
-	TweenService:Create(scale, TweenInfo.new(0.09, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	TweenService:Create(scale, TweenInfo.new(POP_TIME, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 		Scale = 1.15,
 	}):Play()
-	task.delay(0.09, function()
-		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
+	task.delay(POP_TIME, function()
+		TweenService:Create(scale, TweenInfo.new(SETTLE_TIME), { Scale = 1 }):Play()
 	end)
-	-- Drift up and a little further right.
-	local drift = random:NextNumber(0, DRIFT)
-	TweenService:Create(gui, TweenInfo.new(LIFETIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		StudsOffset = Vector3.new(drift, RISE, 0),
+	-- Drift up and a little further out, on the side it appears on.
+	local lifetime = settings.lifetime
+	local side = if settings.offset < 0 then -1 else 1
+	local drift = random:NextNumber(0, settings.drift) * side
+	TweenService:Create(gui, TweenInfo.new(lifetime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		StudsOffset = Vector3.new(drift, settings.rise, 0),
 	}):Play()
 	-- Fade over the second half.
-	local fade = TweenInfo.new(LIFETIME / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, LIFETIME / 2)
+	local fade = TweenInfo.new(lifetime / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, lifetime / 2)
 	TweenService:Create(label, fade, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
 
-	Debris:AddItem(anchor, LIFETIME + 0.1)
+	Debris:AddItem(anchor, lifetime + 0.1)
 end
 
 return table.freeze(DamageNumbers)

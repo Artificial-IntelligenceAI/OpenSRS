@@ -1,0 +1,14 @@
+{
+	"className": "Configuration",
+	"attributes": {
+		"Enabled": true,
+		"Offset": 35,
+		"Size": 26,
+		"Lifetime": 0.8,
+		"Rise": 2.2,
+		"Drift": 0.9,
+		"BodyColor": {"Color3": [1, 1, 1]},
+		"HeadshotColor": {"Color3": [1, 0.839216, 0.25098]},
+		"KillColor": {"Color3": [1, 0.27451, 0.27451]}
+	}
+}

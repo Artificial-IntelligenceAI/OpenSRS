@@ -298,7 +298,7 @@ end
 -- numbers they see. Only what was really taken, after friendly fire and any
 -- damage filter, so a blocked hit shows nothing.
 local function tellDealt(attacker: Player?, at: Vector3?, amount: number, head: boolean, killed: boolean)
-	if not (Config.damageNumbers and attacker and attacker.Parent and at and amount > 0) then
+	if not (Config.damageNumbers.enabled and attacker and attacker.Parent and at and amount > 0) then
 		return
 	end
 	remotes.dealt:FireClient(

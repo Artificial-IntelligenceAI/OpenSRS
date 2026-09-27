@@ -17,7 +17,7 @@ local SettingsSchema = require(script.Parent.SettingsSchema)
 local Weapons = require(script.Parent.Weapons)
 
 type Field = SettingsSchema.Field
-export type Values = { [string]: number | boolean }
+export type Values = { [string]: number | boolean | Color3 }
 export type Resolved = {
 	sections: { [string]: Values },
 	weapons: { [string]: Values },
@@ -27,11 +27,14 @@ local Settings = {}
 
 local function read(
 	field: Field,
-	default: number | boolean,
+	schemaDefault: number | boolean | SettingsSchema.Color,
 	source: Instance?,
 	override: unknown,
 	path: string
-): number | boolean
+): number | boolean | Color3
+	local default: number | boolean | Color3 = if type(schemaDefault) == "table"
+		then Color3.fromRGB(schemaDefault.r, schemaDefault.g, schemaDefault.b)
+		else schemaDefault
 	local value: unknown = default
 	if source then
 		local attribute = source:GetAttribute(field.name)
@@ -60,7 +63,7 @@ local function read(
 		end
 		return clamped
 	end
-	return value :: boolean
+	return value :: boolean | Color3
 end
 
 local function section(value: unknown): { [string]: unknown }
@@ -148,10 +151,20 @@ function Settings.apply(resolved: Resolved)
 	Config.teammateHighlights = gameValues.TeammateHighlights == true
 	Config.unseenShotPrecision = number(gameValues, "UnseenShotPrecision")
 	Config.friendlyFire = gameValues.FriendlyFire == true
-	Config.damageNumbers = gameValues.DamageNumbers == true
 	Config.allowReset = gameValues.AllowReset == true
 	Config.killCreditTime = number(gameValues, "KillCreditTime")
 	Config.aimFlagSensitivity = number(gameValues, "AimFlagSensitivity")
+	local numbers = resolved.sections.DamageNumbers
+	local D = Config.damageNumbers
+	D.enabled = numbers.Enabled == true
+	D.offset = number(numbers, "Offset")
+	D.size = number(numbers, "Size")
+	D.lifetime = number(numbers, "Lifetime")
+	D.rise = number(numbers, "Rise")
+	D.drift = number(numbers, "Drift")
+	D.bodyColor = numbers.BodyColor :: Color3
+	D.headshotColor = numbers.HeadshotColor :: Color3
+	D.killColor = numbers.KillColor :: Color3
 	local controls = resolved.sections.Controls
 	Config.aimToggle = controls.AimToggle == true
 	Config.leanToggle = controls.LeanToggle == true
@@ -174,7 +187,7 @@ function Settings.apply(resolved: Resolved)
 	Config.stance(2).speed = number(movement, "ProneSpeed")
 
 	for name, values in resolved.weapons do
-		Weapons.configure(name, values)
+		Weapons.configure(name, values :: any) -- weapon settings hold no colors
 	end
 end
 

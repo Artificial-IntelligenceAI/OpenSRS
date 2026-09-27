@@ -30,17 +30,35 @@ local function emit(path: string, contents: string)
 	end
 end
 
-local function value(v: number | boolean): string
+type Value = number | boolean | Schema.Color
+
+-- How a value reads in the docs.
+local function value(v: Value): string
+	if type(v) == "table" then
+		return `RGB {v.r}, {v.g}, {v.b}`
+	end
+	return tostring(v)
+end
+
+-- How a value is written in a Rojo model file. Colors need their type spelled
+-- out; numbers and booleans don't.
+local function modelValue(v: Value): string
+	if type(v) == "table" then
+		local function unit(channel: number): string
+			return string.format("%.6g", channel / 255)
+		end
+		return `\{"Color3": [{unit(v.r)}, {unit(v.g)}, {unit(v.b)}]\}`
+	end
 	return tostring(v)
 end
 
 -- Rojo model file for a Configuration holding one attribute per field.
-local function model(fields: { Field }, defaults: { [string]: number | boolean }?): string
+local function model(fields: { Field }, defaults: { [string]: Value }?): string
 	local lines = { "{", '\t"className": "Configuration",', '\t"attributes": {' }
 	for index, field in fields do
 		local default = if defaults and defaults[field.name] ~= nil then defaults[field.name] else field.default
 		local comma = if index < #fields then "," else ""
-		table.insert(lines, `\t\t"{field.name}": {value(default)}{comma}`)
+		table.insert(lines, `\t\t"{field.name}": {modelValue(default)}{comma}`)
 	end
 	table.insert(lines, "\t}")
 	table.insert(lines, "}")
@@ -48,13 +66,15 @@ local function model(fields: { Field }, defaults: { [string]: number | boolean }
 end
 
 local function range(field: Field): string
-	if field.min == nil and field.max == nil then
+	if type(field.default) == "table" then
+		return "any color"
+	elseif field.min == nil and field.max == nil then
 		return "true or false"
 	end
 	return `{field.min} to {field.max}`
 end
 
-local function table_(fields: { Field }, defaults: { [string]: number | boolean }?): string
+local function table_(fields: { Field }, defaults: { [string]: Value }?): string
 	local lines = { "| Setting | Default | Allowed | What it does |", "| --- | --- | --- | --- |" }
 	for _, field in fields do
 		local default = if defaults and defaults[field.name] ~= nil then defaults[field.name] else field.default

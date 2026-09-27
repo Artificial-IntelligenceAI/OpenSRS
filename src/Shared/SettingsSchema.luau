@@ -8,9 +8,13 @@
 --
 -- This module is plain data so tools outside Roblox can read it too.
 
+-- A color, as red, green and blue from 0 to 255. In Studio it's a Color3
+-- attribute; in Overrides, a Color3.
+export type Color = { r: number, g: number, b: number }
+
 export type Field = {
 	name: string, -- attribute name
-	default: number | boolean,
+	default: number | boolean | Color,
 	min: number?,
 	max: number?,
 	description: string,
@@ -85,11 +89,6 @@ local game: Section = {
 			description = "How exactly players hear shots from someone they can't see, in studs. The sound comes from "
 				.. "the middle of the grid square of this size the shooter is in, and they aren't told who fired or "
 				.. "where an unseen victim was hit. Smaller is easier to locate by ear, and by wallhacks; 0 is exact.",
-		},
-		{
-			name = "DamageNumbers",
-			default = true,
-			description = "Shows each hit's damage popping off the spot hit, to the player who fired it.",
 		},
 		{
 			name = "FriendlyFire",
@@ -355,7 +354,44 @@ local weapons: { WeaponEntry } = {
 
 local SettingsSchema = {}
 
-SettingsSchema.sections = { game, controls, movement }
+local damageNumbers: Section = {
+	name = "DamageNumbers",
+	fields = {
+		{
+			name = "Enabled",
+			default = true,
+			description = "Shows each hit's damage popping up beside the spot hit, to the player who fired it.",
+		},
+		{
+			name = "Offset",
+			default = 35,
+			min = -400,
+			max = 400,
+			description = "Pixels to the right of the hit where a number appears (negative is to the left).",
+		},
+		{ name = "Size", default = 26, min = 8, max = 100, description = "Text size, in pixels." },
+		{
+			name = "Lifetime",
+			default = 0.8,
+			min = 0.1,
+			max = 5,
+			description = "Seconds a number stays up; it fades over the second half.",
+		},
+		{ name = "Rise", default = 2.2, min = 0, max = 20, description = "Studs a number drifts up." },
+		{
+			name = "Drift",
+			default = 0.9,
+			min = 0,
+			max = 20,
+			description = "Studs a number may drift further sideways, away from the hit (each a random amount).",
+		},
+		{ name = "BodyColor", default = { r = 255, g = 255, b = 255 }, description = "Color for body hits." },
+		{ name = "HeadshotColor", default = { r = 255, g = 214, b = 64 }, description = "Color for headshots." },
+		{ name = "KillColor", default = { r = 255, g = 70, b = 70 }, description = "Color for the hit that kills." },
+	},
+}
+
+SettingsSchema.sections = { game, controls, movement, damageNumbers }
 SettingsSchema.weaponFields = weaponFields
 SettingsSchema.weapons = weapons
 

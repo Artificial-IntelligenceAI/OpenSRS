@@ -107,7 +107,8 @@ for _, entry in SettingsSchema.weapons do
 	local values: Values = {}
 	for _, field in SettingsSchema.weaponFields do
 		local default = entry.defaults[field.name]
-		values[field.name] = if default ~= nil then default else field.default
+		-- Weapon settings are all numbers and booleans, never colors.
+		values[field.name] = if default ~= nil then default else field.default :: number | boolean
 	end
 	Weapons.configure(entry.name, values)
 end

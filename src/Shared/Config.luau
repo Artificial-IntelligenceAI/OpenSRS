@@ -49,7 +49,18 @@ local Config = {
 	teammateHighlights = false, -- teammates are outlined, and sent even behind walls
 	unseenShotPrecision = 5, -- studs: how exactly shots from someone out of sight are placed
 	friendlyFire = false, -- bullets hurt teammates
-	damageNumbers = true, -- shooters see the damage of each hit
+	-- Shooters see the damage of each hit (see DamageNumbers in SettingsSchema).
+	damageNumbers = {
+		enabled = true,
+		offset = 35, -- pixels right of the hit
+		size = 26,
+		lifetime = 0.8,
+		rise = 2.2,
+		drift = 0.9,
+		bodyColor = Color3.fromRGB(255, 255, 255),
+		headshotColor = Color3.fromRGB(255, 214, 64),
+		killColor = Color3.fromRGB(255, 70, 70),
+	},
 	allowReset = true, -- Roblox's menu Reset button works
 	killCreditTime = 0, -- seconds: a reset or fall credits whoever last hurt them if within this; 0 is no limit
 	aimFlagSensitivity = 1, -- 0 turns aimbot flags off; higher flags on less evidence
