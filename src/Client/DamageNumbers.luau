@@ -1,8 +1,8 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- Damage numbers: each hit's damage pops off the spot it hit, drifts up with a
--- little sideways kick and fades. White for body hits, yellow for headshots,
+-- Damage numbers: each hit's damage pops up just to the right of the spot it
+-- hit (so it doesn't cover the target), drifts up and further right, and fades. White for body hits, yellow for headshots,
 -- red for the hit that kills. Only the shooter sees them, and only for damage
 -- that really landed (the server sends it; see Combat). Purely cosmetic.
 
@@ -11,7 +11,8 @@ local TweenService = game:GetService("TweenService")
 
 local LIFETIME = 0.8 -- seconds a number stays up
 local RISE = 2.2 -- studs it drifts up
-local DRIFT = 0.9 -- studs it may drift sideways, either way
+local DRIFT = 0.9 -- studs it may drift further right
+local BESIDE = 0.6 -- how far right of the hit it starts, as a fraction of its width (so the same on screen at any distance)
 local SIZE = 26
 local WHITE = Color3.new(1, 1, 1)
 local YELLOW = Color3.fromRGB(255, 214, 64)
@@ -33,6 +34,7 @@ function DamageNumbers.show(at: Vector3, amount: number, head: boolean, killed: 
 	gui.LightInfluence = 0
 	gui.MaxDistance = 1000
 	gui.Adornee = anchor
+	gui.SizeOffset = Vector2.new(BESIDE, 0)
 	gui.Parent = anchor
 
 	local label = Instance.new("TextLabel")
@@ -55,8 +57,8 @@ function DamageNumbers.show(at: Vector3, amount: number, head: boolean, killed: 
 	task.delay(0.09, function()
 		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
 	end)
-	-- Drift up and a little to one side.
-	local drift = random:NextNumber(-DRIFT, DRIFT)
+	-- Drift up and a little further right.
+	local drift = random:NextNumber(0, DRIFT)
 	TweenService:Create(gui, TweenInfo.new(LIFETIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		StudsOffset = Vector3.new(drift, RISE, 0),
 	}):Play()
