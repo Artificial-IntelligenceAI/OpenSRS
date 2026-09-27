@@ -80,7 +80,6 @@ local Config = {
 		groundSnap = 0.6,
 		minGroundNormal = 0.5,
 		backwardMultiplier = 0.8,
-		aimSpeedMultiplier = 0.6,
 		slowWalkSpeed = 6,
 		sprintSpeed = 19,
 		sprintMinForward = 0.5,

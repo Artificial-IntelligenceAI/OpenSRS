@@ -26,6 +26,8 @@ export type Weapon = {
 	reloadTicks: number,
 	drawTicks: number, -- after spawning, before the gun can fire or reload
 	raiseTicks: number, -- after sprinting, before the gun can fire
+	speedMultiplier: number, -- movement speed while holding it, times the Movement settings' speeds
+	aimSpeedMultiplier: number, -- movement speed while aiming it, as a fraction
 
 	damage: number,
 	headMultiplier: number,
@@ -71,6 +73,8 @@ function Weapons.configure(name: string, values: Values): Weapon
 	weapon.reloadTicks = ticks(number("ReloadTime"))
 	weapon.drawTicks = math.round(number("DrawTime") * Config.tickRate)
 	weapon.raiseTicks = math.round(number("RaiseTime") * Config.tickRate)
+	weapon.speedMultiplier = number("SpeedMultiplier")
+	weapon.aimSpeedMultiplier = number("AimSpeedMultiplier")
 	weapon.damage = number("Damage")
 	weapon.headMultiplier = number("HeadshotMultiplier")
 	weapon.limbMultiplier = number("LimbMultiplier")

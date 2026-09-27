@@ -172,7 +172,6 @@ function Settings.apply(resolved: Resolved)
 	local M = Config.movement
 	M.slowWalkSpeed = number(movement, "SlowWalkSpeed")
 	M.sprintSpeed = number(movement, "SprintSpeed")
-	M.aimSpeedMultiplier = number(movement, "AimSpeedMultiplier")
 	M.backwardMultiplier = number(movement, "BackwardSpeedMultiplier")
 	M.groundAcceleration = number(movement, "Acceleration")
 	M.groundDeceleration = number(movement, "Deceleration")

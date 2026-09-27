@@ -74,8 +74,9 @@ function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 	if fired then
 		state.ammo -= 1
 		state.fireCooldown = weapon.fireInterval
-		-- Never past straight up, however little the recoil settles (RecoilRecovery 0).
-		state.recoilPitch = math.min(state.recoilPitch + math.rad(weapon.recoilPitch), math.pi / 2)
+		-- Never past straight up or down, however little the recoil settles
+		-- (RecoilRecovery 0). RecoilUp can be negative: a gun that kicks down.
+		state.recoilPitch = math.clamp(state.recoilPitch + math.rad(weapon.recoilPitch), -math.pi / 2, math.pi / 2)
 		state.recoilYaw += math.rad(weapon.recoilYaw) * (if state.ammo % 2 == 0 then 1 else -1)
 		state.bloom = math.min(state.bloom + weapon.bloomPerShot, weapon.bloomMax)
 	else

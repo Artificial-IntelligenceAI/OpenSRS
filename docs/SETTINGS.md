@@ -53,7 +53,6 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `SprintSpeed` | 19 | 0 to 100 | Studs a second when sprinting. |
 | `CrouchSpeed` | 6 | 0 to 100 | Studs a second when crouched. |
 | `ProneSpeed` | 2.5 | 0 to 100 | Studs a second when prone. |
-| `AimSpeedMultiplier` | 0.6 | 0 to 1 | Movement speed while aiming down sights, as a fraction. |
 | `BackwardSpeedMultiplier` | 0.8 | 0 to 1 | Movement speed when walking backwards, as a fraction. |
 | `Acceleration` | 1000 | 1 to 1000 | How quickly players speed up on the ground (studs a second, per second). The default is near-instant, like a standard Roblox character; lower it for a sense of weight. |
 | `Deceleration` | 1000 | 1 to 1000 | How quickly players stop on the ground (studs a second, per second). The default is near-instant; lower it and players slide a little before stopping. |
@@ -82,16 +81,18 @@ The server only uses its own copy of the settings. It sends the final values to 
 
 | Setting | Default | Allowed | What it does |
 | --- | --- | --- | --- |
-| `Damage` | 20 | 0 to 10000 | Damage of a body shot at close range. |
+| `Damage` | 14 | 0 to 10000 | Damage of a body shot at close range. |
 | `HeadshotMultiplier` | 2 | 0 to 100 | Damage multiplier for headshots. |
 | `LimbMultiplier` | 0.8 | 0 to 100 | Damage multiplier for arms and legs. |
-| `FireRate` | 1100 | 30 to 3600 | Rounds a minute. |
+| `FireRate` | 1200 | 30 to 3600 | Rounds a minute. |
 | `Automatic` | true | true or false | Keeps firing while the trigger is held. |
 | `MagazineSize` | 60 | 1 to 255 | Rounds in a full magazine. |
 | `ReserveAmmo` | 180 | 0 to 65535 | Spare rounds a player spawns with. |
 | `ReloadTime` | 2 | 0.02 to 4 | Seconds to reload. The reload animation stretches to fit. |
-| `DrawTime` | 0.5 | 0 to 2 | Seconds after spawning before the gun can fire or reload. The draw animation stretches to fit. |
-| `RaiseTime` | 0.25 | 0 to 2 | Seconds after sprinting before the gun can fire. |
+| `DrawTime` | 0.4 | 0 to 2 | Seconds after spawning before the gun can fire or reload. The draw animation stretches to fit. |
+| `RaiseTime` | 0.15 | 0 to 2 | Seconds after sprinting before the gun can fire. |
+| `SpeedMultiplier` | 1.1 | 0.1 to 3 | Movement speed while holding this weapon, as a multiple of the Movement settings' speeds. |
+| `AimSpeedMultiplier` | 0.8 | 0 to 1 | Movement speed while aiming down this weapon's sights, as a fraction. |
 | `BulletSpeed` | 1340 | 1 to 100000 | Studs a second a bullet travels. |
 | `InstantDamage` | false | true or false | Damage lands the moment the gun fires instead of when the bullet would arrive. |
 | `Range` | 1000 | 1 to 10000 | Studs a bullet can reach. |
@@ -101,14 +102,14 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `SpreadStanding` | 1 | 0 to 45 | Degrees of spread standing still, from the hip. |
 | `SpreadCrouching` | 0.8 | 0 to 45 | Degrees of spread crouched. |
 | `SpreadProne` | 0.6 | 0 to 45 | Degrees of spread prone. |
-| `SpreadMoving` | 1.2 | 0 to 45 | Degrees added at full walking speed. |
-| `SpreadAirborne` | 4 | 0 to 45 | Degrees added while in the air. |
+| `SpreadMoving` | 0.3 | 0 to 45 | Degrees added at full walking speed. |
+| `SpreadAirborne` | 2 | 0 to 45 | Degrees added while in the air. |
 | `AimSpreadMultiplier` | 0.3 | 0 to 1 | All spread is multiplied by this while aiming down sights. |
 | `BloomPerShot` | 0.2 | 0 to 45 | Degrees of spread each shot adds. |
 | `BloomMax` | 3 | 0 to 45 | Most spread shots can add. |
 | `BloomRecovery` | 3 | 0 to 1000 | Degrees of added spread that fade a second. |
-| `RecoilUp` | 0.35 | 0 to 45 | Degrees each shot kicks the aim up. |
-| `RecoilSide` | 0.25 | 0 to 45 | Degrees each shot kicks the aim sideways. |
+| `RecoilUp` | -0.2 | -45 to 45 | Degrees each shot kicks the aim up. Negative kicks it down. |
+| `RecoilSide` | 0.15 | 0 to 45 | Degrees each shot kicks the aim sideways. |
 | `RecoilRecovery` | 6.3 | 0 to 100 | How fast the aim settles back after a kick. Higher settles faster. |
 
 ## Weapons / X16
@@ -125,6 +126,8 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `ReloadTime` | 1.3 | 0.02 to 4 | Seconds to reload. The reload animation stretches to fit. |
 | `DrawTime` | 0.5 | 0 to 2 | Seconds after spawning before the gun can fire or reload. The draw animation stretches to fit. |
 | `RaiseTime` | 0.25 | 0 to 2 | Seconds after sprinting before the gun can fire. |
+| `SpeedMultiplier` | 1 | 0.1 to 3 | Movement speed while holding this weapon, as a multiple of the Movement settings' speeds. |
+| `AimSpeedMultiplier` | 0.6 | 0 to 1 | Movement speed while aiming down this weapon's sights, as a fraction. |
 | `BulletSpeed` | 1340 | 1 to 100000 | Studs a second a bullet travels. |
 | `InstantDamage` | false | true or false | Damage lands the moment the gun fires instead of when the bullet would arrive. |
 | `Range` | 1000 | 1 to 10000 | Studs a bullet can reach. |
@@ -140,6 +143,6 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `BloomPerShot` | 0.6 | 0 to 45 | Degrees of spread each shot adds. |
 | `BloomMax` | 3 | 0 to 45 | Most spread shots can add. |
 | `BloomRecovery` | 3 | 0 to 1000 | Degrees of added spread that fade a second. |
-| `RecoilUp` | 1.6 | 0 to 45 | Degrees each shot kicks the aim up. |
+| `RecoilUp` | 1.6 | -45 to 45 | Degrees each shot kicks the aim up. Negative kicks it down. |
 | `RecoilSide` | 0.4 | 0 to 45 | Degrees each shot kicks the aim sideways. |
 | `RecoilRecovery` | 6.3 | 0 to 100 | How fast the aim settles back after a kick. Higher settles faster. |

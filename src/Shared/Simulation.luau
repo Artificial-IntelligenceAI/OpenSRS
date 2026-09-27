@@ -85,7 +85,9 @@ local function switch(state: State, index: number)
 end
 
 function Simulation.step(state: State, input: Input, world: World): (State, Shot?)
-	local nextState = Movement.step(state, input, world)
+	-- Moving with the weapon that's in hand as the tick starts.
+	local held = Simulation.weapon(state)
+	local nextState = Movement.step(state, input, world, held.speedMultiplier, held.aimSpeedMultiplier)
 	if input.weapon ~= nextState.weapon and Weapons.at(input.weapon) then
 		switch(nextState, input.weapon)
 	end

@@ -152,7 +152,15 @@ local function speedFor(stance: number, buttons: number, sprinting: boolean): nu
 	return Config.stance(stance).speed
 end
 
-function Movement.step(state: State, input: Input, world: World): State
+-- `speedMultiplier` and `aimSpeedMultiplier` come from the weapon in hand (a
+-- light gun moves faster); without them, movement is at the base speeds.
+function Movement.step(
+	state: State,
+	input: Input,
+	world: World,
+	speedMultiplier: number?,
+	aimSpeedMultiplier: number?
+): State
 	local DT = 1 / Config.tickRate -- read now: settings may be applied after this module loads
 	local position = state.position
 	local grounded = state.grounded
@@ -205,12 +213,12 @@ function Movement.step(state: State, input: Input, world: World): State
 		move = move.Unit
 	end
 
-	local speed = speedFor(stance, buttons, sprinting)
+	local speed = speedFor(stance, buttons, sprinting) * (speedMultiplier or 1)
 	if input.moveZ < 0 then
 		speed *= M.backwardMultiplier
 	end
 	if aiming then
-		speed *= M.aimSpeedMultiplier
+		speed *= aimSpeedMultiplier or 1
 	end
 
 	local horizontal = Vector3.new(state.velocity.X, 0, state.velocity.Z)

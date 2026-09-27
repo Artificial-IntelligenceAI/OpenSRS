@@ -11,6 +11,8 @@
 		"ReloadTime": 1.3,
 		"DrawTime": 0.5,
 		"RaiseTime": 0.25,
+		"SpeedMultiplier": 1,
+		"AimSpeedMultiplier": 0.6,
 		"BulletSpeed": 1340,
 		"InstantDamage": false,
 		"Range": 1000,

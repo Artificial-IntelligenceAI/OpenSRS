@@ -120,7 +120,7 @@ Roblox's default characters are not used. SecureRGS runs its own server-authorit
 
 - The full character system: all movement including prone, server authority, anti-wallhack visibility, and the avatar system with the placeholder avatar.
 - The X16 pistol: ammo, reload, recoil, accuracy and delayed damage. Until the game-ready model is done, a block stand-in is used.
-- The XS-120 submachine gun: a magazine melter, deadly up close and weak beyond, with little recoil. Until its model is done, a block stand-in is used, with the X16's sounds.
+- The XS-120 submachine gun, for moving, spraying and praying: easy to do well with, but it eats through ammo. It's light (10% faster movement, and less slowed while aiming), quick to draw and ready, with low damage that falls off fast, a very high fire rate, recoil that pushes the aim down instead of up, and little spread penalty for moving. Until its model is done, a block stand-in is used, with the X16's sounds.
 
 ## Cheat flags
 

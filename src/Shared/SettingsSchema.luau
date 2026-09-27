@@ -144,13 +144,6 @@ local movement: Section = {
 		{ name = "CrouchSpeed", default = 6, min = 0, max = 100, description = "Studs a second when crouched." },
 		{ name = "ProneSpeed", default = 2.5, min = 0, max = 100, description = "Studs a second when prone." },
 		{
-			name = "AimSpeedMultiplier",
-			default = 0.6,
-			min = 0,
-			max = 1,
-			description = "Movement speed while aiming down sights, as a fraction.",
-		},
-		{
 			name = "BackwardSpeedMultiplier",
 			default = 0.8,
 			min = 0,
@@ -248,6 +241,20 @@ local weaponFields: { Field } = {
 		max = 2,
 		description = "Seconds after sprinting before the gun can fire.",
 	},
+	{
+		name = "SpeedMultiplier",
+		default = 1,
+		min = 0.1,
+		max = 3,
+		description = "Movement speed while holding this weapon, as a multiple of the Movement settings' speeds.",
+	},
+	{
+		name = "AimSpeedMultiplier",
+		default = 0.6,
+		min = 0,
+		max = 1,
+		description = "Movement speed while aiming down this weapon's sights, as a fraction.",
+	},
 	{ name = "BulletSpeed", default = 1340, min = 1, max = 100000, description = "Studs a second a bullet travels." },
 	{
 		name = "InstantDamage",
@@ -303,7 +310,13 @@ local weaponFields: { Field } = {
 		max = 1000,
 		description = "Degrees of added spread that fade a second.",
 	},
-	{ name = "RecoilUp", default = 1.6, min = 0, max = 45, description = "Degrees each shot kicks the aim up." },
+	{
+		name = "RecoilUp",
+		default = 1.6,
+		min = -45,
+		max = 45,
+		description = "Degrees each shot kicks the aim up. Negative kicks it down.",
+	},
 	{
 		name = "RecoilSide",
 		default = 0.4,
@@ -331,21 +344,29 @@ export type WeaponEntry = {
 
 local weapons: { WeaponEntry } = {
 	{
-		-- A submachine gun that melts through its magazine: deadly up close,
-		-- weak beyond, with surprisingly little kick.
+		-- A submachine gun for moving, spraying and praying: easy to do well
+		-- with, but it eats through ammo. Light and quick to handle, low damage
+		-- that falls off fast, a very high fire rate, recoil that pushes down,
+		-- and little penalty for shooting on the move.
 		name = "XS-120",
 		defaults = {
 			Automatic = true,
-			FireRate = 1100,
+			FireRate = 1200,
 			MagazineSize = 60,
 			ReserveAmmo = 180,
 			ReloadTime = 2,
-			Damage = 20,
+			DrawTime = 0.4,
+			RaiseTime = 0.15,
+			SpeedMultiplier = 1.1,
+			AimSpeedMultiplier = 0.8,
+			Damage = 14,
 			FullDamageRange = 15,
 			MinDamageRange = 40,
 			MinDamageMultiplier = 0.25,
-			RecoilUp = 0.35,
-			RecoilSide = 0.25,
+			SpreadMoving = 0.3,
+			SpreadAirborne = 2,
+			RecoilUp = -0.2,
+			RecoilSide = 0.15,
 			BloomPerShot = 0.2,
 		},
 	},
