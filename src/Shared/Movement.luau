@@ -7,7 +7,10 @@
 --
 -- The collision shape is a box that floats `stepUp` studs above the feet.
 -- Anything lower than that is walked over, and a downward cast snaps the feet
--- onto the ground, which also handles stairs and slopes.
+-- onto the ground, which also handles stairs and slopes. Upright it's a
+-- square column; prone it covers the whole lying body and turns with it, so
+-- going prone, crawling and turning all need room for the body, and a body
+-- that can't turn keeps facing (and aiming) where it was.
 
 local Config = require(script.Parent.Config)
 local Types = require(script.Parent.Types)
@@ -18,6 +21,7 @@ type StanceConfig = Config.StanceConfig
 
 export type World = {
 	raycast: RaycastParams,
+	overlap: OverlapParams, -- the same filter, for checking whether a box fits somewhere
 }
 
 local Buttons = Types.Buttons
@@ -35,13 +39,33 @@ function Movement.newWorld(exclude: { Instance }): World
 	raycast.FilterType = Enum.RaycastFilterType.Exclude
 	raycast.FilterDescendantsInstances = exclude
 	raycast.RespectCanCollide = true
-	return { raycast = raycast }
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	overlap.FilterDescendantsInstances = exclude
+	overlap.RespectCanCollide = true
+	return { raycast = raycast, overlap = overlap }
 end
 
-local function hull(position: Vector3, stance: StanceConfig): (CFrame, Vector3)
+-- The collision box for `stance` at `position` with the body facing `yaw`.
+local function hull(position: Vector3, stance: StanceConfig, yaw: number): (CFrame, Vector3)
 	local height = stance.height - stance.stepUp
+	local center = position + Vector3.new(0, stance.stepUp + height / 2, 0)
+	local length, back, bodyWidth = stance.bodyLength, stance.bodyBack, stance.bodyWidth
+	if length and back and bodyWidth then
+		local facing = CFrame.Angles(0, yaw, 0)
+		return CFrame.new(center + facing:VectorToWorldSpace(Vector3.new(0, 0, back))) * facing,
+			Vector3.new(bodyWidth - 2 * M.skin, height, length - 2 * M.skin)
+	end
 	local width = M.width - 2 * M.skin
-	return CFrame.new(position + Vector3.new(0, stance.stepUp + height / 2, 0)), Vector3.new(width, height, width)
+	return CFrame.new(center), Vector3.new(width, height, width)
+end
+
+-- Whether `stance`'s box fits at `position` facing `yaw` without overlapping
+-- anything. (Casts can't tell: they ignore whatever they start inside.)
+local function fits(position: Vector3, stance: StanceConfig, yaw: number, world: World): boolean
+	local cframe, size = hull(position, stance, yaw)
+	size -= Vector3.new(0, 2 * M.skin, 0)
+	return #workspace:GetPartBoundsInBox(cframe, size, world.overlap) == 0
 end
 
 -- Moves the hull horizontally, sliding along anything it hits.
@@ -50,6 +74,7 @@ local function slide(
 	velocity: Vector3,
 	displacement: Vector3,
 	stance: StanceConfig,
+	yaw: number,
 	world: World
 ): (Vector3, Vector3)
 	for _ = 1, SLIDE_ITERATIONS do
@@ -63,7 +88,7 @@ local function slide(
 		-- crept up against a wall (moving nearly along it, or pushed into a
 		-- corner) would pass straight through. Casting a hull SLIDE_INSET
 		-- narrower keeps every cast clear of whatever the real hull touches.
-		local cframe, size = hull(position, stance)
+		local cframe, size = hull(position, stance, yaw)
 		size -= Vector3.new(2 * SLIDE_INSET, 0, 2 * SLIDE_INSET)
 		local reach = length + M.skin + SLIDE_INSET
 		local result = workspace:Blockcast(cframe, size, direction * reach, world.raycast)
@@ -102,12 +127,17 @@ local function slide(
 	return position, velocity
 end
 
-local function hasHeadroom(position: Vector3, from: StanceConfig, to: StanceConfig, world: World): boolean
+-- Whether there's room to change from one stance to another here.
+local function hasRoom(position: Vector3, from: StanceConfig, to: StanceConfig, yaw: number, world: World): boolean
+	if from.bodyLength or to.bodyLength then
+		-- Lying down or getting up: the whole new shape has to fit.
+		return fits(position, to, yaw, world)
+	end
 	local rise = to.height - from.height
 	if rise <= 0 then
 		return true
 	end
-	local cframe, size = hull(position, from)
+	local cframe, size = hull(position, from, yaw)
 	return workspace:Blockcast(cframe, size, Vector3.new(0, rise, 0), world.raycast) == nil
 end
 
@@ -129,15 +159,25 @@ function Movement.step(state: State, input: Input, world: World): State
 	local buttons = input.buttons
 	local jumpCooldown = math.max(state.jumpCooldown - 1, 0)
 
-	-- Stance. Standing up needs room above; going prone needs ground below.
+	-- Stance. Standing up needs room above; going prone needs ground below and
+	-- room for the whole body.
 	local stance = state.stance
 	local wanted = input.stance
 	if wanted ~= stance and (wanted ~= Stance.Prone or grounded) then
-		if hasHeadroom(position, Config.stance(stance), Config.stance(wanted), world) then
+		if hasRoom(position, Config.stance(stance), Config.stance(wanted), input.yaw, world) then
 			stance = wanted
 		end
 	end
 	local stanceConfig = Config.stance(stance)
+
+	-- Facing. Upright, the body turns with the view. Lying down it only turns
+	-- if the body fits the new way; if not, it keeps facing where it was.
+	local yaw = input.yaw
+	if stanceConfig.bodyLength and yaw ~= state.yaw and stance == state.stance then
+		if not fits(position, stanceConfig, yaw, world) then
+			yaw = state.yaw
+		end
+	end
 
 	local aiming = bit32.btest(buttons, Buttons.Aim)
 	local sprinting = stance == Stance.Stand
@@ -158,7 +198,6 @@ function Movement.step(state: State, input: Input, world: World): State
 	local leanTicks = state.leanTicks + math.sign(leanTarget - state.leanTicks)
 
 	-- Horizontal velocity eases toward where the player wants to go.
-	local yaw = input.yaw
 	local forward = Vector3.new(-math.sin(yaw), 0, -math.cos(yaw))
 	local right = Vector3.new(math.cos(yaw), 0, -math.sin(yaw))
 	local move = right * input.moveX + forward * input.moveZ
@@ -197,9 +236,9 @@ function Movement.step(state: State, input: Input, world: World): State
 	end
 
 	local beforeSlide = position
-	position, horizontal = slide(position, horizontal, horizontal * DT, stanceConfig, world)
+	position, horizontal = slide(position, horizontal, horizontal * DT, stanceConfig, yaw, world)
 
-	local cframe, size = hull(position, stanceConfig)
+	local cframe, size = hull(position, stanceConfig, yaw)
 	if vertical > 0 then
 		local rise = vertical * DT
 		local result = workspace:Blockcast(cframe, size, Vector3.new(0, rise, 0), world.raycast)
@@ -235,7 +274,7 @@ function Movement.step(state: State, input: Input, world: World): State
 				-- Too steep to stand on: slide off it instead of falling into it.
 				local away = Vector3.new(result.Normal.X, 0, result.Normal.Z)
 				if away.Magnitude > 1e-4 then
-					position, horizontal = slide(position, horizontal, away.Unit * fall, stanceConfig, world)
+					position, horizontal = slide(position, horizontal, away.Unit * fall, stanceConfig, yaw, world)
 				end
 				fall = math.min(fall, math.max(result.Distance - stanceConfig.stepUp - M.skin, 0))
 			end
@@ -253,7 +292,7 @@ function Movement.step(state: State, input: Input, world: World): State
 	nextState.aiming = aiming
 	nextState.leanTicks = leanTicks
 	nextState.jumpCooldown = jumpCooldown
-	nextState.yaw = input.yaw
+	nextState.yaw = yaw
 	nextState.pitch = input.pitch
 	return nextState
 end

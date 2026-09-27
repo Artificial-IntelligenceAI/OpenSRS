@@ -193,7 +193,7 @@ local function watchAim(record: Record, state: State, input: Input, shot: Simula
 	-- Where the bullets go: a shot's aim is from before its own recoil kick.
 	local aim = if shot
 		then Firearm.direction(shot.yaw, shot.pitch)
-		else Firearm.direction(input.yaw + state.recoilYaw, input.pitch + state.recoilPitch)
+		else Firearm.direction(state.yaw + state.recoilYaw, input.pitch + state.recoilPitch)
 	AimWatch.observe(
 		record.player,
 		record.slot,

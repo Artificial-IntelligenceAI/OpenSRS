@@ -72,7 +72,7 @@ Protocol.MAX_INPUTS_PER_PACKET = 3
 
 local INPUT_SIZE = 17
 -- The fixed part, then each carried weapon's stowed magazine (u8) and reserve (u16).
-local STATE_FIXED_SIZE = 67
+local STATE_FIXED_SIZE = 75
 local STATE_SIZE = STATE_FIXED_SIZE + #Weapons.loadout * 3
 local SHOT_SIZE = 27
 local SNAPSHOT_HEADER_SIZE = 5
@@ -221,6 +221,9 @@ function Protocol.encodeState(epoch: number, ack: number, state: State, health: 
 	buffer.writeu16(data, 63, math.clamp(math.ceil(health), 0, 0xFFFF))
 	buffer.writeu8(data, 65, state.drawTicks)
 	buffer.writeu8(data, 66, state.weapon)
+	-- Where the body faces, at full precision: lying down it may not be where
+	-- the player looks, and the client must reproduce it exactly.
+	buffer.writef64(data, 67, state.yaw)
 	for index = 1, #Weapons.loadout do
 		local offset = STATE_FIXED_SIZE + (index - 1) * 3
 		buffer.writeu8(data, offset, state.stowed[index * 2 - 1])
@@ -252,7 +255,7 @@ function Protocol.decodeState(data: unknown): StateMessage?
 			aiming = bit32.btest(flags, 16),
 			leanTicks = buffer.readi8(data, 30),
 			jumpCooldown = buffer.readu8(data, 31),
-			yaw = 0,
+			yaw = buffer.readf64(data, 67),
 			pitch = 0,
 			weapon = buffer.readu8(data, 66),
 			ammo = buffer.readu8(data, 32),

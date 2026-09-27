@@ -74,6 +74,7 @@ local function matches(a: State, b: State): boolean
 		and a.sprinting == b.sprinting
 		and a.aiming == b.aiming
 		and a.leanTicks == b.leanTicks
+		and math.abs(a.yaw - b.yaw) < TOLERANCE
 		and a.jumpCooldown == b.jumpCooldown
 		and a.weapon == b.weapon
 		and a.ammo == b.ammo
@@ -149,7 +150,8 @@ function Controller.start()
 			InputMap.selectWeapon(server.weapon)
 			epoch = message.epoch
 			history = {}
-			server.yaw, server.pitch = InputMap.look()
+			local _, pitch = InputMap.look()
+			server.pitch = pitch
 			state = server
 			previous = server
 			correction = Vector3.zero
@@ -172,7 +174,7 @@ function Controller.start()
 		-- Misprediction: replay everything the server hasn't processed yet.
 		local replayed = server
 		local basis = if entry then entry.input else predicted
-		replayed.yaw, replayed.pitch = basis.yaw, basis.pitch
+		replayed.pitch = basis.pitch
 		for replaySeq = message.ack + 1, seq do
 			local pending = history[replaySeq]
 			if pending then
@@ -313,6 +315,12 @@ function Controller.start()
 				previous = current
 				local shot
 				current, shot = Simulation.step(current, input, world)
+				if current.yaw ~= input.yaw then
+					-- Lying down, the body had no room to turn that way, and it's
+					-- what aims: the view stops with it.
+					local _, lookPitch = InputMap.look()
+					InputMap.setLook(current.yaw, lookPitch)
+				end
 				history[seq] = { input = input, state = current }
 				table.insert(recent, input)
 				if #recent > Protocol.MAX_INPUTS_PER_PACKET then

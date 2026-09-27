@@ -14,11 +14,29 @@ export type StanceConfig = {
 	eyeHeight: number,
 	speed: number,
 	leanPivot: number, -- height the upper body rotates around when leaning
+	-- Lying down, the body is much longer than it is wide, so its collision
+	-- box covers the whole body and turns with it: `bodyLength` along it,
+	-- centered `bodyBack` behind the feet point, `bodyWidth` across. Upright
+	-- stances leave these out and use a square box of movement.width.
+	bodyLength: number?,
+	bodyBack: number?,
+	bodyWidth: number?,
 }
 
 local stand: StanceConfig = { height = 5, stepUp = 1.1, eyeHeight = 4.5, speed = 12, leanPivot = 2 }
 local crouch: StanceConfig = { height = 4, stepUp = 1.1, eyeHeight = 3.4, speed = 6, leanPivot = 1.1 }
-local prone: StanceConfig = { height = 1.5, stepUp = 0.5, eyeHeight = 0.8, speed = 2.5, leanPivot = 0 }
+-- The prone box spans the body in Body.luau: arms reaching 1.6 ahead, feet
+-- 4.6 behind, elbows 1.7 to each side.
+local prone: StanceConfig = {
+	height = 1.5,
+	stepUp = 0.5,
+	eyeHeight = 0.8,
+	speed = 2.5,
+	leanPivot = 0,
+	bodyLength = 6.2,
+	bodyBack = 1.5,
+	bodyWidth = 3.4,
+}
 
 local Config = {
 	tickRate = 60,

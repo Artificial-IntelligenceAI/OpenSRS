@@ -45,6 +45,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 - **Rig.** R6.
 - **Hitboxes.** Fixed R6 hitboxes for standing, crouching and prone. A hitbox never depends on how an avatar looks.
 - **Movement set:** walk, slow walk, sprint, crouch, prone, jump, lean left and right. Lean is a toggle (tap Q or E), and sprinting or going prone cancels it.
+- **Prone takes up room.** Lying down, the collision box covers the whole body, arms to feet, and turns with it. Going prone, crawling and turning all need room for the body, so legs never stick through a wall (where they'd give the player away or be shot). A body that can't turn keeps facing and aiming where it was, and the view stops with it.
 - **Feel.** Tactical: acceleration and deceleration have weight, there's no bunny-hopping or air strafing, and sprinting delays when you can fire.
 - **Camera.** First-person only.
 
