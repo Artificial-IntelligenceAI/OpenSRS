@@ -22,9 +22,10 @@ type Snapshot = Protocol.Snapshot
 type Remote = Protocol.Remote
 
 local MAX_SNAPSHOTS = 30
--- Further than anyone moves between two snapshots: a player who moved more
--- was teleported or respawned.
-local SNAP_DISTANCE = 20
+-- Nobody moves faster than falling at top speed; a player who covered more
+-- ground than that between two snapshots (plus this margin, in studs) was
+-- teleported or respawned.
+local SNAP_MARGIN = 2
 local FORGET_AFTER = 60 -- seconds a player's model is kept while they're not shown
 local CLOCK_SMOOTHING = 0.02
 local HIGHLIGHT = "OpenSRSTeammate"
@@ -51,8 +52,8 @@ local function lerpAngle(a: number, b: number, t: number): number
 	return a + difference * t
 end
 
-local function blend(a: Remote, b: Remote, t: number): Remote
-	if (b.position - a.position).Magnitude > SNAP_DISTANCE then
+local function blend(a: Remote, b: Remote, t: number, seconds: number): Remote
+	if (b.position - a.position).Magnitude > Config.movement.terminalVelocity * seconds + SNAP_MARGIN then
 		return b -- a teleport or respawn: jump there rather than glide
 	end
 	return {
@@ -175,9 +176,10 @@ function Puppets.render()
 	local shown: { [number]: Remote } = {}
 	if before and after then
 		local t = (renderTick - before.tick) / (after.tick - before.tick)
+		local seconds = (after.tick - before.tick) / Config.tickRate
 		for slot, remote in after.players do
 			local previous = before.players[slot]
-			shown[slot] = if previous then blend(previous, remote, t) else remote
+			shown[slot] = if previous then blend(previous, remote, t, seconds) else remote
 		end
 	else
 		local only = before or after

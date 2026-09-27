@@ -76,6 +76,12 @@ end)
 local flagShown = Instance.new("RemoteEvent")
 flagShown.Name = "OpenSRSDevFlag"
 flagShown.Parent = ReplicatedStorage
+-- Deaths too, with who got the kill, for testing kill credit.
+OpenSRS.Died:Connect(function(victim: Player, killer: Player?)
+	local text = `{victim.Name} died, killed by {if killer then killer.Name else "no one"}`
+	print(text)
+	flagShown:FireAllClients(text)
+end)
 OpenSRS.Flagged:Connect(function(player: Player, reason: string, details: string)
 	local text = `FLAG {player.Name}: {reason}: {details}`
 	warn(text)
