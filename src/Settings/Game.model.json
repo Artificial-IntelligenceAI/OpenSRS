@@ -3,6 +3,7 @@
 	"attributes": {
 		"TickRate": 60,
 		"SnapshotRate": 20,
+		"CatchUpTime": 0.07,
 		"RespawnTime": 3,
 		"MaxHealth": 100,
 		"BulletHoleTime": 30,

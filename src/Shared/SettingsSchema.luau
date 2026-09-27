@@ -39,6 +39,15 @@ local game: Section = {
 			description = "How many times a second each player is told about the others.",
 		},
 		{
+			name = "CatchUpTime",
+			default = 0.07,
+			min = 0.02,
+			max = 0.25,
+			description = "Seconds of movement a player whose connection stalled may catch up on at once. "
+				.. "Longer is kinder to unstable connections; shorter limits lag-switch peeking, where a "
+				.. "player stalls their connection to move and shoot before others see them.",
+		},
+		{
 			name = "RespawnTime",
 			default = 3,
 			min = 0,

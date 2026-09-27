@@ -12,6 +12,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local Shared = script.Parent.Parent.Shared
+local Body = require(Shared.Body)
 local Config = require(Shared.Config)
 local Eye = require(Shared.Eye)
 local Firearm = require(Shared.Firearm)
@@ -47,7 +48,6 @@ type Record = {
 	streaming: boolean, -- a streaming request is in flight
 }
 
-local MAX_TOKENS = 8 -- how far (in ticks) a player can fall behind before the server moves them on
 local MAX_PENDING = 12 -- queued inputs beyond this are dropped, oldest first
 local MAX_TICKS_PER_FRAME = 4
 local PACKET_BUDGET_PER_TICK = 2 -- 120 input packets a second
@@ -247,7 +247,10 @@ local function simulate(record: Record)
 	local processed = false
 	local started = record.lastSeq ~= nil or #record.pending > 0
 	if started then
-		record.tokens = math.min(record.tokens + 1, MAX_TOKENS)
+		-- How far (in ticks) a player can fall behind before the server moves
+		-- them on, and so how much they can catch up on at once (CatchUpTime).
+		local maxTokens = Config.catchUpTicks
+		record.tokens = math.min(record.tokens + 1, maxTokens)
 		while record.tokens >= 1 do
 			local input: Input
 			local queued = table.remove(record.pending, 1)
@@ -257,7 +260,7 @@ local function simulate(record: Record)
 				Combat.observe(record.slot, queued, tickCount)
 			else
 				local lastInput = record.lastInput
-				if record.tokens < MAX_TOKENS or not lastInput then
+				if record.tokens < maxTokens or not lastInput then
 					break
 				end
 				-- The client has gone quiet. Keep simulating with its last input so
@@ -316,7 +319,13 @@ local function updateVisibility()
 	for _, record in records do
 		local state = record.state
 		if state then
-			table.insert(subjects, { slot = record.slot, state = state, leanOffset = Eye.leanOffset(state, world) })
+			local leanOffset = Eye.leanOffset(state, world)
+			table.insert(subjects, {
+				slot = record.slot,
+				state = state,
+				leanOffset = leanOffset,
+				tuck = Body.tuckFor(state.position, state.yaw, state.pitch, state.stance, leanOffset, world.overlap),
+			})
 		end
 	end
 	Visibility.update(subjects, os.clock(), tickCount % VISIBILITY_GROUPS, VISIBILITY_GROUPS)
@@ -328,13 +337,15 @@ local function sendSnapshots()
 	for player, record in records do
 		local state = record.state
 		if state then
+			local leanOffset = Eye.leanOffset(state, world)
 			remote[player] = {
 				position = state.position,
 				yaw = state.yaw,
 				pitch = state.pitch,
 				stance = state.stance,
-				leanOffset = Eye.leanOffset(state, world),
+				leanOffset = leanOffset,
 				weapon = state.weapon,
+				tuck = Body.tuckFor(state.position, state.yaw, state.pitch, state.stance, leanOffset, world.overlap),
 			}
 		end
 	end

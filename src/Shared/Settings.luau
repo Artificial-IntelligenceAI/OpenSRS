@@ -140,6 +140,7 @@ function Settings.apply(resolved: Resolved)
 	local tickRate = math.round(number(gameValues, "TickRate"))
 	Config.tickRate = tickRate
 	Config.snapshotInterval = math.max(math.round(tickRate / number(gameValues, "SnapshotRate")), 1)
+	Config.catchUpTicks = math.max(math.round(number(gameValues, "CatchUpTime") * tickRate), 1)
 	Config.respawnTime = number(gameValues, "RespawnTime")
 	Config.maxHealth = number(gameValues, "MaxHealth")
 	Config.bulletHoleTime = number(gameValues, "BulletHoleTime")

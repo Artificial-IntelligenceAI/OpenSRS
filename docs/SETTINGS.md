@@ -25,6 +25,7 @@ The server only uses its own copy of the settings. It sends the final values to 
 | --- | --- | --- | --- |
 | `TickRate` | 60 | 20 to 120 | Simulation updates a second. Higher is more precise and costs more server time. |
 | `SnapshotRate` | 20 | 5 to 60 | How many times a second each player is told about the others. |
+| `CatchUpTime` | 0.07 | 0.02 to 0.25 | Seconds of movement a player whose connection stalled may catch up on at once. Longer is kinder to unstable connections; shorter limits lag-switch peeking, where a player stalls their connection to move and shoot before others see them. |
 | `RespawnTime` | 3 | 0 to 60 | Seconds between dying and respawning. |
 | `MaxHealth` | 100 | 1 to 10000 | Health each player spawns with. |
 | `BulletHoleTime` | 30 | 0 to 600 | Seconds bullet holes stay on walls and players. 0 turns them off. |

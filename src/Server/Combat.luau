@@ -70,6 +70,18 @@ Combat.Died = died.Event
 local history: { [number]: { Entry } } = {}
 local health: { [number]: number } = {}
 local usualRewind: { [number]: number } = {}
+-- The rough position each listener was last given for each shooter they can't
+-- see, and when: [listener][shooter] (see unseenShot).
+local UNSEEN_HOLD = 1
+local heardFrom: { [number]: { [number]: { origin: Vector3, at: number } } } = {}
+
+-- Forgets where anyone heard `slot`'s shots from, when they jump somewhere.
+local function forgetHeard(slot: number)
+	for _, byShooter in heardFrom do
+		byShooter[slot] = nil
+	end
+end
+
 -- Who last hurt each player, and when: a reset or fall soon after credits them.
 local lastHurtBy: { [number]: { player: Player, at: number } } = {}
 local world = Movement.newWorld({})
@@ -88,6 +100,7 @@ end
 
 function Combat.spawned(slot: number)
 	lastHurtBy[slot] = nil
+	forgetHeard(slot)
 	health[slot] = Config.maxHealth
 	history[slot] = {}
 end
@@ -95,6 +108,7 @@ end
 -- Called when the player in `slot` is teleported: rewinding must never slide
 -- their hitbox along the jump, so their history starts over.
 function Combat.jumped(slot: number)
+	forgetHeard(slot)
 	if history[slot] then
 		history[slot] = {}
 	end
@@ -102,6 +116,8 @@ end
 
 function Combat.forget(slot: number)
 	lastHurtBy[slot] = nil
+	forgetHeard(slot)
+	heardFrom[slot] = nil
 	health[slot] = nil
 	history[slot] = nil
 	usualRewind[slot] = nil
@@ -174,6 +190,7 @@ local function poseAt(slot: number, tick: number): Pose?
 				stance = b.stance,
 				leanOffset = a.leanOffset + (b.leanOffset - a.leanOffset) * t,
 				weapon = b.weapon,
+				tuck = a.tuck + (b.tuck - a.tuck) * t,
 			}
 		end
 	end
@@ -367,14 +384,33 @@ end
 -- A shot as heard by someone who can't see the shooter: enough to hear where
 -- it came from, not to find them. It comes from the middle of the grid square
 -- (UnseenShotPrecision studs across) the shooter is in, without who fired.
-local function unseenShot(effect: Protocol.ShotEffect): Protocol.ShotEffect
+-- Each listener keeps the square they were given for a shooter for
+-- UNSEEN_HOLD seconds, so rapid fire can't reveal the moment they cross from
+-- one square to the next.
+local function unseenShot(
+	effect: Protocol.ShotEffect,
+	listenerSlot: number,
+	shooterSlot: number,
+	now: number
+): Protocol.ShotEffect
 	local grid = Config.unseenShotPrecision
 	local origin = effect.origin
 	if grid > 0 then
-		origin = (
-			Vector3.new(math.floor(origin.X / grid), math.floor(origin.Y / grid), math.floor(origin.Z / grid))
-			+ Vector3.new(0.5, 0.5, 0.5)
-		) * grid
+		local byShooter = heardFrom[listenerSlot]
+		if not byShooter then
+			byShooter = {}
+			heardFrom[listenerSlot] = byShooter
+		end
+		local held = byShooter[shooterSlot]
+		if held and now - held.at < UNSEEN_HOLD then
+			origin = held.origin
+		else
+			origin = (
+				Vector3.new(math.floor(origin.X / grid), math.floor(origin.Y / grid), math.floor(origin.Z / grid))
+				+ Vector3.new(0.5, 0.5, 0.5)
+			) * grid
+			byShooter[shooterSlot] = { origin = origin, at = now }
+		end
 	end
 	return { slot = 0, weapon = effect.weapon, origin = origin, hit = effect.hit, kind = effect.kind }
 end
@@ -428,7 +464,9 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 			local toBody = pose.position + Vector3.new(0, 2.5, 0) - origin
 			local along = toBody:Dot(direction)
 			if along > -4 and along < distance + 4 and (toBody - direction * along).Magnitude < 6 then
-				for name, cframe in Body.pose(pose.position, pose.yaw, pose.pitch, pose.stance, pose.leanOffset) do
+				for name, cframe in
+					Body.pose(pose.position, pose.yaw, pose.pitch, pose.stance, pose.leanOffset, pose.tuck)
+				do
 					local hit = rayBox(origin, direction, cframe, Body.SIZES[name])
 					if hit and hit < distance then
 						distance = hit
@@ -467,7 +505,7 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 		local position = latestPosition(slot)
 		if listener and position and (position - origin).Magnitude <= HEARING_RANGE then
 			local shooterShown = shows(slot, shooterSlot, now)
-			local heard = if shooterShown then full else unseenShot(full)
+			local heard = if shooterShown then full else unseenShot(full, slot, shooterSlot, now)
 			if victimSlot and victimSlot ~= slot and not shows(slot, victimSlot, now) then
 				heard = hideVictim(heard, missPoint, missKind)
 			end

@@ -124,7 +124,7 @@ local function aimPoints(poseAt: (slot: number, tick: number) -> any, slot: numb
 	if not remote then
 		return nil, nil
 	end
-	local pose = Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset)
+	local pose = Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset, remote.tuck)
 	return pose.Head.Position, pose.Torso.Position
 end
 
@@ -187,7 +187,12 @@ function AimWatch.observe(
 				-- snapshot early, so count from the earliest they could have
 				-- shown: a real reaction can only measure a little longer.
 				local shown = seen.since - Config.snapshotInterval
-				local reaction = math.max(viewedTick - shown, 0) / Config.tickRate
+				-- The view tick is the client's own claim. Claiming to see others
+				-- with less delay would make reactions look slower, so it's held
+				-- to the latest an honest client could be seeing: every client
+				-- draws others at least an interpolation delay behind.
+				local latestHonest = serverTick - (Config.snapshotInterval * 2 + 1)
+				local reaction = math.max(math.min(viewedTick, latestHonest) - shown, 0) / Config.tickRate
 				note(
 					player,
 					watcher,

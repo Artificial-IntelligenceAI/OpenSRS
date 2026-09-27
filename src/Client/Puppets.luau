@@ -63,6 +63,7 @@ local function blend(a: Remote, b: Remote, t: number, seconds: number): Remote
 		stance = b.stance,
 		leanOffset = a.leanOffset + (b.leanOffset - a.leanOffset) * t,
 		weapon = b.weapon,
+		tuck = a.tuck + (b.tuck - a.tuck) * t,
 	}
 end
 
@@ -199,7 +200,10 @@ function Puppets.render()
 		if held then
 			Avatar.hold(avatar, held.name)
 		end
-		Avatar.apply(avatar, Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset))
+		Avatar.apply(
+			avatar,
+			Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset, remote.tuck)
+		)
 		if owners then
 			outline(avatar, owners[slot])
 		end

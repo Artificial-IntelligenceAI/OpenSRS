@@ -41,6 +41,7 @@ local prone: StanceConfig = {
 local Config = {
 	tickRate = 60,
 	snapshotInterval = 3, -- ticks between updates about other players
+	catchUpTicks = 4, -- ticks of input a stalled player may catch up on at once (CatchUpTime)
 	respawnTime = 3,
 	maxHealth = 100,
 	bulletHoleTime = 30, -- seconds; cosmetic, on each client

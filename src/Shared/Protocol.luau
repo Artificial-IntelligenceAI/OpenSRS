@@ -20,6 +20,7 @@ export type Remote = {
 	stance: number,
 	leanOffset: number,
 	weapon: number, -- the one in their hands, by its place in Weapons.loadout
+	tuck: number, -- 0 to 1: arms tucked in because aiming would push them into a wall (see Body.tuckFor)
 }
 
 export type Snapshot = {
@@ -76,7 +77,7 @@ local STATE_FIXED_SIZE = 75
 local STATE_SIZE = STATE_FIXED_SIZE + #Weapons.loadout * 3
 local SHOT_SIZE = 27
 local SNAPSHOT_HEADER_SIZE = 5
-local SNAPSHOT_ENTRY_SIZE = 20
+local SNAPSHOT_ENTRY_SIZE = 21
 -- Unreliable events are dropped above about 900 bytes, so a snapshot of more
 -- players than this is split across several packets for the same tick.
 local SNAPSHOT_MAX_ENTRIES = 36
@@ -325,6 +326,7 @@ local function encodeSnapshotPart(
 			if M.leanDistance > 0 then packUnit(remote.leanOffset / M.leanDistance) else 0
 		)
 		buffer.writeu8(data, offset + 19, remote.weapon)
+		buffer.writeu8(data, offset + 20, math.round(math.clamp(remote.tuck, 0, 1) * 255))
 		offset += SNAPSHOT_ENTRY_SIZE
 	end
 	return data
@@ -365,6 +367,7 @@ function Protocol.decodeSnapshot(data: unknown): Snapshot?
 			stance = buffer.readu8(data, offset + 17),
 			leanOffset = buffer.readi8(data, offset + 18) / UNIT_SCALE * M.leanDistance,
 			weapon = buffer.readu8(data, offset + 19),
+			tuck = buffer.readu8(data, offset + 20) / 255,
 		}
 		offset += SNAPSHOT_ENTRY_SIZE
 	end

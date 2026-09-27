@@ -22,6 +22,7 @@ export type Subject = {
 	slot: number,
 	state: State,
 	leanOffset: number,
+	tuck: number, -- see Body.tuckFor
 }
 
 export type Stats = {
@@ -85,7 +86,8 @@ local function pointsOf(subject: Subject): { Vector3 }
 	local torsoHeight = Config.stance(state.stance).height / 2
 	local torso = state.position + Vector3.new(0, torsoHeight, 0)
 	local shift = advance(torso, state.velocity * LOOKAHEAD) - torso
-	local pose = Body.pose(state.position + shift, state.yaw, state.pitch, state.stance, subject.leanOffset)
+	local pose =
+		Body.pose(state.position + shift, state.yaw, state.pitch, state.stance, subject.leanOffset, subject.tuck)
 	return {
 		pose.Torso.Position,
 		pose.Head.Position,
