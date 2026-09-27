@@ -8,7 +8,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for how OpenSRS works and why, and [docs/SE
 
 ## Official downloads
 
-The **only** official source of OpenSRS is this repository's [Releases page](https://github.com/Artificial-IntelligenceAI/OpenSRS/releases). OpenSRS isn't published on the Creator Store or Toolbox, so any copy you find there isn't ours and may contain backdoors.
+The **only** official source of OpenSRS is this repository's [Releases page](https://github.com/Open-sourced-Secure-Roblox-Systems/SecureRGS/releases). OpenSRS isn't published on the Creator Store or Toolbox, so any copy you find there isn't ours and may contain backdoors.
 
 Each release comes in two versions:
 
@@ -30,7 +30,7 @@ Release builds (e.g. `.rbxm` files) bundle both. The scripts inside are under Ap
 
 CC BY 4.0 requires attribution. If you use OpenSRS models or sounds in your game, credit them somewhere players can see, such as the game description or an in-game credits screen:
 
-> Weapon models and sounds from OpenSRS (https://github.com/Artificial-IntelligenceAI/OpenSRS), licensed under CC BY 4.0.
+> Weapon models and sounds from OpenSRS (https://github.com/Open-sourced-Secure-Roblox-Systems/SecureRGS), licensed under CC BY 4.0.
 
 The X16's magazine-drop sound is edited from "Pistol Reload" by Bunny_Clark (https://freesound.org/people/Bunny_Clark/sounds/377549/), also CC BY 4.0, so if your game uses it, add:
 
