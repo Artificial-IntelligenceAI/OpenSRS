@@ -41,7 +41,18 @@ end
 -- `view` is "FirstPerson" or "ThirdPerson".
 function GunModel.new(weapon: string, view: string): Model
 	local model = Assets.weapon(weapon, view) or standIn()
+	-- Guns are seen up close, so Roblox's level of detail (which simplifies
+	-- meshes with distance) is off. Not every property can be set by scripts
+	-- everywhere, so failing to is fine: the shipped assets already have it.
+	pcall(function()
+		model.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled
+	end)
 	for _, part in model:GetDescendants() do
+		if part:IsA("MeshPart") then
+			pcall(function()
+				part.RenderFidelity = Enum.RenderFidelity.Precise
+			end)
+		end
 		if part:IsA("BasePart") then
 			part.Anchored = true
 			part.CanCollide = false
