@@ -24,7 +24,7 @@
 		"SpreadProne": 0.6,
 		"SpreadMoving": 1.2,
 		"SpreadAirborne": 4,
-		"AimSpreadMultiplier": 0.3,
+		"AimSpreadMultiplier": 0,
 		"BloomPerShot": 0.6,
 		"BloomMax": 3,
 		"BloomRecovery": 3,

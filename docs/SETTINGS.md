@@ -99,16 +99,16 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `FullDamageRange` | 15 | 0 to 10000 | Studs before damage starts to drop off. |
 | `MinDamageRange` | 40 | 0 to 10000 | Studs where damage stops dropping. |
 | `MinDamageMultiplier` | 0.25 | 0 to 1 | Fraction of damage left at and beyond MinDamageRange. |
-| `SpreadStanding` | 1 | 0 to 45 | Degrees of spread standing still, from the hip. |
-| `SpreadCrouching` | 0.8 | 0 to 45 | Degrees of spread crouched. |
-| `SpreadProne` | 0.6 | 0 to 45 | Degrees of spread prone. |
+| `SpreadStanding` | 0.6 | 0 to 45 | Degrees of spread standing still, from the hip. |
+| `SpreadCrouching` | 0.5 | 0 to 45 | Degrees of spread crouched. |
+| `SpreadProne` | 0.4 | 0 to 45 | Degrees of spread prone. |
 | `SpreadMoving` | 0.3 | 0 to 45 | Degrees added at full walking speed. |
 | `SpreadAirborne` | 2 | 0 to 45 | Degrees added while in the air. |
-| `AimSpreadMultiplier` | 0.3 | 0 to 1 | All spread is multiplied by this while aiming down sights. |
+| `AimSpreadMultiplier` | 0 | 0 to 1 | All spread is multiplied by this while aiming down sights. 0 (the default) makes aiming perfectly accurate: every bullet goes exactly where the sights point. |
 | `BloomPerShot` | 0.2 | 0 to 45 | Degrees of spread each shot adds. |
-| `BloomMax` | 3 | 0 to 45 | Most spread shots can add. |
+| `BloomMax` | 2 | 0 to 45 | Most spread shots can add. |
 | `BloomRecovery` | 3 | 0 to 1000 | Degrees of added spread that fade a second. |
-| `RecoilUp` | -0.2 | -45 to 45 | Degrees each shot kicks the aim up. Negative kicks it down. |
+| `RecoilUp` | 0.3 | -45 to 45 | Degrees each shot kicks the aim up. Negative kicks it down. |
 | `RecoilSide` | 0.15 | 0 to 45 | Degrees each shot kicks the aim sideways. |
 | `RecoilRecovery` | 6.3 | 0 to 100 | How fast the aim settles back after a kick. Higher settles faster. |
 
@@ -139,7 +139,7 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `SpreadProne` | 0.6 | 0 to 45 | Degrees of spread prone. |
 | `SpreadMoving` | 1.2 | 0 to 45 | Degrees added at full walking speed. |
 | `SpreadAirborne` | 4 | 0 to 45 | Degrees added while in the air. |
-| `AimSpreadMultiplier` | 0.3 | 0 to 1 | All spread is multiplied by this while aiming down sights. |
+| `AimSpreadMultiplier` | 0 | 0 to 1 | All spread is multiplied by this while aiming down sights. 0 (the default) makes aiming perfectly accurate: every bullet goes exactly where the sights point. |
 | `BloomPerShot` | 0.6 | 0 to 45 | Degrees of spread each shot adds. |
 | `BloomMax` | 3 | 0 to 45 | Most spread shots can add. |
 | `BloomRecovery` | 3 | 0 to 1000 | Degrees of added spread that fade a second. |

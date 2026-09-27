@@ -296,10 +296,11 @@ local weaponFields: { Field } = {
 	{ name = "SpreadAirborne", default = 4, min = 0, max = 45, description = "Degrees added while in the air." },
 	{
 		name = "AimSpreadMultiplier",
-		default = 0.3,
+		default = 0,
 		min = 0,
 		max = 1,
-		description = "All spread is multiplied by this while aiming down sights.",
+		description = "All spread is multiplied by this while aiming down sights. 0 (the default) makes aiming "
+			.. "perfectly accurate: every bullet goes exactly where the sights point.",
 	},
 	{ name = "BloomPerShot", default = 0.6, min = 0, max = 45, description = "Degrees of spread each shot adds." },
 	{ name = "BloomMax", default = 3, min = 0, max = 45, description = "Most spread shots can add." },
@@ -345,9 +346,10 @@ export type WeaponEntry = {
 local weapons: { WeaponEntry } = {
 	{
 		-- A submachine gun for moving, spraying and praying: easy to do well
-		-- with, but it eats through ammo. Light and quick to handle, low damage
-		-- that falls off fast, a very high fire rate, recoil that pushes down,
-		-- and little penalty for shooting on the move.
+		-- with, but it eats through ammo. Made for shooting from the hip: light
+		-- and quick to handle, accurate without aiming, low damage that falls
+		-- off fast, a very high fire rate, low recoil, and little penalty for
+		-- shooting on the move.
 		name = "XS-120",
 		defaults = {
 			Automatic = true,
@@ -363,11 +365,15 @@ local weapons: { WeaponEntry } = {
 			FullDamageRange = 15,
 			MinDamageRange = 40,
 			MinDamageMultiplier = 0.25,
+			SpreadStanding = 0.6,
+			SpreadCrouching = 0.5,
+			SpreadProne = 0.4,
 			SpreadMoving = 0.3,
 			SpreadAirborne = 2,
-			RecoilUp = -0.2,
+			RecoilUp = 0.3,
 			RecoilSide = 0.15,
 			BloomPerShot = 0.2,
+			BloomMax = 2,
 		},
 	},
 	{ name = "X16", defaults = {} }, -- the field defaults above are the X16's
