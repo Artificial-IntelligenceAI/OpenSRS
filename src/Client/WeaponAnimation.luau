@@ -30,6 +30,14 @@ export type Animation = {
 	hipPose: CFrame, -- the grip relative to the camera from the hip
 	aimReach: number, -- studs in front of the eye the rear sight sits while aiming (arm's length for a pistol, closer for a shouldered gun)
 	leftHand: CFrame, -- where the left hand holds the gun outside of reloads (a LeftHand attachment on the model wins)
+	rightHand: Vector3, -- where the right arm ends, in the gun's space (just in front of the grip)
+	-- Where the shoulders are, relative to the camera: the forearms run from
+	-- these to the hands, so they set the angle the arms come into view at.
+	hipRightShoulder: Vector3,
+	hipLeftShoulder: Vector3,
+	aimRightShoulder: Vector3,
+	aimLeftShoulder: Vector3,
+	reloadLeftShoulder: Vector3, -- while reloading, in front of the eye so the arm never covers the view
 	reloadPose: CFrame, -- the grip relative to the camera while changing magazines
 	rackPose: CFrame, -- the grip relative to the camera while racking the slide
 	rackStart: number, -- when the gun heads to the rack pose
@@ -97,6 +105,17 @@ local DEFAULT: Animation = {
 	hipPose = CFrame.new(0.3, -0.72, -0.9), -- straight and level
 	aimReach = 0.85,
 	leftHand = LEFT_HAND,
+	-- Two-handed pistol grip, with the gun sitting on top of both hands: the
+	-- forearms run in nearly level from below the view, side by side under the
+	-- gun, and the whole grip is swallowed by the right hand. From the hip the
+	-- gun sits lower right, so the arms come in from the lower right and lower
+	-- middle instead.
+	rightHand = Vector3.new(0.07, 0, -0.2),
+	hipRightShoulder = Vector3.new(0.55, -0.95, 0.15),
+	hipLeftShoulder = Vector3.new(-0.1, -1, 0.15),
+	aimRightShoulder = Vector3.new(0.3, -0.6, 0.2),
+	aimLeftShoulder = Vector3.new(-0.35, -0.6, 0.2),
+	reloadLeftShoulder = Vector3.new(-2, -1.9, -0.6),
 	reloadPose = CFrame.new(0.04, -0.3, -0.85) * CFrame.Angles(0.75, 0.25, -0.35), -- muzzle up, the magazine well showing
 	-- Level and fully on its side, the top of the slide facing left, so the
 	-- left hand can come over the top.

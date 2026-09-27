@@ -38,20 +38,9 @@ local TUCK_MARGIN = 0.25 -- studs kept between the muzzle and a wall
 local TUCK_RANGE = 1 -- how much further in a wall must be for the gun to tuck fully
 local TUCK_SPEED = 20 -- how quickly it tucks; it comes back out at half that
 
--- Arms: shoulders are fixed to the camera, hands follow the gun.
--- Two-handed pistol grip, with the gun sitting on top of both hands: the
--- forearms run in nearly level from below the view, side by side under the
--- gun, and the whole grip is swallowed by the right hand, so only the slide,
--- frame and trigger guard show above and in front of it. From the hip the gun sits lower right, so the arms
--- come in from the lower right and lower middle instead.
-local AIM_RIGHT_SHOULDER = Vector3.new(0.3, -0.6, 0.2)
-local AIM_LEFT_SHOULDER = Vector3.new(-0.35, -0.6, 0.2)
-local HIP_RIGHT_SHOULDER = Vector3.new(0.55, -0.95, 0.15)
-local HIP_LEFT_SHOULDER = Vector3.new(-0.1, -1, 0.15)
--- While reloading the left forearm comes in from the lower left, in front of the
--- eye rather than from behind it, so it never covers the view.
-local RELOAD_LEFT_SHOULDER = Vector3.new(-2, -1.9, -0.6)
-local RIGHT_HAND = Vector3.new(0.07, 0, -0.2) -- in the gun's space: the end of the arm, just in front of the grip
+-- Arms: shoulders are fixed to the camera, hands follow the gun. Where the
+-- shoulders are and where the right hand holds are per weapon (see
+-- WeaponAnimation's hipRightShoulder and the fields after it).
 local ARM_WIDTH = 0.38
 local ARM_HEIGHT = 0.66 -- deeper than the grip is tall, so the hand swallows it whole
 local ARM_LENGTH = 1.3 -- forearms only: long enough to run off screen, never near the eye
@@ -600,10 +589,12 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	end
 
 	local leftHandPoint = (origin * leftHand).Position
-	local rightHandPoint = (origin * CFrame.new(RIGHT_HAND)).Position
+	local rightHandPoint = (origin * CFrame.new(animation.rightHand)).Position
 	local count = #rig.gunParts
-	local rightShoulder = HIP_RIGHT_SHOULDER:Lerp(AIM_RIGHT_SHOULDER, aimBlend)
-	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend):Lerp(RELOAD_LEFT_SHOULDER, reloadBlend)
+	local rightShoulder = animation.hipRightShoulder:Lerp(animation.aimRightShoulder, aimBlend)
+	local leftShoulder = animation.hipLeftShoulder
+		:Lerp(animation.aimLeftShoulder, aimBlend)
+		:Lerp(animation.reloadLeftShoulder, reloadBlend)
 	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint, origin.UpVector)
 	cframes[count + 2] = arm((camera * CFrame.new(leftShoulder)).Position, leftHandPoint, origin.UpVector)
 	local fillAt = origin * FILL_OFFSET
