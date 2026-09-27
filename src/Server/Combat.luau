@@ -160,6 +160,7 @@ local function poseAt(slot: number, tick: number): Pose?
 				pitch = a.pitch + (b.pitch - a.pitch) * t,
 				stance = b.stance,
 				leanOffset = a.leanOffset + (b.leanOffset - a.leanOffset) * t,
+				weapon = b.weapon,
 			}
 		end
 	end
@@ -294,7 +295,7 @@ local function unseenShot(effect: Protocol.ShotEffect): Protocol.ShotEffect
 			+ Vector3.new(0.5, 0.5, 0.5)
 		) * grid
 	end
-	return { slot = 0, origin = origin, hit = effect.hit, kind = effect.kind }
+	return { slot = 0, weapon = effect.weapon, origin = origin, hit = effect.hit, kind = effect.kind }
 end
 
 -- A shot as heard by someone who can't see who it hit: where it went would
@@ -308,6 +309,7 @@ local function hideVictim(effect: Protocol.ShotEffect, shooterShown: boolean): P
 	end
 	return {
 		slot = effect.slot,
+		weapon = effect.weapon,
 		origin = effect.origin,
 		hit = effect.origin + direction * 0.5,
 		kind = Protocol.HitKind.Nothing,
@@ -322,7 +324,7 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 	if not shooter or not shooter.alive or (health[shooterSlot] or 0) <= 0 then
 		return
 	end
-	local weapon = Weapons.default
+	local weapon = shot.weapon
 
 	-- How far to rewind: what the shooter was seeing, kept close to their usual delay.
 	local rewoundTick = viewedTick(shooterSlot, input, serverTick)
@@ -368,7 +370,13 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 	end
 
 	local hitPoint = origin + direction * distance
-	local full: Protocol.ShotEffect = { slot = shooterSlot, origin = origin, hit = hitPoint, kind = kind }
+	local full: Protocol.ShotEffect = {
+		slot = shooterSlot,
+		weapon = shot.state.weapon,
+		origin = origin,
+		hit = hitPoint,
+		kind = kind,
+	}
 	local effect = Protocol.encodeShot(full)
 	remotes.shotResult:FireClient(shooter.player, effect)
 	local now = os.clock()

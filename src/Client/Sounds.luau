@@ -29,6 +29,7 @@ local Debris = game:GetService("Debris")
 local SoundService = game:GetService("SoundService")
 
 local Living = require(script.Parent.Parent.Shared.Living)
+local Weapons = require(script.Parent.Parent.Shared.Weapons)
 local Assets = require(script.Parent.Assets)
 
 local PITCH_VARIATION = 0.03 -- each play is up to this much higher or lower, so repeats don't sound identical
@@ -123,8 +124,24 @@ local function effectsOf(source: Sound): { Instance }
 	return found
 end
 
+-- A weapon's Sounds folder. One that shipped without any (like a stand-in)
+-- borrows the first carried weapon's that has some, rather than being silent.
+local function soundsOf(weapon: string): Instance?
+	local own = Assets.weaponPart(weapon, "Sounds")
+	if own then
+		return own
+	end
+	for _, carried in Weapons.loadout do
+		local borrowed = Assets.weaponPart(carried.name, "Sounds")
+		if borrowed then
+			return borrowed
+		end
+	end
+	return nil
+end
+
 local function pick(weapon: string, cue: string): Sound?
-	local folder = Assets.weaponPart(weapon, "Sounds")
+	local folder = soundsOf(weapon)
 	local entry = folder and folder:FindFirstChild(cue)
 	if entry and entry:IsA("Sound") then
 		return entry
@@ -420,7 +437,7 @@ end
 -- Starts loading every sound a weapon has, so the first shot isn't silent
 -- while its sound downloads.
 function Sounds.preload(weapon: string)
-	local folder = Assets.weaponPart(weapon, "Sounds")
+	local folder = soundsOf(weapon)
 	if not folder then
 		return
 	end

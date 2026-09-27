@@ -7,6 +7,7 @@
 
 local Config = require(script.Parent.Config)
 local Types = require(script.Parent.Types)
+local Weapons = require(script.Parent.Weapons)
 
 type Input = Types.Input
 type State = Types.State
@@ -18,6 +19,7 @@ export type Remote = {
 	pitch: number,
 	stance: number,
 	leanOffset: number,
+	weapon: number, -- the one in their hands, by its place in Weapons.loadout
 }
 
 export type Snapshot = {
@@ -35,6 +37,7 @@ export type StateMessage = {
 -- What a shot hit. Shooters get their own; nearby players get everyone's.
 export type ShotEffect = {
 	slot: number, -- who fired, or 0 when the listener can't see them
+	weapon: number, -- what fired it, by its place in Weapons.loadout
 	origin: Vector3,
 	hit: Vector3,
 	kind: number, -- see Protocol.HitKind
@@ -67,11 +70,13 @@ Protocol.VIEW_TICK_SCALE = 8
 -- Each input packet repeats the last few inputs, so one lost packet costs nothing.
 Protocol.MAX_INPUTS_PER_PACKET = 3
 
-local INPUT_SIZE = 16
-local STATE_SIZE = 66
-local SHOT_SIZE = 26
+local INPUT_SIZE = 17
+-- The fixed part, then each carried weapon's stowed magazine (u8) and reserve (u16).
+local STATE_FIXED_SIZE = 67
+local STATE_SIZE = STATE_FIXED_SIZE + #Weapons.loadout * 3
+local SHOT_SIZE = 27
 local SNAPSHOT_HEADER_SIZE = 5
-local SNAPSHOT_ENTRY_SIZE = 19
+local SNAPSHOT_ENTRY_SIZE = 20
 local ANGLE_SCALE = 32767 / math.pi
 local UNIT_SCALE = 127
 local TWO_PI = 2 * math.pi
@@ -99,6 +104,7 @@ function Protocol.quantizeInput(input: Input): Input
 		pitch = packPitch(input.pitch) / ANGLE_SCALE,
 		buttons = input.buttons,
 		stance = input.stance,
+		weapon = input.weapon,
 		viewTick = math.clamp(math.floor(input.viewTick), 0, 0xFFFFFFFF),
 	}
 end
@@ -117,6 +123,7 @@ function Protocol.encodeInputs(inputs: { Input }): buffer
 		buffer.writeu8(data, offset + 10, input.buttons)
 		buffer.writeu8(data, offset + 11, input.stance)
 		buffer.writeu32(data, offset + 12, math.clamp(math.floor(input.viewTick), 0, 0xFFFFFFFF))
+		buffer.writeu8(data, offset + 16, input.weapon)
 	end
 	return data
 end
@@ -145,6 +152,7 @@ function Protocol.decodeInputs(data: unknown): { Input }?
 		local pitch = buffer.readi16(data, offset + 8)
 		local buttons = buffer.readu8(data, offset + 10)
 		local stance = buffer.readu8(data, offset + 11)
+		local weapon = buffer.readu8(data, offset + 16)
 		if
 			moveX < -UNIT_SCALE
 			or moveZ < -UNIT_SCALE
@@ -152,6 +160,7 @@ function Protocol.decodeInputs(data: unknown): { Input }?
 			or math.abs(pitch) > maxPitch
 			or bit32.band(buttons, bit32.bnot(Types.ALL_BUTTONS)) ~= 0
 			or stance > Types.Stance.Prone
+			or Weapons.at(weapon) == nil
 		then
 			return nil
 		end
@@ -163,6 +172,7 @@ function Protocol.decodeInputs(data: unknown): { Input }?
 			pitch = pitch / ANGLE_SCALE,
 			buttons = buttons,
 			stance = stance,
+			weapon = weapon,
 			viewTick = buffer.readu32(data, offset + 12),
 		}
 	end
@@ -207,6 +217,12 @@ function Protocol.encodeState(epoch: number, ack: number, state: State, health: 
 	buffer.writef64(data, 55, state.bloom)
 	buffer.writeu16(data, 63, math.clamp(math.ceil(health), 0, 0xFFFF))
 	buffer.writeu8(data, 65, state.drawTicks)
+	buffer.writeu8(data, 66, state.weapon)
+	for index = 1, #Weapons.loadout do
+		local offset = STATE_FIXED_SIZE + (index - 1) * 3
+		buffer.writeu8(data, offset, state.stowed[index * 2 - 1])
+		buffer.writeu16(data, offset + 1, state.stowed[index * 2])
+	end
 	return data
 end
 
@@ -215,6 +231,12 @@ function Protocol.decodeState(data: unknown): StateMessage?
 		return nil
 	end
 	local flags = buffer.readu8(data, 29)
+	local stowed = {}
+	for index = 1, #Weapons.loadout do
+		local offset = STATE_FIXED_SIZE + (index - 1) * 3
+		table.insert(stowed, buffer.readu8(data, offset))
+		table.insert(stowed, buffer.readu16(data, offset + 1))
+	end
 	return {
 		epoch = buffer.readu8(data, 0),
 		ack = buffer.readu32(data, 1),
@@ -229,8 +251,10 @@ function Protocol.decodeState(data: unknown): StateMessage?
 			jumpCooldown = buffer.readu8(data, 31),
 			yaw = 0,
 			pitch = 0,
+			weapon = buffer.readu8(data, 66),
 			ammo = buffer.readu8(data, 32),
 			reserve = buffer.readu16(data, 33),
+			stowed = table.freeze(stowed),
 			fireCooldown = buffer.readu8(data, 35),
 			reloadTicks = buffer.readu16(data, 36),
 			drawTicks = buffer.readu8(data, 65),
@@ -251,6 +275,7 @@ function Protocol.encodeShot(effect: ShotEffect): buffer
 	writeVector(data, 1, effect.origin)
 	writeVector(data, 13, effect.hit)
 	buffer.writeu8(data, 25, effect.kind)
+	buffer.writeu8(data, 26, effect.weapon)
 	return data
 end
 
@@ -263,6 +288,7 @@ function Protocol.decodeShot(data: unknown): ShotEffect?
 		origin = readVector(data, 1),
 		hit = readVector(data, 13),
 		kind = buffer.readu8(data, 25),
+		weapon = buffer.readu8(data, 26),
 	}
 end
 
@@ -286,6 +312,7 @@ function Protocol.encodeSnapshot(tick: number, players: { [number]: Remote }): b
 			offset + 18,
 			if M.leanDistance > 0 then packUnit(remote.leanOffset / M.leanDistance) else 0
 		)
+		buffer.writeu8(data, offset + 19, remote.weapon)
 		offset += SNAPSHOT_ENTRY_SIZE
 	end
 	return data
@@ -308,6 +335,7 @@ function Protocol.decodeSnapshot(data: unknown): Snapshot?
 			pitch = buffer.readi16(data, offset + 15) / ANGLE_SCALE,
 			stance = buffer.readu8(data, offset + 17),
 			leanOffset = buffer.readi8(data, offset + 18) / UNIT_SCALE * M.leanDistance,
+			weapon = buffer.readu8(data, offset + 19),
 		}
 		offset += SNAPSHOT_ENTRY_SIZE
 	end

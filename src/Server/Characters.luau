@@ -20,7 +20,6 @@ local Protocol = require(Shared.Protocol)
 local Simulation = require(Shared.Simulation)
 local Teammates = require(Shared.Teammates)
 local Types = require(Shared.Types)
-local Weapons = require(Shared.Weapons)
 local AimWatch = require(script.Parent.AimWatch)
 local Combat = require(script.Parent.Combat)
 local Flags = require(script.Parent.Flags)
@@ -112,7 +111,7 @@ local function spawn(record: Record)
 	if records[record.player] ~= record then
 		return
 	end
-	local state = Simulation.newState(position, 0, Weapons.default)
+	local state = Simulation.newState(position, 0)
 	state.canShoot = record.canShoot
 	record.state = state
 	record.epoch = (record.epoch + 1) % 256
@@ -240,7 +239,7 @@ local function simulate(record: Record)
 			end
 
 			local shot
-			state, shot = Simulation.step(state, input, world, Weapons.default)
+			state, shot = Simulation.step(state, input, world)
 			record.lastInput = input
 			record.tokens -= 1
 			processed = true
@@ -299,6 +298,7 @@ local function sendSnapshots()
 				pitch = state.pitch,
 				stance = state.stance,
 				leanOffset = Eye.leanOffset(state, world),
+				weapon = state.weapon,
 			}
 		end
 	end

@@ -1,8 +1,9 @@
 --!strict
 -- SPDX-License-Identifier: Apache-2.0
 
--- The on-screen HUD: crosshair, ammo, health, hit markers, the death notice,
--- and a tag while the game has stopped the player shooting.
+-- The on-screen HUD: crosshair, the weapon in hand and its ammo, health, hit
+-- markers, the death notice, and a tag while the game has stopped the player
+-- shooting.
 
 local Players = game:GetService("Players")
 
@@ -38,7 +39,8 @@ end
 
 local ammo = label("Ammo", Vector2.new(1, 1), UDim2.new(1, -24, 1, -20), 28)
 local health = label("Health", Vector2.new(0, 1), UDim2.new(0, 24, 1, -20), 28)
-local cantShoot = label("CantShoot", Vector2.new(1, 1), UDim2.new(1, -24, 1, -56), 18)
+local weaponName = label("Weapon", Vector2.new(1, 1), UDim2.new(1, -24, 1, -54), 18)
+local cantShoot = label("CantShoot", Vector2.new(1, 1), UDim2.new(1, -24, 1, -80), 18)
 cantShoot.Text = CANT_SHOOT_TEXT
 cantShoot.TextColor3 = RED
 cantShoot.Visible = false
@@ -78,6 +80,7 @@ end
 
 -- `spreadDegrees` and `fieldOfView` size the crosshair to match real spread.
 function Hud.update(
+	weapon: string,
 	ammoCount: number,
 	reserve: number,
 	reloading: boolean,
@@ -87,6 +90,7 @@ function Hud.update(
 	showCrosshair: boolean,
 	canShoot: boolean
 )
+	weaponName.Text = weapon
 	ammo.Text = if reloading then "Reloading…" else `{ammoCount} / {reserve}`
 	cantShoot.Visible = not canShoot
 	health.Text = `{math.ceil(healthPoints)} HP`
@@ -117,6 +121,7 @@ function Hud.setAlive(alive: boolean)
 	notice.Text = "You died"
 	notice.Visible = not alive
 	ammo.Visible = alive
+	weaponName.Visible = alive
 	health.Visible = alive
 	if not alive then
 		cantShoot.Visible = false

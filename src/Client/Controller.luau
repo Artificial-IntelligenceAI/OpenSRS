@@ -47,8 +47,24 @@ local NEAR_MISS = 4 -- studs a bullet must pass within to be heard going by
 
 local Controller = {}
 
-local weapon = Weapons.default
 local random = Random.new() -- only for how predicted tracers look; the server decides real spread
+
+local function sameStowed(a: { number }, b: { number }): boolean
+	if a == b then
+		return true
+	end
+	for index, value in a do
+		if b[index] ~= value then
+			return false
+		end
+	end
+	return #a == #b
+end
+
+-- The weapon at `index` in the loadout; the first if there's none there.
+local function weaponAt(index: number): Weapons.Weapon
+	return Weapons.at(index) or Weapons.loadout[1]
+end
 
 local function matches(a: State, b: State): boolean
 	return (a.position - b.position).Magnitude < TOLERANCE
@@ -59,6 +75,7 @@ local function matches(a: State, b: State): boolean
 		and a.aiming == b.aiming
 		and a.leanTicks == b.leanTicks
 		and a.jumpCooldown == b.jumpCooldown
+		and a.weapon == b.weapon
 		and a.ammo == b.ammo
 		and a.reserve == b.reserve
 		and a.fireCooldown == b.fireCooldown
@@ -70,10 +87,12 @@ local function matches(a: State, b: State): boolean
 		and math.abs(a.recoilPitch - b.recoilPitch) < TOLERANCE
 		and math.abs(a.recoilYaw - b.recoilYaw) < TOLERANCE
 		and math.abs(a.bloom - b.bloom) < TOLERANCE
+		and sameStowed(a.stowed, b.stowed)
 end
 
 -- Shows where a shot landed: a hole and a burst of particles, and its sound.
 local function landed(shot: Protocol.ShotEffect)
+	local weapon = weaponAt(shot.weapon)
 	if shot.kind == Protocol.HitKind.World then
 		local alive = Impacts.world(shot.origin, shot.hit)
 		Sounds.at(weapon.name, if alive then Sounds.Cues.ImpactBody else Sounds.Cues.ImpactWorld, shot.hit)
@@ -127,6 +146,7 @@ function Controller.start()
 		if predicted == nil or message.epoch ~= epoch then
 			-- Spawned or moved by the server: start over from its state.
 			Sounds.jumped()
+			InputMap.selectWeapon(server.weapon)
 			epoch = message.epoch
 			history = {}
 			server.yaw, server.pitch = InputMap.look()
@@ -156,7 +176,7 @@ function Controller.start()
 		for replaySeq = message.ack + 1, seq do
 			local pending = history[replaySeq]
 			if pending then
-				replayed = Simulation.step(replayed, pending.input, world, weapon)
+				replayed = Simulation.step(replayed, pending.input, world)
 				pending.state = replayed
 			end
 		end
@@ -179,6 +199,7 @@ function Controller.start()
 		if not shot then
 			return
 		end
+		local weapon = weaponAt(shot.weapon)
 		local delay = if weapon.instantDamage then 0 else (shot.hit - shot.origin).Magnitude / weapon.bulletSpeed
 		task.delay(delay, function()
 			landed(shot)
@@ -198,6 +219,7 @@ function Controller.start()
 		if not shot then
 			return
 		end
+		local weapon = weaponAt(shot.weapon)
 		Effects.muzzleFlash(weapon.name, CFrame.lookAt(shot.origin, shot.hit))
 		Effects.tracer(shot.origin, shot.hit, weapon.bulletSpeed)
 		local port = Puppets.ejectionPort(shot.slot)
@@ -222,11 +244,17 @@ function Controller.start()
 	end)
 
 	snapshotRemote.OnClientEvent:Connect(Puppets.receive)
-	Sounds.preload(weapon.name)
+	for _, carried in Weapons.loadout do
+		Sounds.preload(carried.name)
+	end
 	Casings.ignore({ camera, Puppets.folder, Effects.folder })
 	Sounds.ignore({ camera, Puppets.folder, Effects.folder, Casings.folder })
 	InputMap.start()
 	Hud.start()
+
+	-- OpenSRS characters can't hold Roblox tools, and the tools bar takes the
+	-- number keys that pick weapons.
+	pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.Backpack, false)
 
 	-- Roblox's menu Reset button would kill the Roblox character, which OpenSRS
 	-- doesn't use, so it's pointed at OpenSRS's own: the server kills and
@@ -267,6 +295,7 @@ function Controller.start()
 				seq += 1
 				local viewTick = Puppets.renderTick() * Protocol.VIEW_TICK_SCALE
 				local input = Protocol.quantizeInput(InputMap.sample(seq, viewTick))
+				local weapon = Simulation.weapon(current)
 				-- A fresh pull with nothing left to fire or reload just clicks.
 				local pulled = bit32.btest(input.buttons, Types.Buttons.Fire) and not current.triggerHeld
 				if
@@ -283,7 +312,7 @@ function Controller.start()
 				end
 				previous = current
 				local shot
-				current, shot = Simulation.step(current, input, world, weapon)
+				current, shot = Simulation.step(current, input, world)
 				history[seq] = { input = input, state = current }
 				table.insert(recent, input)
 				if #recent > Protocol.MAX_INPUTS_PER_PACKET then
@@ -292,6 +321,7 @@ function Controller.start()
 				inputRemote:FireServer(Protocol.encodeInputs(recent))
 
 				if shot then
+					weapon = shot.weapon
 					-- Show the shot right away. Where it really lands comes back from the server.
 					local direction = Firearm.scatter(Firearm.direction(shot.yaw, shot.pitch), shot.spread, random)
 					local hit = workspace:Raycast(camera.CFrame.Position, direction * weapon.range, world.raycast)
@@ -342,7 +372,9 @@ function Controller.start()
 			camera.FieldOfView = fieldOfView
 
 			muzzle = Viewmodel.update(view, current, InputMap.mouseDelta(), frameTime)
+			local weapon = Simulation.weapon(current)
 			Hud.update(
+				weapon.name,
 				current.ammo,
 				current.reserve,
 				current.reloadTicks > 0,

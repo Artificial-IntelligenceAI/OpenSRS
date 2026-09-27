@@ -19,6 +19,7 @@ export type Avatar = {
 	model: Model,
 	parts: { [Body.PartName]: BasePart },
 	gun: Model,
+	weapon: string, -- the name of the gun in its hand
 }
 
 local PLAIN = Color3.fromRGB(163, 162, 165)
@@ -92,10 +93,25 @@ function Avatar.new(name: string): Avatar
 	for _, partName in Body.PART_NAMES do
 		parts[partName] = model:FindFirstChild(partName) :: BasePart
 	end
-	local gun = GunModel.new(Weapons.default.name, "ThirdPerson")
+	local weapon = Weapons.loadout[1].name
+	local gun = GunModel.new(weapon, "ThirdPerson")
 	gun.Name = "Gun"
 	gun.Parent = model
-	return { model = model, parts = parts, gun = gun }
+	return { model = model, parts = parts, gun = gun, weapon = weapon }
+end
+
+-- Puts `weapon` in the avatar's hand, if it isn't already.
+function Avatar.hold(avatar: Avatar, weapon: string)
+	if avatar.weapon == weapon then
+		return
+	end
+	local gun = GunModel.new(weapon, "ThirdPerson")
+	gun.Name = "Gun"
+	gun:PivotTo(avatar.gun:GetPivot())
+	avatar.gun:Destroy()
+	gun.Parent = avatar.model
+	avatar.gun = gun
+	avatar.weapon = weapon
 end
 
 function Avatar.apply(avatar: Avatar, pose: Body.Pose)

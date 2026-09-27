@@ -27,7 +27,9 @@ export type Hit = { t: number, move: Vector3, turn: Vector3, look: Vector3 }
 export type SoundCue = { t: number, cue: string }
 
 export type Animation = {
-	leftHand: CFrame, -- where the left hand holds the gun outside of reloads
+	hipPose: CFrame, -- the grip relative to the camera from the hip
+	aimReach: number, -- studs in front of the eye the rear sight sits while aiming (arm's length for a pistol, closer for a shouldered gun)
+	leftHand: CFrame, -- where the left hand holds the gun outside of reloads (a LeftHand attachment on the model wins)
 	reloadPose: CFrame, -- the grip relative to the camera while changing magazines
 	rackPose: CFrame, -- the grip relative to the camera while racking the slide
 	rackStart: number, -- when the gun heads to the rack pose
@@ -89,6 +91,8 @@ local IDENTITY = CFrame.identity
 -- then roll the gun onto its side, rack the slide over the top and come back
 -- up ready.
 local DEFAULT: Animation = {
+	hipPose = CFrame.new(0.3, -0.72, -0.9), -- straight and level
+	aimReach = 0.85,
 	leftHand = LEFT_HAND,
 	reloadPose = CFrame.new(0.04, -0.3, -0.85) * CFrame.Angles(0.75, 0.25, -0.35), -- muzzle up, the magazine well showing
 	-- Level and fully on its side, the top of the slide facing left, so the

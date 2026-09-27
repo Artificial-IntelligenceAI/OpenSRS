@@ -5,7 +5,8 @@
 --
 -- WASD move, mouse looks, Space jumps, Left Shift sprints, Left Alt slow-walks,
 -- C toggles crouch, Z toggles prone, Q and E lean left and right. Left click
--- fires, right click aims, R reloads. Whether aiming and leaning are held or
+-- fires, right click aims, R reloads. The number keys pick a weapon, and the
+-- mouse wheel steps through them. Whether aiming and leaning are held or
 -- toggled are the AimToggle and LeanToggle settings.
 
 local UserInputService = game:GetService("UserInputService")
@@ -13,12 +14,24 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = script.Parent.Parent.Shared
 local Config = require(Shared.Config)
 local Types = require(Shared.Types)
+local Weapons = require(Shared.Weapons)
 
 type Input = Types.Input
 
 local Buttons = Types.Buttons
 local Stance = Types.Stance
 local RADIANS_PER_PIXEL = 0.004
+local NUMBER_KEYS = {
+	Enum.KeyCode.One,
+	Enum.KeyCode.Two,
+	Enum.KeyCode.Three,
+	Enum.KeyCode.Four,
+	Enum.KeyCode.Five,
+	Enum.KeyCode.Six,
+	Enum.KeyCode.Seven,
+	Enum.KeyCode.Eight,
+	Enum.KeyCode.Nine,
+}
 
 local InputMap = {}
 
@@ -27,6 +40,7 @@ local pitch = 0
 local stance: number = Stance.Stand
 local lean = 0 -- -1 left, 0 upright, 1 right, while leaning is toggled
 local aimToggled = false -- aiming, while aiming is toggled
+local weapon = 1 -- the weapon wanted in hand, by its place in Weapons.loadout
 -- Presses shorter than a tick still count.
 local firePressed = false
 local reloadPressed = false
@@ -48,6 +62,11 @@ function InputMap.start()
 			return
 		end
 		local key = input.KeyCode
+		local numbered = table.find(NUMBER_KEYS, key)
+		if numbered and Weapons.at(numbered) then
+			weapon = numbered
+			return
+		end
 		if key == Enum.KeyCode.R then
 			reloadPressed = true
 		elseif key == Enum.KeyCode.C then
@@ -67,6 +86,22 @@ function InputMap.start()
 			lean = if lean == 1 then 0 else 1
 		end
 	end)
+	UserInputService.InputChanged:Connect(function(input, processed)
+		if processed or input.UserInputType ~= Enum.UserInputType.MouseWheel then
+			return
+		end
+		-- Wheel down goes to the next weapon, wrapping around.
+		local count = #Weapons.loadout
+		local step = if input.Position.Z < 0 then 1 elseif input.Position.Z > 0 then -1 else 0
+		weapon = (weapon - 1 + step) % count + 1
+	end)
+end
+
+-- Makes `index` the weapon wanted in hand, such as the one a respawn gives.
+function InputMap.selectWeapon(index: number)
+	if Weapons.at(index) then
+		weapon = index
+	end
 end
 
 local lastDelta = Vector2.zero
@@ -110,6 +145,7 @@ function InputMap.sample(seq: number, viewTick: number): Input
 		pitch = pitch,
 		buttons = 0,
 		stance = stance,
+		weapon = weapon,
 		viewTick = viewTick,
 	}
 	local fire = firePressed

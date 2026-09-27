@@ -13,6 +13,7 @@ export type Input = {
 	pitch: number, -- radians, positive looks up
 	buttons: number, -- bit flags, see Types.Buttons
 	stance: number, -- the stance the player wants, see Types.Stance
+	weapon: number, -- the weapon the player wants in their hands, by its place in Weapons.loadout
 	viewTick: number, -- the server tick the player was seeing others at, in eighths of a tick
 }
 
@@ -30,8 +31,14 @@ export type State = {
 	pitch: number,
 
 	-- Weapon
-	ammo: number, -- rounds in the magazine
-	reserve: number, -- rounds left outside the magazine
+	weapon: number, -- the one in their hands, by its place in Weapons.loadout
+	ammo: number, -- rounds in its magazine
+	reserve: number, -- rounds left for it outside the magazine
+	-- Every carried weapon's magazine and reserve as of when it was put away:
+	-- { magazine 1, reserve 1, magazine 2, reserve 2, ... }. The one in hand's
+	-- entries are stale; `ammo` and `reserve` are its real counts. Never changed
+	-- in place (states share it), only replaced.
+	stowed: { number },
 	fireCooldown: number, -- ticks until the next shot is allowed
 	reloadTicks: number, -- ticks left in the current reload; 0 when not reloading
 	drawTicks: number, -- ticks until the gun is drawn after spawning

@@ -112,7 +112,17 @@ for _, entry in SettingsSchema.weapons do
 	Weapons.configure(entry.name, values)
 end
 
--- The weapon every player carries for now.
-Weapons.default = byName.X16
+-- What every player carries, in order (see SettingsSchema.weapons). A
+-- player's state says which of these is in their hands by its index.
+local loadout: { Weapon } = {}
+for _, entry in SettingsSchema.weapons do
+	table.insert(loadout, byName[entry.name])
+end
+Weapons.loadout = table.freeze(loadout)
+
+-- The weapon at `index` in the loadout, or nil if there's none.
+function Weapons.at(index: number): Weapon?
+	return loadout[index]
+end
 
 return Weapons

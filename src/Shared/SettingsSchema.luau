@@ -289,14 +289,35 @@ local weaponFields: { Field } = {
 	},
 }
 
--- Weapons shipped with OpenSRS, in order. Each gets a Weapons/<name> section
--- with the fields above; `defaults` replaces field defaults for that weapon.
+-- Weapons shipped with OpenSRS, in order: every player carries all of them,
+-- in this order (the first is what they spawn holding, on key 1). Each gets a
+-- Weapons/<name> section with the fields above; `defaults` replaces field
+-- defaults for that weapon.
 export type WeaponEntry = {
 	name: string,
 	defaults: { [string]: number | boolean },
 }
 
 local weapons: { WeaponEntry } = {
+	{
+		-- A submachine gun that melts through its magazine: deadly up close,
+		-- weak beyond, with surprisingly little kick.
+		name = "XS-120",
+		defaults = {
+			Automatic = true,
+			FireRate = 1100,
+			MagazineSize = 60,
+			ReserveAmmo = 180,
+			ReloadTime = 2,
+			Damage = 20,
+			FullDamageRange = 15,
+			MinDamageRange = 40,
+			MinDamageMultiplier = 0.25,
+			RecoilUp = 0.35,
+			RecoilSide = 0.25,
+			BloomPerShot = 0.2,
+		},
+	},
 	{ name = "X16", defaults = {} }, -- the field defaults above are the X16's
 }
 

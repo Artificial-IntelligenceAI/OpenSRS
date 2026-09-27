@@ -14,6 +14,7 @@ local Body = require(Shared.Body)
 local Config = require(Shared.Config)
 local Protocol = require(Shared.Protocol)
 local Teammates = require(Shared.Teammates)
+local Weapons = require(Shared.Weapons)
 local Avatar = require(script.Parent.Avatar)
 local GunModel = require(script.Parent.GunModel)
 
@@ -52,6 +53,7 @@ local function blend(a: Remote, b: Remote, t: number): Remote
 		pitch = a.pitch + (b.pitch - a.pitch) * t,
 		stance = b.stance,
 		leanOffset = a.leanOffset + (b.leanOffset - a.leanOffset) * t,
+		weapon = b.weapon,
 	}
 end
 
@@ -176,6 +178,10 @@ function Puppets.render()
 		if not avatar then
 			avatar = Avatar.new(`Player{slot}`)
 			avatars[slot] = avatar
+		end
+		local held = Weapons.at(remote.weapon)
+		if held then
+			Avatar.hold(avatar, held.name)
 		end
 		Avatar.apply(avatar, Body.pose(remote.position, remote.yaw, remote.pitch, remote.stance, remote.leanOffset))
 		if owners then

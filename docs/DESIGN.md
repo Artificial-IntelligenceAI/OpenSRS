@@ -73,6 +73,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 ## Weapons
 
+- **Everyone carries every weapon.** Players spawn holding the first (the XS-120) and switch with the number keys or the mouse wheel. Which weapon is in hand is part of each tick's input and of the simulated state, so switching is predicted like everything else: the new gun has to be drawn, a reload in progress is lost, and each gun keeps its own ammo.
 - **Part of the input stream.** Fire, aim and reload are buttons in each tick's input. Server and client run the same weapon rules (ammo, fire rate, reload timing, the delay before firing after a sprint), so rapid fire and infinite ammo don't work.
 - **Hitscan with rewind.** Each input also says which server tick the player was seeing others at. The server rewinds other players to that moment (from the same snapshots clients saw) and casts the bullet itself. The client never says what it hit.
 - **No backtracking.** A shot may only rewind about as far as that player normally sees others behind (within 3 ticks), and no further than their connection's delay (from Roblox's measured ping) plus how far behind clients draw others, plus a little slack, and never more than 0.4 s. Claiming to see further back, to hit someone who was exposed a moment ago, gets clamped.
@@ -115,7 +116,7 @@ Roblox's default characters are not used. OpenSRS runs its own server-authoritat
 
 - The full character system: all movement including prone, server authority, anti-wallhack visibility, and the avatar system with the placeholder avatar.
 - The X16 pistol: ammo, reload, recoil, accuracy and delayed damage. Until the game-ready model is done, a block stand-in is used.
-- More weapons come after the core feels right in playtesting.
+- The XS-120 submachine gun: a magazine melter, deadly up close and weak beyond, with little recoil. Until its model is done, a block stand-in is used, with the X16's sounds.
 
 ## Cheat flags
 

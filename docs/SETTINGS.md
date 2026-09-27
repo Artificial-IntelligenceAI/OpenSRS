@@ -60,6 +60,39 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `LeanDistance` | 1 | 0 to 2 | Studs the eye moves sideways when leaning. |
 | `LeanTime` | 0.17 | 0.02 to 1 | Seconds to go from upright to a full lean. |
 
+## Weapons / XS-120
+
+| Setting | Default | Allowed | What it does |
+| --- | --- | --- | --- |
+| `Damage` | 20 | 0 to 10000 | Damage of a body shot at close range. |
+| `HeadshotMultiplier` | 2 | 0 to 100 | Damage multiplier for headshots. |
+| `LimbMultiplier` | 0.8 | 0 to 100 | Damage multiplier for arms and legs. |
+| `FireRate` | 1100 | 30 to 3600 | Rounds a minute. |
+| `Automatic` | true | true or false | Keeps firing while the trigger is held. |
+| `MagazineSize` | 60 | 1 to 255 | Rounds in a full magazine. |
+| `ReserveAmmo` | 180 | 0 to 65535 | Spare rounds a player spawns with. |
+| `ReloadTime` | 2 | 0.02 to 4 | Seconds to reload. The reload animation stretches to fit. |
+| `DrawTime` | 0.5 | 0 to 2 | Seconds after spawning before the gun can fire or reload. The draw animation stretches to fit. |
+| `RaiseTime` | 0.25 | 0 to 2 | Seconds after sprinting before the gun can fire. |
+| `BulletSpeed` | 1340 | 1 to 100000 | Studs a second a bullet travels. |
+| `InstantDamage` | false | true or false | Damage lands the moment the gun fires instead of when the bullet would arrive. |
+| `Range` | 1000 | 1 to 10000 | Studs a bullet can reach. |
+| `FullDamageRange` | 15 | 0 to 10000 | Studs before damage starts to drop off. |
+| `MinDamageRange` | 40 | 0 to 10000 | Studs where damage stops dropping. |
+| `MinDamageMultiplier` | 0.25 | 0 to 1 | Fraction of damage left at and beyond MinDamageRange. |
+| `SpreadStanding` | 1 | 0 to 45 | Degrees of spread standing still, from the hip. |
+| `SpreadCrouching` | 0.8 | 0 to 45 | Degrees of spread crouched. |
+| `SpreadProne` | 0.6 | 0 to 45 | Degrees of spread prone. |
+| `SpreadMoving` | 1.2 | 0 to 45 | Degrees added at full walking speed. |
+| `SpreadAirborne` | 4 | 0 to 45 | Degrees added while in the air. |
+| `AimSpreadMultiplier` | 0.3 | 0 to 1 | All spread is multiplied by this while aiming down sights. |
+| `BloomPerShot` | 0.2 | 0 to 45 | Degrees of spread each shot adds. |
+| `BloomMax` | 3 | 0 to 45 | Most spread shots can add. |
+| `BloomRecovery` | 3 | 0 to 1000 | Degrees of added spread that fade a second. |
+| `RecoilUp` | 0.35 | 0 to 45 | Degrees each shot kicks the aim up. |
+| `RecoilSide` | 0.25 | 0 to 45 | Degrees each shot kicks the aim sideways. |
+| `RecoilRecovery` | 6.3 | 0 to 100 | How fast the aim settles back after a kick. Higher settles faster. |
+
 ## Weapons / X16
 
 | Setting | Default | Allowed | What it does |

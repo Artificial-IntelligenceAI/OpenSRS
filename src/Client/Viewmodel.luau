@@ -28,8 +28,8 @@ local WeaponAnimation = require(script.Parent.WeaponAnimation)
 type State = Types.State
 
 -- Where the gun's grip sits relative to the camera in each pose.
-local AIM_REACH = 0.85 -- how far in front of the eye the rear sight sits when aiming
-local HIP = CFrame.new(0.3, -0.72, -0.9) -- straight and level
+-- (Where each gun sits from the hip and how far out it's aimed are part of its
+-- animation: see WeaponAnimation's hipPose and aimReach.)
 local POSE_SPEED = 16
 -- The gun is only drawn, not solid, so up against a wall it would poke through.
 -- It's pulled in low and close instead, by as much as a wall is in the way.
@@ -143,21 +143,10 @@ local AIMED_MOTION = 0.12 -- sway and bob keep this fraction while aiming
 
 local Viewmodel = {}
 
-local weapon = Weapons.default
-local animation = WeaponAnimation.get(weapon.name)
-local LEFT_HAND_AT = animation.leftHand
-local model = GunModel.new(weapon.name, "FirstPerson")
-model.Name = "OpenSRSViewmodel"
-
-local gunParts: { BasePart } = {}
-local rest: { CFrame } = {} -- each gun part relative to the grip
-local pivot = model:GetPivot()
-for _, part in model:GetDescendants() do
-	if part:IsA("BasePart") then
-		table.insert(gunParts, part)
-		table.insert(rest, pivot:ToObjectSpace(part.CFrame))
-	end
-end
+-- Everything in the view: the gun in hand (each weapon has its own model,
+-- swapped in and out), the arms and the fill light.
+local root = Instance.new("Model")
+root.Name = "OpenSRSViewmodel"
 
 local function limb(name: string, size: Vector3, color: Color3): Part
 	local part = Instance.new("Part")
@@ -170,30 +159,13 @@ local function limb(name: string, size: Vector3, color: Color3): Part
 	part.CanQuery = false
 	part.CanTouch = false
 	part.CastShadow = false
-	part.Parent = model
+	part.Parent = root
 	return part
 end
 
 -- Plain R6 arms, ending at the hands, in the avatar's arm color.
 local rightArm = limb("RightArm", Vector3.new(ARM_WIDTH, ARM_HEIGHT, ARM_LENGTH), Avatar.armColor)
 local leftArm = limb("LeftArm", Vector3.new(ARM_WIDTH, ARM_HEIGHT, ARM_LENGTH), Avatar.armColor)
-
-local function localPoint(name: string, fallback: Vector3): CFrame
-	local attachment = GunModel.point(model, name)
-	return if attachment then pivot:ToObjectSpace(attachment.WorldCFrame) else CFrame.new(fallback)
-end
-
-local MUZZLE = localPoint("Muzzle", Vector3.new(0, 0.44, -1))
-local SIGHT = localPoint("RearSight", Vector3.new(0, 0.53, 0.05))
--- With a FrontSight too, the eye goes level with the front post's top (and the
--- notch's top, which a well-made sight matches): the real sight picture.
--- Without one, it goes level with RearSight.
-local frontSight = GunModel.point(model, "FrontSight")
-local SIGHT_LINE = if frontSight
-	then Vector3.new(SIGHT.Position.X, pivot:PointToObjectSpace(frontSight.WorldPosition).Y, SIGHT.Position.Z)
-	else SIGHT.Position
-local EJECTION = localPoint("EjectionPort", Vector3.new(0.06, 0.5, -0.41))
-local AIM = CFrame.new(0, 0, -AIM_REACH) * CFrame.new(-SIGHT_LINE)
 
 local fill = limb("FillLight", Vector3.one * 0.05, Color3.new(1, 1, 1))
 fill.Transparency = 1
@@ -206,16 +178,89 @@ light.Parent = fill
 local fillLevel = 1
 local probe = RaycastParams.new()
 probe.FilterType = Enum.RaycastFilterType.Exclude
-probe.FilterDescendantsInstances = { model }
+probe.FilterDescendantsInstances = { root }
 probe.IgnoreWater = true
 
-local parts: { BasePart } = table.clone(gunParts)
-table.insert(parts, rightArm)
-table.insert(parts, leftArm)
-table.insert(parts, fill)
-local cframes: { CFrame } = table.create(#parts)
+-- One weapon's gun in the view, and where things are on it (in its space).
+type Rig = {
+	weapon: Weapons.Weapon,
+	animation: WeaponAnimation.Animation,
+	model: Model,
+	gunParts: { BasePart },
+	rest: { CFrame }, -- each gun part relative to the grip
+	muzzle: CFrame,
+	ejection: CFrame,
+	aim: CFrame, -- the grip relative to the camera while aiming
+	leftHand: CFrame, -- where the left hand holds it outside of reloads
+	parts: { BasePart }, -- its parts, then the arms and the fill light: what's moved each frame
+	cframes: { CFrame },
+}
 
-local current = HIP
+local rigs: { [number]: Rig } = {}
+
+local function rigFor(index: number): Rig
+	local existing = rigs[index]
+	if existing then
+		return existing
+	end
+	local weapon = Weapons.at(index) or Weapons.loadout[1]
+	local animation = WeaponAnimation.get(weapon.name)
+	local model = GunModel.new(weapon.name, "FirstPerson")
+	model.Name = weapon.name
+
+	local gunParts: { BasePart } = {}
+	local rest: { CFrame } = {}
+	local pivot = model:GetPivot()
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			table.insert(gunParts, part)
+			table.insert(rest, pivot:ToObjectSpace(part.CFrame))
+		end
+	end
+
+	local function localPoint(name: string, fallback: Vector3): CFrame
+		local attachment = GunModel.point(model, name)
+		return if attachment then pivot:ToObjectSpace(attachment.WorldCFrame) else CFrame.new(fallback)
+	end
+	local sight = localPoint("RearSight", Vector3.new(0, 0.53, 0.05))
+	-- With a FrontSight too, the eye goes level with the front post's top (and
+	-- the notch's top, which a well-made sight matches): the real sight
+	-- picture. Without one, it goes level with RearSight.
+	local frontSight = GunModel.point(model, "FrontSight")
+	local sightLine = if frontSight
+		then Vector3.new(sight.Position.X, pivot:PointToObjectSpace(frontSight.WorldPosition).Y, sight.Position.Z)
+		else sight.Position
+	local leftHand = GunModel.point(model, "LeftHand")
+
+	local parts = table.clone(gunParts)
+	table.insert(parts, rightArm)
+	table.insert(parts, leftArm)
+	table.insert(parts, fill)
+	local rig: Rig = {
+		weapon = weapon,
+		animation = animation,
+		model = model,
+		gunParts = gunParts,
+		rest = rest,
+		muzzle = localPoint("Muzzle", Vector3.new(0, 0.44, -1)),
+		ejection = localPoint("EjectionPort", Vector3.new(0.06, 0.5, -0.41)),
+		aim = CFrame.new(0, 0, -animation.aimReach) * CFrame.new(-sightLine),
+		leftHand = if leftHand
+			then CFrame.new(pivot:PointToObjectSpace(leftHand.WorldPosition))
+			else animation.leftHand,
+		parts = parts,
+		cframes = table.create(#parts),
+	}
+	rigs[index] = rig
+	return rig
+end
+
+local rig = rigFor(1)
+rig.model.Parent = root
+local weapon = rig.weapon
+local animation = rig.animation
+
+local current = animation.hipPose
 local tuck = 0
 local aimBlend = 0
 local reloadBlend = 0
@@ -237,18 +282,41 @@ local drift = 0
 local hold = IDENTITY
 local random = Random.new()
 
+-- Puts the weapon at `index` in hand, if it isn't already. Its draw (which the
+-- simulation starts) brings it up.
+local function use(index: number)
+	local wanted = rigFor(index)
+	if wanted == rig then
+		return
+	end
+	rig.model.Parent = nil
+	rig = wanted
+	rig.model.Parent = root
+	weapon, animation = rig.weapon, rig.animation
+	for _, spring in { gunMove, gunTurn } do
+		local fresh = Spring.new(animation.gunStiffness, animation.gunDamping)
+		spring.stiffness, spring.damping = fresh.stiffness, fresh.damping
+	end
+	local fresh = Spring.new(animation.lookStiffness, animation.lookDamping)
+	look.stiffness, look.damping = fresh.stiffness, fresh.damping
+	kick = 0
+	reloadLength = 0
+	lastProgress = 0
+	droppedFrom = nil
+end
+
 function Viewmodel.show(visible: boolean)
-	model.Parent = if visible then workspace.CurrentCamera else nil
+	root.Parent = if visible then workspace.CurrentCamera else nil
 end
 
 -- Where the gun's ejection port is, as of the last frame.
 function Viewmodel.ejectionPort(): CFrame
-	return lastOrigin * EJECTION
+	return lastOrigin * rig.ejection
 end
 
 -- Where the muzzle is, facing the way the gun points.
 function Viewmodel.muzzle(): CFrame
-	local at = (lastOrigin * MUZZLE).Position
+	local at = (lastOrigin * rig.muzzle).Position
 	return CFrame.lookAt(at, at + lastOrigin.LookVector)
 end
 
@@ -346,7 +414,7 @@ end
 -- Coming out of a sprint the gun rises back to ready over the raise time,
 -- arriving just as it can fire again.
 local function raising(state: State): CFrame
-	local ready = if state.aiming then AIM else HIP
+	local ready = if state.aiming then rig.aim else animation.hipPose
 	-- Aim to be up a little early: the gun follows its target with a short lag.
 	local raised = if weapon.raiseTicks > 0
 		then math.min((1 - state.raiseTicks / weapon.raiseTicks) / RAISE_LEAD, 1)
@@ -356,6 +424,7 @@ end
 
 -- Positions the gun and arms for this frame and returns where the muzzle is.
 function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, frameTime: number): Vector3
+	use(state.weapon)
 	local raw = reloadProgress(state)
 	if raw > 0 and lastProgress == 0 then
 		-- A new reload: pick how this one differs.
@@ -386,15 +455,15 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		then (if progress >= animation.rackStart then animation.rackPose else animation.reloadPose) * hold
 		elseif state.sprinting then animation.sprintPose
 		elseif state.raiseTicks > 0 then raising(state)
-		elseif aiming then AIM
-		else HIP
+		elseif aiming then rig.aim
+		else animation.hipPose
 	local blend = 1 - math.exp(-POSE_SPEED * frameTime)
 	current = current:Lerp(target, blend)
 
 	-- Tuck the gun away from a wall it would otherwise go through: look from
 	-- the eye to where the muzzle would be, and straight ahead that far.
 	local eye = camera.Position
-	local muzzleAt = (camera * current * MUZZLE).Position
+	local muzzleAt = (camera * current * rig.muzzle).Position
 	local reach = (muzzleAt - eye).Magnitude + TUCK_MARGIN
 	local blocked = 0
 	for _, toward in { muzzleAt - eye, camera.LookVector } do
@@ -510,10 +579,11 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 	local leftHand = if reloading
 		then CFrame.new(sampleArc(animation.leftHandTrack, progress, animation.arc))
 		elseif drawing then CFrame.new(sampleArc(animation.drawLeftHandTrack, drawProgress, animation.arc))
-		else LEFT_HAND_AT
+		else rig.leftHand
 	local magazine, magazineShown = magazineAt(progress, leftHand.Position, camera, origin)
-	for index, part in gunParts do
-		local offset = rest[index]
+	local cframes = rig.cframes
+	for index, part in rig.gunParts do
+		local offset = rig.rest[index]
 		if part.Name == "Slide" then
 			offset = slide * offset
 		elseif part.Name == "Barrel" then
@@ -527,7 +597,7 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 
 	local leftHandPoint = (origin * leftHand).Position
 	local rightHandPoint = (origin * CFrame.new(RIGHT_HAND)).Position
-	local count = #gunParts
+	local count = #rig.gunParts
 	local rightShoulder = HIP_RIGHT_SHOULDER:Lerp(AIM_RIGHT_SHOULDER, aimBlend)
 	local leftShoulder = HIP_LEFT_SHOULDER:Lerp(AIM_LEFT_SHOULDER, aimBlend):Lerp(RELOAD_LEFT_SHOULDER, reloadBlend)
 	cframes[count + 1] = arm((camera * CFrame.new(rightShoulder)).Position, rightHandPoint, origin.UpVector)
@@ -551,9 +621,9 @@ function Viewmodel.update(camera: CFrame, state: State, mouseDelta: Vector2, fra
 		then wanted -- out at once, so walking up to a wall never flashes a spot on it
 		else fillLevel + (wanted - fillLevel) * (1 - math.exp(-FILL_FADE * frameTime))
 	light.Brightness = FILL_BRIGHTNESS * fillLevel
-	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+	workspace:BulkMoveTo(rig.parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 
-	return (origin * MUZZLE).Position
+	return (origin * rig.muzzle).Position
 end
 
 return table.freeze(Viewmodel)
