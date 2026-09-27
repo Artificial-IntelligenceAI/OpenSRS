@@ -81,12 +81,12 @@ The server only uses its own copy of the settings. It sends the final values to 
 
 | Setting | Default | Allowed | What it does |
 | --- | --- | --- | --- |
-| `Damage` | 14 | 0 to 10000 | Damage of a body shot at close range. |
+| `Damage` | 16 | 0 to 10000 | Damage of a body shot at close range. |
 | `HeadshotMultiplier` | 2 | 0 to 100 | Damage multiplier for headshots. |
 | `LimbMultiplier` | 0.8 | 0 to 100 | Damage multiplier for arms and legs. |
 | `FireRate` | 1200 | 30 to 3600 | Rounds a minute. |
 | `Automatic` | true | true or false | Keeps firing while the trigger is held. |
-| `MagazineSize` | 60 | 1 to 255 | Rounds in a full magazine. |
+| `MagazineSize` | 40 | 1 to 255 | Rounds in a full magazine. |
 | `ReserveAmmo` | 180 | 0 to 65535 | Spare rounds a player spawns with. |
 | `ReloadTime` | 2 | 0.02 to 4 | Seconds to reload. The reload animation stretches to fit. |
 | `DrawTime` | 0.4 | 0 to 2 | Seconds after spawning before the gun can fire or reload. The draw animation stretches to fit. |

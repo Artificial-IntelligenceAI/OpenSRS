@@ -1,12 +1,12 @@
 {
 	"className": "Configuration",
 	"attributes": {
-		"Damage": 14,
+		"Damage": 16,
 		"HeadshotMultiplier": 2,
 		"LimbMultiplier": 0.8,
 		"FireRate": 1200,
 		"Automatic": true,
-		"MagazineSize": 60,
+		"MagazineSize": 40,
 		"ReserveAmmo": 180,
 		"ReloadTime": 2,
 		"DrawTime": 0.4,
