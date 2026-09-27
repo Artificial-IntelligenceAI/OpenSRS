@@ -79,7 +79,7 @@ local game: Section = {
 		},
 		{
 			name = "FriendlyFire",
-			default = true,
+			default = false,
 			description = "Whether players' bullets hurt their own teammates. Teams come from Roblox's Teams service.",
 		},
 		{
@@ -89,11 +89,11 @@ local game: Section = {
 		},
 		{
 			name = "KillCreditTime",
-			default = 10,
+			default = 0,
 			min = 0,
-			max = 60,
-			description = "If a player resets or falls out of the map within this many seconds of being hurt "
-				.. "by someone, that someone gets the kill. 0 never gives credit.",
+			max = 600,
+			description = "When a player resets or falls out of the map, whoever last hurt them in that life gets "
+				.. "the kill, if it was within this many seconds. 0 means no time limit.",
 		},
 		{
 			name = "TeammateHighlights",

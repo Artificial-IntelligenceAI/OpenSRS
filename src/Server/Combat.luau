@@ -315,18 +315,17 @@ local function applyDamage(
 	end
 end
 
--- Kills a player outright (a reset, or a fall out of the map). If someone hurt
--- them within KillCreditTime, that someone gets the kill; otherwise no one.
+-- Kills a player outright (a reset, or a fall out of the map). Whoever last
+-- hurt them in this life gets the kill, if within KillCreditTime (0 is no
+-- limit) and they're still in the game; otherwise no one.
 function Combat.kill(victimSlot: number)
 	local victim = lookup(victimSlot)
 	local current = health[victimSlot]
 	if victim and current and current > 0 then
 		local hurt = lastHurtBy[victimSlot]
-		local credited = if hurt
-				and os.clock() - hurt.at <= Config.killCreditTime
-				and hurt.player.Parent
-			then hurt.player
-			else nil
+		local limit = Config.killCreditTime
+		local recent = hurt ~= nil and (limit == 0 or os.clock() - hurt.at <= limit)
+		local credited = if hurt and recent and hurt.player.Parent then hurt.player else nil
 		applyDamage(victimSlot, victim.life, credited, current, TORSO, true)
 	end
 end

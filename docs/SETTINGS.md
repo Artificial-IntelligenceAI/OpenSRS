@@ -31,9 +31,9 @@ The server only uses its own copy of the settings. It sends the final values to 
 | `MaxBulletHoles` | 60 | 0 to 1000 | Most bullet holes shown at once; the oldest disappear first. |
 | `AimFlagSensitivity` | 1 | 0 to 3 | How readily aim that looks like an aimbot is flagged (see Flags). 0 turns it off; above 1 flags on less evidence, and risks flagging very good players. |
 | `UnseenShotPrecision` | 5 | 0 to 50 | How exactly players hear shots from someone they can't see, in studs. The sound comes from the middle of the grid square of this size the shooter is in, and they aren't told who fired or where an unseen victim was hit. Smaller is easier to locate by ear, and by wallhacks; 0 is exact. |
-| `FriendlyFire` | true | true or false | Whether players' bullets hurt their own teammates. Teams come from Roblox's Teams service. |
+| `FriendlyFire` | false | true or false | Whether players' bullets hurt their own teammates. Teams come from Roblox's Teams service. |
 | `AllowReset` | true | true or false | Whether Roblox's menu Reset button works. Off, the button is greyed out. |
-| `KillCreditTime` | 10 | 0 to 60 | If a player resets or falls out of the map within this many seconds of being hurt by someone, that someone gets the kill. 0 never gives credit. |
+| `KillCreditTime` | 0 | 0 to 600 | When a player resets or falls out of the map, whoever last hurt them in that life gets the kill, if it was within this many seconds. 0 means no time limit. |
 | `TeammateHighlights` | false | true or false | Outlines teammates, even through walls. Teams come from Roblox's Teams service. While on, players are also sent where their teammates are behind walls (never their enemies), so a cheat could show teammates too. |
 
 ## Controls
