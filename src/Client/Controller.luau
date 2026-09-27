@@ -66,6 +66,12 @@ local function weaponAt(index: number): Weapons.Weapon
 	return Weapons.at(index) or Weapons.loadout[1]
 end
 
+-- Whether epoch `a` came after `b`. Epochs count up and wrap around at 256.
+local function newerEpoch(a: number, b: number): boolean
+	local ahead = (a - b) % 256
+	return ahead ~= 0 and ahead < 128
+end
+
 local function matches(a: State, b: State): boolean
 	return (a.position - b.position).Magnitude < TOLERANCE
 		and (a.velocity - b.velocity).Magnitude < TOLERANCE
@@ -119,6 +125,7 @@ function Controller.start()
 	local state: State? = nil
 	local previous: State? = nil
 	local epoch = -1
+	local lastAck = 0
 	local seq = 0
 	local history: { [number]: HistoryEntry } = {}
 	local recent: { Input } = {}
@@ -134,6 +141,16 @@ function Controller.start()
 		if not message then
 			return
 		end
+		-- Unreliable messages can arrive late and out of order: one from before
+		-- the last spawn or teleport, or older than one already handled, would
+		-- snap us back.
+		if epoch ~= -1 and message.epoch ~= epoch and not newerEpoch(message.epoch, epoch) then
+			return
+		end
+		if message.epoch == epoch and message.ack < lastAck then
+			return
+		end
+		lastAck = math.max(lastAck, message.ack)
 		health = message.health
 		local server = message.state
 		local predicted = state
@@ -222,8 +239,13 @@ function Controller.start()
 			return
 		end
 		local weapon = weaponAt(shot.weapon)
-		Effects.muzzleFlash(weapon.name, CFrame.lookAt(shot.origin, shot.hit))
-		Effects.tracer(shot.origin, shot.hit, weapon.bulletSpeed)
+		-- From someone out of sight, the origin is only roughly where they are
+		-- (see Combat), so there's no flash or tracer to draw there: just the
+		-- sound, and wherever the bullet lands.
+		if shot.slot ~= 0 then
+			Effects.muzzleFlash(weapon.name, CFrame.lookAt(shot.origin, shot.hit))
+			Effects.tracer(shot.origin, shot.hit, weapon.bulletSpeed)
+		end
 		local port = Puppets.ejectionPort(shot.slot)
 		if port then
 			Casings.eject(weapon.name, port)
@@ -370,7 +392,7 @@ function Controller.start()
 			local roll = if leanDistance > 0 then LEAN_ROLL * leanOffset / leanDistance else 0
 			local view = CFrame.new(shown.position + smoothed)
 				* CFrame.Angles(0, yaw + recoilYaw, 0)
-				* CFrame.Angles(pitch + recoilPitch, 0, 0)
+				* CFrame.Angles(Firearm.aimPitch(pitch, recoilPitch), 0, 0)
 				* CFrame.Angles(0, 0, -roll)
 			-- The reload's jolts nudge the head, not the hands: the gun stays put.
 			camera.CFrame = view * Viewmodel.cameraOffset()

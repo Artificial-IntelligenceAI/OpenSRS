@@ -35,6 +35,9 @@ API.Flagged = Flags.Flagged
 -- Moves a living player's character so its feet are at `position`, and stops
 -- it. Returns whether they were moved (they may be dead or not spawned yet).
 function API.teleport(player: Player, position: Vector3): boolean
+	if typeof(position) ~= "Vector3" then
+		return false
+	end
 	return Characters.teleport(player, position)
 end
 

@@ -303,6 +303,7 @@ local function use(index: number)
 	reloadLength = 0
 	lastProgress = 0
 	droppedFrom = nil
+	lastDrawTicks = 0 -- so the new gun's draw always starts from its beginning
 end
 
 function Viewmodel.show(visible: boolean)

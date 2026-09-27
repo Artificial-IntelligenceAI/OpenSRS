@@ -70,7 +70,6 @@ Combat.Died = died.Event
 local history: { [number]: { Entry } } = {}
 local health: { [number]: number } = {}
 local usualRewind: { [number]: number } = {}
-local random = Random.new() -- never shared: this is what makes spread unpredictable
 local world = Movement.newWorld({})
 local bullets = RaycastParams.new()
 bullets.FilterType = Enum.RaycastFilterType.Exclude
@@ -88,6 +87,14 @@ end
 function Combat.spawned(slot: number)
 	health[slot] = Config.maxHealth
 	history[slot] = {}
+end
+
+-- Called when the player in `slot` is teleported: rewinding must never slide
+-- their hitbox along the jump, so their history starts over.
+function Combat.jumped(slot: number)
+	if history[slot] then
+		history[slot] = {}
+	end
 end
 
 function Combat.forget(slot: number)
@@ -145,7 +152,9 @@ local function poseAt(slot: number, tick: number): Pose?
 	if not entries or #entries == 0 then
 		return nil
 	end
-	if tick <= entries[1].tick then
+	if tick < entries[1].tick then
+		return nil -- before they spawned or were teleported here
+	elseif tick == entries[1].tick then
 		return entries[1].pose
 	end
 	for index = 2, #entries do
@@ -236,7 +245,7 @@ local function applyDamage(victimSlot: number, life: number, attackerPlayer: Pla
 	end
 	local remaining = math.max(current - amount, 0)
 	health[victimSlot] = remaining
-	damaged:Fire(victim.player, attackerPlayer, amount, part)
+	damaged:Fire(victim.player, attackerPlayer, current - remaining, part)
 	if remaining <= 0 then
 		died:Fire(victim.player, attackerPlayer)
 	end
@@ -300,21 +309,16 @@ local function unseenShot(effect: Protocol.ShotEffect): Protocol.ShotEffect
 	return { slot = 0, weapon = effect.weapon, origin = origin, hit = effect.hit, kind = effect.kind }
 end
 
--- A shot as heard by someone who can't see who it hit: where it went would
--- give the victim away, so it stops just past the muzzle (too short for a
--- tracer) and hits nothing. If they can see the shooter it still points the
--- way the gun does; if not, straight down, so it doesn't point at the victim.
-local function hideVictim(effect: Protocol.ShotEffect, shooterShown: boolean): Protocol.ShotEffect
-	local direction = if shooterShown then (effect.hit - effect.origin).Unit else -Vector3.yAxis
-	if direction ~= direction then -- NaN: a zero-length shot
-		direction = -Vector3.yAxis
-	end
+-- A shot as heard by someone who can't see who it hit: where it stopped would
+-- give the victim away, so it's shown as the miss it would have been, flying
+-- on to whatever was behind them. That looks just like any other miss.
+local function hideVictim(effect: Protocol.ShotEffect, missPoint: Vector3, missKind: number): Protocol.ShotEffect
 	return {
 		slot = effect.slot,
 		weapon = effect.weapon,
 		origin = effect.origin,
-		hit = effect.origin + direction * 0.5,
-		kind = Protocol.HitKind.Nothing,
+		hit = missPoint,
+		kind = missKind,
 	}
 end
 
@@ -332,11 +336,17 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 	local rewoundTick = viewedTick(shooterSlot, input, serverTick)
 
 	local origin = Eye.position(shot.state, Eye.leanOffset(shot.state, world))
-	local direction = Firearm.scatter(Firearm.direction(shot.yaw, shot.pitch), shot.spread, random)
+	-- A fresh generator for every shot, from Roblox's own entropy: a single
+	-- long-lived one could in principle be worked out from the shots it makes,
+	-- and then its spread predicted.
+	local direction = Firearm.scatter(Firearm.direction(shot.yaw, shot.pitch), shot.spread, Random.new())
 
 	local worldHit = workspace:Raycast(origin, direction * weapon.range, bullets)
 	local distance = if worldHit then worldHit.Distance else weapon.range
 	local kind = if worldHit then Protocol.HitKind.World else Protocol.HitKind.Nothing
+	-- Where it would have gone with no player in the way (see hideVictim).
+	local missPoint = origin + direction * distance
+	local missKind = kind
 	local victimSlot: number? = nil
 	local victimPart = ""
 
@@ -389,7 +399,7 @@ function Combat.fire(shooterSlot: number, shot: Shot, input: Input, serverTick: 
 			local shooterShown = shows(slot, shooterSlot, now)
 			local heard = if shooterShown then full else unseenShot(full)
 			if victimSlot and victimSlot ~= slot and not shows(slot, victimSlot, now) then
-				heard = hideVictim(heard, shooterShown)
+				heard = hideVictim(heard, missPoint, missKind)
 			end
 			remotes.shots:FireClient(listener.player, if heard == full then effect else Protocol.encodeShot(heard))
 		end

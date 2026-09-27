@@ -19,6 +19,16 @@ local Stance = Types.Stance
 
 local Firearm = {}
 
+-- The widest the spread cone gets, in degrees.
+Firearm.MAX_SPREAD = 60
+
+-- Where the aim points up or down, recoil included, held within the range
+-- the view can look.
+function Firearm.aimPitch(pitch: number, recoilPitch: number): number
+	local limit = Config.movement.maxPitch
+	return math.clamp(pitch + recoilPitch, -limit, limit)
+end
+
 -- Applies one tick of trigger, reload and recoil to `state`, which has already
 -- been moved this tick. Returns true if a shot was fired.
 function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
@@ -64,7 +74,8 @@ function Firearm.step(state: State, input: Input, weapon: Weapon): boolean
 	if fired then
 		state.ammo -= 1
 		state.fireCooldown = weapon.fireInterval
-		state.recoilPitch += math.rad(weapon.recoilPitch)
+		-- Never past straight up, however little the recoil settles (RecoilRecovery 0).
+		state.recoilPitch = math.min(state.recoilPitch + math.rad(weapon.recoilPitch), math.pi / 2)
 		state.recoilYaw += math.rad(weapon.recoilYaw) * (if state.ammo % 2 == 0 then 1 else -1)
 		state.bloom = math.min(state.bloom + weapon.bloomPerShot, weapon.bloomMax)
 	else
@@ -92,7 +103,9 @@ function Firearm.spread(state: State, weapon: Weapon): number
 	if state.aiming then
 		degrees *= spread.aimMultiplier
 	end
-	return degrees
+	-- Settings allow spreads that add up past 90 degrees, which would send
+	-- bullets backward.
+	return math.min(degrees, Firearm.MAX_SPREAD)
 end
 
 function Firearm.direction(yaw: number, pitch: number): Vector3

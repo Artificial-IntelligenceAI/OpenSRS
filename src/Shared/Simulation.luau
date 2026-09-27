@@ -93,7 +93,7 @@ function Simulation.step(state: State, input: Input, world: World): (State, Shot
 	-- Where the body faces: the view upright, but a prone body that couldn't
 	-- turn keeps aiming where it faces.
 	local yaw = nextState.yaw + nextState.recoilYaw
-	local pitch = input.pitch + nextState.recoilPitch
+	local pitch = Firearm.aimPitch(input.pitch, nextState.recoilPitch)
 	local spread = Firearm.spread(nextState, weapon)
 	if Firearm.step(nextState, input, weapon) then
 		-- Firing doesn't change where the shooter stands, so the moved state is the origin.

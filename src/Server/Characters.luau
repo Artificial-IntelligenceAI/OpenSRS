@@ -79,24 +79,50 @@ local function claimSlot(): number?
 	return nil
 end
 
-local function spawnPoint(): Vector3
-	local spawns: { SpawnLocation } = {}
-	for _, descendant in workspace:GetDescendants() do
-		if descendant:IsA("SpawnLocation") and descendant.Enabled then
-			table.insert(spawns, descendant)
+-- Every SpawnLocation in the map, kept up to date rather than searched for
+-- on each spawn (a big map has a lot to search).
+local spawnLocations: { [SpawnLocation]: true } = {}
+local function watchSpawn(instance: Instance)
+	if instance:IsA("SpawnLocation") then
+		spawnLocations[instance] = true
+	end
+end
+for _, descendant in workspace:GetDescendants() do
+	watchSpawn(descendant)
+end
+workspace.DescendantAdded:Connect(watchSpawn)
+workspace.DescendantRemoving:Connect(function(instance)
+	spawnLocations[instance :: any] = nil
+end)
+
+-- Where `player` spawns: an enabled SpawnLocation that's neutral or their
+-- team's, the way Roblox picks for its own characters. If none is theirs,
+-- any enabled one.
+local function spawnPoint(player: Player): Vector3
+	local theirs: { SpawnLocation } = {}
+	local any: { SpawnLocation } = {}
+	for location in spawnLocations do
+		if location.Enabled then
+			table.insert(any, location)
+			if location.Neutral or (not player.Neutral and location.TeamColor == player.TeamColor) then
+				table.insert(theirs, location)
+			end
 		end
 	end
-	if #spawns == 0 then
+	local options = if #theirs > 0 then theirs else any
+	if #options == 0 then
 		return Vector3.new(0, 5, 0)
 	end
-	local chosen = spawns[math.random(#spawns)]
+	local chosen = options[math.random(#options)]
 	return chosen.Position + Vector3.new(0, chosen.Size.Y / 2 + 0.1, 0)
 end
 
 -- Players have no Roblox character, so Roblox doesn't know where to stream the
 -- map for them. Ask for it around their position, and keep asking.
-local function streamAround(record: Record, position: Vector3)
-	if not workspace.StreamingEnabled or record.streaming then
+-- `refresh` marks the periodic renewal, which is skipped while another
+-- request is in flight; spawns and teleports always ask, so they really wait.
+local function streamAround(record: Record, position: Vector3, refresh: boolean?)
+	if not workspace.StreamingEnabled or (refresh and record.streaming) then
 		return
 	end
 	record.streaming = true
@@ -105,7 +131,7 @@ local function streamAround(record: Record, position: Vector3)
 end
 
 local function spawn(record: Record)
-	local position = spawnPoint()
+	local position = spawnPoint(record.player)
 	-- Make sure the map around the spawn has reached the client first.
 	streamAround(record, position)
 	if records[record.player] ~= record then
@@ -119,6 +145,9 @@ local function spawn(record: Record)
 	record.life = lives
 	record.dirty = true
 	record.pending = {}
+	-- Nothing from the last life carries over: no replaying its last input.
+	record.lastInput = nil
+	record.tokens = 0
 	Visibility.forgetTarget(record.slot)
 	Combat.spawned(record.slot)
 	AimWatch.reset(record.slot)
@@ -182,7 +211,7 @@ local function watchAim(record: Record, state: State, input: Input, shot: Simula
 	local targets: { AimWatch.Target } = {}
 	local now = os.clock()
 	for _, other in records do
-		if other ~= record and other.state then
+		if other ~= record and other.state and not Teammates.are(record.player, other.player) then
 			table.insert(targets, { slot = other.slot, visible = Visibility.canSee(record.slot, other.slot, now) })
 		end
 	end
@@ -193,7 +222,7 @@ local function watchAim(record: Record, state: State, input: Input, shot: Simula
 	-- Where the bullets go: a shot's aim is from before its own recoil kick.
 	local aim = if shot
 		then Firearm.direction(shot.yaw, shot.pitch)
-		else Firearm.direction(state.yaw + state.recoilYaw, input.pitch + state.recoilPitch)
+		else Firearm.direction(state.yaw + state.recoilYaw, Firearm.aimPitch(input.pitch, state.recoilPitch))
 	AimWatch.observe(
 		record.player,
 		record.slot,
@@ -278,7 +307,7 @@ local function simulate(record: Record)
 	end
 
 	if (tickCount + record.slot) % STREAM_REFRESH_TICKS == 0 then
-		task.spawn(streamAround, record, state.position)
+		task.spawn(streamAround, record, state.position, true)
 	end
 end
 
@@ -459,6 +488,12 @@ function Characters.teleport(player: Player, position: Vector3): boolean
 	if not record or not record.state then
 		return false
 	end
+	-- NaN or infinite coordinates would leave the character nowhere, stuck.
+	for _, value in { position.X, position.Y, position.Z } do
+		if value ~= value or math.abs(value) == math.huge then
+			return false
+		end
+	end
 	local life = record.life
 	-- Give the map there a moment to reach the client, but don't hold the
 	-- teleport up for it: loading can take over a second even for places the
@@ -482,6 +517,7 @@ function Characters.teleport(player: Player, position: Vector3): boolean
 	record.state = moved
 	record.epoch = (record.epoch + 1) % 256 -- the client sees a new epoch and starts over from the server's state
 	Visibility.forgetTarget(record.slot)
+	Combat.jumped(record.slot)
 	AimWatch.reset(record.slot)
 	record.dirty = true
 	record.pending = {}

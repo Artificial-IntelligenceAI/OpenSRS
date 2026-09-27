@@ -22,6 +22,10 @@ type Snapshot = Protocol.Snapshot
 type Remote = Protocol.Remote
 
 local MAX_SNAPSHOTS = 30
+-- Further than anyone moves between two snapshots: a player who moved more
+-- was teleported or respawned.
+local SNAP_DISTANCE = 20
+local FORGET_AFTER = 60 -- seconds a player's model is kept while they're not shown
 local CLOCK_SMOOTHING = 0.02
 local HIGHLIGHT = "OpenSRSTeammate"
 local HIGHLIGHT_FILL = 0.75 -- how see-through the fill is; the outline is solid
@@ -35,6 +39,7 @@ Puppets.folder = folder
 
 local snapshots: { Snapshot } = {}
 local avatars: { [number]: Avatar.Avatar } = {}
+local lastShown: { [number]: number } = {}
 local clockOffset: number? = nil -- server tick minus local tick
 
 local function localTick(): number
@@ -47,6 +52,9 @@ local function lerpAngle(a: number, b: number, t: number): number
 end
 
 local function blend(a: Remote, b: Remote, t: number): Remote
+	if (b.position - a.position).Magnitude > SNAP_DISTANCE then
+		return b -- a teleport or respawn: jump there rather than glide
+	end
 	return {
 		position = a.position:Lerp(b.position, t),
 		yaw = lerpAngle(a.yaw, b.yaw, t),
@@ -195,8 +203,16 @@ function Puppets.render()
 		end
 		avatar.model.Parent = folder
 	end
+	local now = os.clock()
 	for slot, avatar in avatars do
-		if not shown[slot] and avatar.model.Parent then
+		if shown[slot] then
+			lastShown[slot] = now
+		elseif now - (lastShown[slot] or now) > FORGET_AFTER then
+			-- Not shown for a long while (they may have left): free the model.
+			avatar.model:Destroy()
+			avatars[slot] = nil
+			lastShown[slot] = nil
+		elseif avatar.model.Parent then
 			-- Holes from Impacts don't outlast a player being shown: they'd
 			-- still be there after a respawn.
 			for _, descendant in avatar.model:GetDescendants() do

@@ -36,6 +36,7 @@ local SEE_THROUGH = 0.25 -- parts at least this transparent don't block sight
 local EYE_RADIUS = Config.movement.eyeRadius
 local MAX_HOPS = 4 -- see-through parts a single line may pass
 local HOP_EPSILON = 0.01
+local BLOCKS_SIGHT = "OpenSRSBlocksSight"
 
 local Visibility = {}
 
@@ -105,7 +106,10 @@ local function clear(from: Vector3, to: Vector3): (boolean, number)
 			return true, rays
 		end
 		local part = result.Instance
-		if not (part:IsA("BasePart") and part.Transparency >= SEE_THROUGH) then
+		-- A game can mark a part that looks solid though it's see-through (like
+		-- glass covered by a decal) with the OpenSRSBlocksSight attribute.
+		local blocks = part:GetAttribute(BLOCKS_SIGHT) == true
+		if blocks or not (part:IsA("BasePart") and part.Transparency >= SEE_THROUGH) then
 			return false, rays
 		end
 		from = result.Position + offset.Unit * HOP_EPSILON
